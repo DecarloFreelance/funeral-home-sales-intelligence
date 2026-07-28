@@ -117,3 +117,42 @@ def get_open_actions():
     conn.close()
 
     return rows
+
+
+def migrate_action_queue():
+
+    from crm.database import connect
+
+    conn = connect()
+    cur = conn.cursor()
+
+
+    columns = {
+        "started_at": "TEXT",
+        "completed_at": "TEXT",
+    }
+
+
+    cur.execute(
+        "PRAGMA table_info(action_queue)"
+    )
+
+    existing = {
+        row[1]
+        for row in cur.fetchall()
+    }
+
+
+    for name, dtype in columns.items():
+
+        if name not in existing:
+
+            cur.execute(
+                f"""
+                ALTER TABLE action_queue
+                ADD COLUMN {name} {dtype}
+                """
+            )
+
+
+    conn.commit()
