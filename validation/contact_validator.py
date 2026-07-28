@@ -3,7 +3,7 @@ import re
 
 def validate_email(email):
     """
-    Basic email format validation.
+    Basic email validation.
     """
 
     if not email:
@@ -26,12 +26,16 @@ def validate_email(email):
 
 def validate_phone(phone):
     """
-    Basic phone validation.
+    Validate business phone numbers.
 
     Accepts:
-    +1XXXXXXXXXX
-    XXXXXXXXXX
-    (XXX) XXX-XXXX
+    - 10 digit North American numbers
+    - 11 digit North American numbers starting with 1
+
+    Rejects:
+    - timestamps
+    - scraped IDs
+    - impossible area codes
     """
 
     if not phone:
@@ -45,26 +49,35 @@ def validate_phone(phone):
     )
 
 
-    return len(digits) in [
-        10,
-        11
-    ]
+    # Reject timestamps / IDs
+    if digits.startswith(
+        (
+            "19",
+            "20"
+        )
+    ):
+        return False
 
 
-def confidence_adjustment(
-    email,
-    phone
-):
+    # Normalize country code
+    if len(digits) == 11:
 
-    score = 0
+        if not digits.startswith("1"):
+            return False
 
-
-    if validate_email(email):
-        score += 50
+        digits = digits[1:]
 
 
-    if validate_phone(phone):
-        score += 50
+    if len(digits) != 10:
+        return False
 
 
-    return score
+    area_code = digits[:3]
+
+
+    # North American area codes cannot start with 0 or 1
+    if area_code[0] in ("0", "1"):
+        return False
+
+
+    return True
