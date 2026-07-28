@@ -76,11 +76,11 @@ Examples include:
 
 ### 4. Validation
 
-Validation currently focuses on filtering malformed or unusable extracted values.
+Validation currently focuses on filtering malformed or unusable extracted values through regex filtering, domain checks, and basic formatting rules.
 
 Current limitations:
 
-- Validation does not guarantee that extracted contacts belong to the correct decision makers.
+- Validation does not verify email ownership, phone ownership, or whether extracted contacts belong to the correct decision makers.
 - External verification is not currently part of the extraction workflow.
 
 ### 5. Storage
@@ -109,9 +109,21 @@ The current extraction architecture provides:
 Current limitations include:
 
 - Extraction depends on already discovered websites.
-- Contact discovery is limited to information available from collected sources.
+- Contact discovery is limited to information already present in collected website content.
 - External enrichment is not integrated.
 - Decision-maker identification remains limited.
+
+---
+
+## Observed Extraction Issues
+
+### Phone Extraction False Positives
+
+The current phone extraction regex can identify non-phone numeric strings as phone candidates. Example output inspection identified timestamp-like values being captured as phone numbers.
+
+### Contact Ranking Limitations
+
+Extracted emails may exist in the dataset while failing to produce a ranked primary contact due to current scoring thresholds and filtering rules.
 
 ---
 
