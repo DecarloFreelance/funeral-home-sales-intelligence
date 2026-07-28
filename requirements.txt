@@ -1,0 +1,7 @@
+rich
+requests
+beautifulsoup4
+lxml
+pandas
+python-dotenv
+tqdm

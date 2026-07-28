@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+
+# Environment secrets
+.env
+
+# Generated data
+data/results.json
+logs/
+reports/
+
+# Personal/client communication
+email.txt
+
+# Temporary files
+*.tmp
+*.bak
+
+# Archive backups
+archive/
+Todd_Life_Celebrants_Digital_Outreach_Project.zip
