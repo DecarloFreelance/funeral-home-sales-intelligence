@@ -1,0 +1,32 @@
+# Python environment
+.venv/
+venv/
+
+# Git data
+.git/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Archives
+archive/
+*.zip
+
+# Generated output
+reports/
+deliverable_package/
+logs/
+
+# Audit outputs
+audit/
+
+# Large data files
+*.csv
+*.json
+*.sqlite
+*.db
+
+# Temporary files
+*.tmp
+*.log
