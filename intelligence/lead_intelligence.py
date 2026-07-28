@@ -3,6 +3,7 @@ from typing import Any, Dict
 
 from contact_cleaner import clean_contact_data
 from contact_ranker import choose_email, choose_phone
+from crm.status_engine import initial_status, follow_up_schedule
 
 from intelligence.phone_intelligence import (
     phone_quality_score
@@ -104,6 +105,9 @@ class LeadIntelligence:
             crm={
                 "crm_status": result.get("crm_status"),
                 "sales_lane": result.get("sales_lane"),
+                **cls.build_crm_state(
+                    result
+                ),
             }
         )
 
@@ -243,6 +247,45 @@ class LeadIntelligence:
             "priority_level": level,
             "best_contact_method": method
         }
+
+
+
+    @classmethod
+    def build_crm_state(cls, result):
+        """
+        Generate CRM workflow state.
+        """
+
+        priority = result.get(
+            "outreach_priority",
+            ""
+        )
+
+        method = result.get(
+            "outreach_channel",
+            "email"
+        )
+
+
+        state = initial_status(
+            priority,
+            method
+        )
+
+
+        state["follow_up_date"] = follow_up_schedule(
+            priority
+        )
+
+        state["attempt_count"] = 0
+
+        state["engagement_score"] = result.get(
+            "sales_readiness",
+            0
+        )
+
+
+        return state
 
 
     def to_dict(self):
