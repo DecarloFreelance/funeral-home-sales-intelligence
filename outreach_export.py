@@ -4,6 +4,7 @@ from pathlib import Path
 
 from intelligence.lead_intelligence import LeadIntelligence
 from crm.database import initialize, upsert_lead
+from crm.action_queue import initialize_queue, create_action
 
 
 INPUT = Path("data/results.json")
@@ -15,6 +16,7 @@ with INPUT.open() as f:
 
 
 initialize()
+initialize_queue()
 
 
 leads = [
@@ -122,6 +124,26 @@ with OUTPUT.open(
 
 
         upsert_lead(crm_record)
+
+
+        create_action(
+            data["company"].get(
+                "domain",
+                ""
+            ),
+            data["outreach"].get(
+                "best_contact_method",
+                "research"
+            ),
+            data["outreach"].get(
+                "priority_level",
+                "Research Required"
+            ),
+            data["outreach"].get(
+                "recommended_pitch",
+                ""
+            )
+        )
 
 
         writer.writerow({
