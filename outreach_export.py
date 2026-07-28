@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 from intelligence.lead_intelligence import LeadIntelligence
+from crm.database import initialize, upsert_lead
 
 
 INPUT = Path("data/results.json")
@@ -11,6 +12,9 @@ OUTPUT = Path("data/outreach_contacts.csv")
 
 with INPUT.open() as f:
     raw_leads = json.load(f)
+
+
+initialize()
 
 
 leads = [
@@ -56,6 +60,69 @@ with OUTPUT.open(
     for lead in leads:
 
         data = lead.to_dict()
+
+        crm_record = {
+
+            "domain": data["company"].get("domain",""),
+
+            "pipeline_stage":
+                data["crm"].get(
+                    "pipeline_stage",
+                    "NEW"
+                ),
+
+            "crm_status":
+                data["crm"].get(
+                    "crm_status",
+                    ""
+                ),
+
+            "priority_score":
+                data["outreach"].get(
+                    "priority_score",
+                    0
+                ),
+
+            "priority_level":
+                data["outreach"].get(
+                    "priority_level",
+                    ""
+                ),
+
+            "contact_method":
+                data["outreach"].get(
+                    "best_contact_method",
+                    ""
+                ),
+
+            "primary_email":
+                data["contacts"].get(
+                    "primary_email",
+                    ""
+                ),
+
+            "primary_phone":
+                data["contacts"].get(
+                    "primary_phone",
+                    ""
+                ),
+
+            "next_action":
+                data["crm"].get(
+                    "next_action",
+                    ""
+                ),
+
+            "follow_up_date":
+                data["crm"].get(
+                    "follow_up_date",
+                    ""
+                )
+        }
+
+
+        upsert_lead(crm_record)
+
 
         writer.writerow({
 
