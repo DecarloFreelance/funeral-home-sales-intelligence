@@ -95,6 +95,10 @@ class LeadIntelligence:
                 "personalization_profile": result.get(
                     "personalization_profile"
                 ),
+                **cls.build_outreach_priority(
+                    result,
+                    cls.build_contacts(result)
+                ),
             },
 
             crm={
@@ -172,6 +176,72 @@ class LeadIntelligence:
                 ),
                 2
             )
+        }
+
+
+
+
+    @classmethod
+    def build_outreach_priority(cls, result, contacts):
+        """
+        Generate actionable outreach priority intelligence.
+        """
+
+        score = 0
+
+        sales_readiness = result.get(
+            "sales_readiness",
+            0
+        )
+
+        if isinstance(sales_readiness, (int, float)):
+            score += sales_readiness
+
+
+        score += contacts.get(
+            "contact_quality_score",
+            0
+        )
+
+
+        if contacts.get("primary_email"):
+            score += 20
+
+
+        if contacts.get("phone_region_score"):
+            score += contacts.get(
+                "phone_region_score",
+                0
+            ) / 10
+
+
+        if score >= 180:
+            level = "A1 - Immediate Outreach"
+
+        elif score >= 120:
+            level = "A2 - Priority Outreach"
+
+        elif score >= 80:
+            level = "B1 - Nurture"
+
+        else:
+            level = "Research Required"
+
+
+        if contacts.get("email_confidence", 0) >= 80:
+            method = "email"
+
+        elif contacts.get("phone_confidence", 0) >= 80:
+            method = "phone"
+
+        else:
+            method = "research"
+
+
+        return {
+            "priority_score": round(score,2),
+            "priority_level": level,
+            "best_contact_method": method
         }
 
 
