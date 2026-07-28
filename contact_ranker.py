@@ -1,6 +1,13 @@
 import re
 
-from validation.contact_validator import validate_email, validate_phone
+from validation.contact_validator import (
+    validate_email,
+    validate_phone
+)
+
+from intelligence.phone_intelligence import (
+    phone_region_score
+)
 
 
 FREE_EMAILS = [
@@ -19,6 +26,50 @@ BAD_PREFIXES = [
     "webmaster",
     "noreply",
     "no-reply"
+]
+
+
+
+CANADA_AREA_CODES = [
+    "204",
+    "236",
+    "249",
+    "250",
+    "289",
+    "306",
+    "343",
+    "365",
+    "403",
+    "416",
+    "418",
+    "431",
+    "437",
+    "438",
+    "450",
+    "506",
+    "514",
+    "519",
+    "548",
+    "579",
+    "581",
+    "587",
+    "604",
+    "613",
+    "639",
+    "647",
+    "705",
+    "709",
+    "778",
+    "780",
+    "782",
+    "807",
+    "819",
+    "825",
+    "867",
+    "873",
+    "879",
+    "902",
+    "905"
 ]
 
 
@@ -136,11 +187,23 @@ def score_phone(phone):
 
 
     if len(digits)==10:
-        return 100
+
+        area = digits[:3]
+
+        if area in CANADA_AREA_CODES:
+            return 100
+
+        return 40
 
 
     if len(digits)==11 and digits.startswith("1"):
-        return 90
+
+        area = digits[1:4]
+
+        if area in CANADA_AREA_CODES:
+            return 90
+
+        return 30
 
 
     return 0
@@ -149,19 +212,40 @@ def score_phone(phone):
 
 def choose_phone(phones):
 
-    best=""
-    confidence=0
+    ranked = []
 
 
     for phone in phones:
 
-        score=score_phone(phone)
+        score = score_phone(phone)
+
+        if score:
+
+            regional = phone_region_score(phone)
+
+            final_score = (
+                score * 0.7 +
+                regional * 0.3
+            )
+
+            ranked.append(
+                (
+                    final_score,
+                    phone
+                )
+            )
 
 
-        if score > confidence:
-
-            best=phone
-            confidence=score
+    if not ranked:
+        return "", 0
 
 
-    return best,confidence
+    ranked.sort(
+        reverse=True
+    )
+
+
+    return (
+        ranked[0][1],
+        round(ranked[0][0])
+    )

@@ -1,6 +1,13 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict
 
+from contact_cleaner import clean_contact_data
+from contact_ranker import choose_email, choose_phone
+
+from intelligence.phone_intelligence import (
+    phone_quality_score
+)
+
 
 @dataclass
 class LeadIntelligence:
@@ -42,17 +49,7 @@ class LeadIntelligence:
                 "evidence": result.get("evidence", {}),
             },
 
-            contacts={
-                "emails_found": result.get("emails_found", []),
-                "phones_found": result.get("phones_found", []),
-                "primary_email": result.get("primary_email"),
-                "primary_phone": result.get("primary_phone"),
-                "email_confidence": result.get("email_confidence"),
-                "phone_confidence": result.get("phone_confidence"),
-                "contact_quality_score": result.get(
-                    "contact_quality_score"
-                ),
-            },
+            contacts=cls.build_contacts(result),
 
             scoring={
                 "conversion": result.get("conversion"),
@@ -105,6 +102,77 @@ class LeadIntelligence:
                 "sales_lane": result.get("sales_lane"),
             }
         )
+
+
+
+    @classmethod
+    def build_contacts(cls, result: Dict[str, Any]):
+        """
+        Normalize, clean, and rank contact intelligence.
+        """
+
+        domain = result.get(
+            "domain",
+            ""
+        )
+
+        raw_emails = result.get(
+            "emails_found",
+            []
+        )
+
+        raw_phones = result.get(
+            "phones_found",
+            []
+        )
+
+        cleaned = clean_contact_data(
+            raw_emails,
+            raw_phones,
+            domain
+        )
+
+        primary_email, email_confidence = choose_email(
+            cleaned["emails"],
+            domain
+        )
+
+        primary_phone, phone_confidence = choose_phone(
+            cleaned["phones"]
+        )
+
+        phone_analysis = phone_quality_score(
+            primary_phone
+        )
+
+        return {
+            "emails_found": cleaned["emails"],
+            "phones_found": cleaned["phones"],
+
+            "primary_email": primary_email,
+            "email_confidence": email_confidence,
+
+            "primary_phone": primary_phone,
+            "phone_confidence": phone_confidence,
+
+            "normalized_phone":
+                phone_analysis["normalized"],
+
+            "phone_region_score":
+                phone_analysis["score"],
+
+            "phone_reason":
+                phone_analysis["reasons"],
+
+            "contact_quality_score": round(
+                (
+                    email_confidence * 0.35 +
+                    phone_confidence * 0.35 +
+                    phone_analysis["score"] * 0.30
+                ),
+                2
+            )
+        }
 
 
     def to_dict(self):
