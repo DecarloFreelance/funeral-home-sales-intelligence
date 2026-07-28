@@ -2,13 +2,36 @@ import csv
 import json
 from pathlib import Path
 
+from intelligence.lead_intelligence import LeadIntelligence
+
 
 INPUT = Path("data/results.json")
 OUTPUT = Path("data/todd_outreach_campaign.csv")
 
 
 with INPUT.open() as f:
-    leads = json.load(f)
+    raw_leads = json.load(f)
+
+
+leads = [
+    LeadIntelligence.from_result(lead)
+    for lead in raw_leads
+]
+
+
+fields = [
+    "company",
+    "website",
+    "emails",
+    "phones",
+    "campaign_type",
+    "recommended_subject",
+    "first_email_angle",
+    "seminar_fit",
+    "sales_stage",
+    "follow_up_priority",
+    "follow_up_days"
+]
 
 
 with OUTPUT.open(
@@ -19,21 +42,8 @@ with OUTPUT.open(
 
     writer = csv.DictWriter(
         f,
-        fieldnames=[
-            "company",
-            "website",
-            "emails",
-            "phones",
-            "campaign_type",
-            "recommended_subject",
-            "first_email_angle",
-            "seminar_fit",
-            "sales_stage",
-            "follow_up_priority",
-            "follow_up_days"
-        ]
+        fieldnames=fields
     )
-
 
     writer.writeheader()
 
@@ -43,14 +53,17 @@ with OUTPUT.open(
         writer.writerow({
 
             "company":
-                lead.get("domain"),
+                lead.company.get("domain", ""),
 
             "website":
-                "https://" + lead.get("domain"),
+                "https://" + lead.company.get(
+                    "domain",
+                    ""
+                ),
 
             "emails":
                 ", ".join(
-                    lead.get(
+                    lead.contacts.get(
                         "emails_found",
                         []
                     )
@@ -58,54 +71,53 @@ with OUTPUT.open(
 
             "phones":
                 ", ".join(
-                    lead.get(
+                    lead.contacts.get(
                         "phones_found",
                         []
                     )
                 ),
 
             "campaign_type":
-                lead.get(
+                lead.outreach.get(
                     "campaign_type",
                     ""
                 ),
 
             "recommended_subject":
-                lead.get(
+                lead.outreach.get(
                     "recommended_subject",
                     ""
                 ),
 
             "first_email_angle":
-                lead.get(
+                lead.outreach.get(
                     "first_email_angle",
                     ""
                 ),
 
             "seminar_fit":
-                lead.get(
+                lead.opportunity.get(
                     "seminar_fit",
                     0
                 ),
 
             "sales_stage":
-                lead.get(
+                lead.scoring.get(
                     "sales_stage",
                     ""
                 ),
 
             "follow_up_priority":
-                lead.get(
+                lead.outreach.get(
                     "follow_up_priority",
                     ""
                 ),
 
             "follow_up_days":
-                lead.get(
+                lead.outreach.get(
                     "follow_up_days",
                     ""
                 )
-
         })
 
 
