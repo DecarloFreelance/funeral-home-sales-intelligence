@@ -15,6 +15,10 @@ def connect():
 
 def initialize():
 
+    from crm.events import initialize_events
+
+    initialize_events()
+
     conn = connect()
 
     cur = conn.cursor()
