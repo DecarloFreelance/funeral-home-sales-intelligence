@@ -7,7 +7,6 @@
 
 3. **Planned Automated Sources:** Future integration should include search engines, business directories, funeral associations, map listings, and other industry-specific sources.
 
-
 4. **Existing Analysis Features:** The platform performs website crawling, feature detection, and decision-making to generate sales strategies, indicating digital presence analysis capability.
 
 ## Discovery Workflow
