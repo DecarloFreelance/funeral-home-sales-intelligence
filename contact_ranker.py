@@ -1,5 +1,7 @@
 import re
 
+from validation.contact_validator import validate_email, validate_phone
+
 
 FREE_EMAILS = [
     "gmail.com",
@@ -33,6 +35,9 @@ BAD_DOMAINS = [
 def score_email(email, domain):
 
     if not email:
+        return 0
+
+    if not validate_email(email):
         return 0
 
 
@@ -117,6 +122,9 @@ def choose_email(emails, domain):
 def score_phone(phone):
 
     if not phone:
+        return 0
+
+    if not validate_phone(phone):
         return 0
 
 
