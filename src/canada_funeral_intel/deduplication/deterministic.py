@@ -201,10 +201,10 @@ def _load_latest_normalized_signals(
         JOIN (
             SELECT source_record_id, field_name, MAX(id) AS normalized_value_id
             FROM normalized_values
-            WHERE normalized_value IS NOT NULL
             GROUP BY source_record_id, field_name
         ) AS latest
           ON latest.normalized_value_id = nv.id
+        WHERE nv.normalized_value IS NOT NULL
         ORDER BY nv.source_record_id, nv.field_name
         """
     ).fetchall()
