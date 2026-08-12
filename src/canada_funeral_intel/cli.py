@@ -97,6 +97,14 @@ from .people.models import PersonReviewStatus
 from .people.remediation import TASK_TYPES, RemediationStatus
 from .people.triage import TriageFilters, TriageSeverity
 from .people.work_queue import WorkQueueFilters
+from .quality.cli import (
+    parse_reference_time,
+    quality_database_session,
+    run_quality_export,
+    run_quality_score,
+    run_quality_summary,
+)
+from .quality.scoring import READINESS, SUBJECT_TYPES
 from .storage import DatabaseError, database_session
 from .storage.migrations import (
     MigrationError,
@@ -595,6 +603,30 @@ def build_parser() -> argparse.ArgumentParser:
     facts_export_parser.add_argument("--output", required=True, type=Path)
     add_fact_filters(facts_export_parser)
 
+    quality_parser = subparsers.add_parser("quality", help="Read-only quality and confidence reporting.")
+    quality_subparsers = quality_parser.add_subparsers(dest="quality_command")
+    quality_score_parser = quality_subparsers.add_parser("score", help="Score one evidence subject.")
+    quality_score_parser.add_argument("--subject-type", required=True, choices=SUBJECT_TYPES)
+    quality_score_parser.add_argument("--subject-id", required=True, type=int)
+    quality_score_parser.add_argument("--reference-time")
+    quality_score_parser.add_argument("--include-historical", action="store_true")
+    def add_quality_filters(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--subject-type", choices=SUBJECT_TYPES, default="entity")
+        parser.add_argument("--reference-time")
+        parser.add_argument("--readiness", choices=READINESS)
+        parser.add_argument("--minimum-score", type=float)
+        parser.add_argument("--maximum-score", type=float)
+        parser.add_argument("--entity-id", type=int)
+        parser.add_argument("--conflict-only", action="store_true")
+        parser.add_argument("--incomplete-only", action="store_true")
+        parser.add_argument("--include-historical", action="store_true")
+    quality_summary_parser = quality_subparsers.add_parser("summary", help="List deterministic quality scores.")
+    add_quality_filters(quality_summary_parser)
+    quality_export_parser = quality_subparsers.add_parser("export", help="Export deterministic quality reports.")
+    quality_export_parser.add_argument("--output", required=True, type=Path)
+    quality_export_parser.add_argument("--reference-time")
+    quality_export_parser.add_argument("--include-historical", action="store_true")
+
     people_parser = subparsers.add_parser("people", help="Review and resolve canonical people.")
     people_subparsers = people_parser.add_subparsers(dest="people_command")
     people_review_parser = people_subparsers.add_parser("people-review", help="Review page-level person observations.")
@@ -923,6 +955,28 @@ def main(argv: Sequence[str] | None = None) -> int:
                 return 2
         print(json.dumps(payload, indent=2, sort_keys=True))
         return 0
+
+    if args.command == "quality":
+        if args.quality_command is None:
+            parser.parse_args(["quality", "--help"])
+            return 2
+        try:
+            reference_time = parse_reference_time(args.reference_time)
+            with quality_database_session(settings.database_path) as connection:
+                if args.quality_command == "score":
+                    payload = run_quality_score(connection, subject_type=args.subject_type, subject_id=args.subject_id, reference_time=reference_time, include_historical=args.include_historical)
+                elif args.quality_command == "summary":
+                    payload = run_quality_summary(connection, subject_type=args.subject_type, reference_time=reference_time, include_historical=args.include_historical, readiness=args.readiness, minimum_score=args.minimum_score, maximum_score=args.maximum_score, entity_id=args.entity_id, conflict_only=args.conflict_only, incomplete_only=args.incomplete_only)
+                elif args.quality_command == "export":
+                    payload = run_quality_export(connection, output=args.output, reference_time=reference_time, include_historical=args.include_historical)
+                else:
+                    parser.parse_args(["quality", "--help"])
+                    return 2
+            print(json.dumps(payload, indent=2, sort_keys=True))
+            return 0
+        except (DatabaseError, ValueError) as exc:
+            print(f"quality error: {exc}", file=sys.stderr)
+            return 13
 
     if args.command == "sources" and args.sources_command == "collect":
         from canada_funeral_intel.collectors.manitoba_cli import (
