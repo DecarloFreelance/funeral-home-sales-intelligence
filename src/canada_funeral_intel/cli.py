@@ -25,6 +25,12 @@ from .collectors.source_registry import (
 )
 from .collectors.source_registry_storage import seed_source_registry
 from .config import ConfigurationError, load_settings
+from .deduplication.match_cli import (
+    MatchCommandError,
+    MatchMode,
+    print_match_payload,
+    run_match_command,
+)
 from .deduplication.merge_cli import (
     MergeCommandError,
     print_merge_payload,
@@ -193,6 +199,26 @@ def build_parser() -> argparse.ArgumentParser:
     normalize_parser.add_argument(
         "--source",
         help="Optional registered source name to normalize.",
+    )
+
+    match_parser = subparsers.add_parser(
+        "match",
+        help="Generate entity-resolution match candidates.",
+    )
+    match_subparsers = match_parser.add_subparsers(
+        dest="match_command",
+    )
+    match_subparsers.add_parser(
+        "deterministic",
+        help="Run deterministic entity matching.",
+    )
+    match_subparsers.add_parser(
+        "fuzzy",
+        help="Run fuzzy entity matching.",
+    )
+    match_subparsers.add_parser(
+        "all",
+        help="Run deterministic matching followed by fuzzy matching.",
     )
 
     merge_parser = subparsers.add_parser(
@@ -644,6 +670,23 @@ def main(argv: Sequence[str] | None = None) -> int:
         except (DatabaseError, NormalizeCommandError) as exc:
             print(f"normalize error: {exc}", file=sys.stderr)
             return 6
+
+    if args.command == "match":
+        if args.match_command is None:
+            parser.parse_args(["match", "--help"])
+            return 2
+
+        try:
+            with database_session(settings.database_path) as connection:
+                payload = run_match_command(
+                    connection,
+                    mode=MatchMode(args.match_command),
+                )
+            print_match_payload(payload)
+            return 0
+        except (DatabaseError, MatchCommandError) as exc:
+            print(f"match error: {exc}", file=sys.stderr)
+            return 10
 
     if args.command == "merge":
         if args.merge_command is None:
