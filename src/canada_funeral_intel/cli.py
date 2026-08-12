@@ -137,6 +137,13 @@ from .verification.website_cli import (
     run_website_review_list,
     run_website_verify,
 )
+from .verticals.cli import (
+    profile_payload,
+    profiles_payload,
+    run_verticals_assign,
+    run_verticals_entities,
+    run_verticals_seed,
+)
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _MIGRATION_DIR = _PROJECT_ROOT / "database" / "migrations"
@@ -682,6 +689,21 @@ def build_parser() -> argparse.ArgumentParser:
     refresh_changes_parser.add_argument("--subject-key")
     refresh_changes_parser.add_argument("--change-type", choices=("added", "changed", "missing", "reappeared"))
 
+    verticals_parser = subparsers.add_parser("verticals", help="Inspect and classify business verticals.")
+    verticals_subparsers = verticals_parser.add_subparsers(dest="verticals_command")
+    verticals_subparsers.add_parser("list", help="List vertical profiles.")
+    verticals_show = verticals_subparsers.add_parser("show", help="Show one vertical profile.")
+    verticals_show.add_argument("--vertical", required=True)
+    verticals_entities = verticals_subparsers.add_parser("entities", help="List explicit vertical memberships.")
+    verticals_entities.add_argument("--vertical", required=True)
+    verticals_subparsers.add_parser("seed", help="Seed configured vertical profiles.")
+    verticals_assign = verticals_subparsers.add_parser("assign", help="Assign an explicit entity vertical membership.")
+    verticals_assign.add_argument("--entity-id", required=True, type=int)
+    verticals_assign.add_argument("--vertical", required=True)
+    verticals_assign.add_argument("--actor", required=True)
+    verticals_assign.add_argument("--confidence", type=float, default=1.0)
+    verticals_assign.add_argument("--source-record-id", type=int)
+
     people_parser = subparsers.add_parser("people", help="Review and resolve canonical people.")
     people_subparsers = people_parser.add_subparsers(dest="people_command")
     people_review_parser = people_subparsers.add_parser("people-review", help="Review page-level person observations.")
@@ -1068,6 +1090,27 @@ def main(argv: Sequence[str] | None = None) -> int:
         except (DatabaseError, ValueError) as exc:
             print(f"refresh error: {exc}", file=sys.stderr)
             return 15
+
+    if args.command == "verticals":
+        if args.verticals_command is None:
+            parser.parse_args(["verticals", "--help"])
+            return 2
+        try:
+            if args.verticals_command == "list":
+                payload = profiles_payload()
+            elif args.verticals_command == "show":
+                payload = profile_payload(args.vertical)
+            else:
+                with database_session(settings.database_path) as connection:
+                    if args.verticals_command == "seed": payload = run_verticals_seed(connection)
+                    elif args.verticals_command == "entities": payload = run_verticals_entities(connection, args.vertical)
+                    elif args.verticals_command == "assign": payload = run_verticals_assign(connection, entity_id=args.entity_id, vertical_key=args.vertical, actor=args.actor, confidence=args.confidence, source_record_id=args.source_record_id)
+                    else: parser.parse_args(["verticals", "--help"]); return 2
+            print(json.dumps(payload, indent=2, sort_keys=True))
+            return 0
+        except (DatabaseError, ValueError) as exc:
+            print(f"verticals error: {exc}", file=sys.stderr)
+            return 16
 
     if args.command == "sources" and args.sources_command == "collect":
         from canada_funeral_intel.collectors.manitoba_cli import (
