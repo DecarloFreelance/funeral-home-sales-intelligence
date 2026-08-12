@@ -19,6 +19,18 @@ alongside its normalized value.
 
 ## Dry run
 
+First generate a deterministic template for active entities without a current
+non-rejected candidate:
+
+```bash
+DATABASE_PATH=/tmp/cfi.sqlite3 \
+  .venv/bin/python -m canada_funeral_intel website manual-template \
+  --output /tmp/manual-website-evidence.csv \
+  --limit 50
+```
+
+Fill only `website_url`, `source_url`, and `note`; do not change `entity_id`.
+
 ```bash
 DATABASE_PATH=/tmp/cfi.sqlite3 \
   .venv/bin/python -m canada_funeral_intel website import-manual \

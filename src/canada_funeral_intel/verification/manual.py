@@ -37,6 +37,66 @@ class ManualWebsiteEvidenceResult:
     dry_run: bool
 
 
+def export_manual_website_template(
+    connection: sqlite3.Connection,
+    *,
+    output_path: Path,
+    limit: int | None = None,
+) -> dict[str, object]:
+    if limit is not None and limit < 1:
+        raise ManualWebsiteEvidenceError("limit must be positive")
+
+    query = """
+        SELECT
+            e.id,
+            e.canonical_name,
+            MAX(CASE WHEN nv.field_name = 'city' THEN nv.normalized_value END) AS city,
+            MAX(CASE WHEN nv.field_name = 'province' THEN nv.normalized_value END) AS province
+        FROM entities AS e
+        LEFT JOIN entity_source_records AS esr ON esr.entity_id = e.id
+        LEFT JOIN normalized_values AS nv ON nv.source_record_id = esr.source_record_id
+        WHERE e.status = 'active'
+          AND NOT EXISTS (
+              SELECT 1 FROM websites AS w
+              WHERE w.entity_id = e.id AND w.status <> 'rejected'
+          )
+        GROUP BY e.id, e.canonical_name
+        ORDER BY e.id
+    """
+    parameters: tuple[object, ...] = ()
+    if limit is not None:
+        query += " LIMIT ?"
+        parameters = (limit,)
+    rows = connection.execute(query, parameters).fetchall()
+    try:
+        with output_path.open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.writer(handle, lineterminator="\n")
+            writer.writerow(
+                ("entity_id", "entity_name", "city", "province", "website_url", "source_url", "note")
+            )
+            for row in rows:
+                writer.writerow(
+                    (
+                        row["id"],
+                        _safe_csv_cell(row["canonical_name"]),
+                        _safe_csv_cell(row["city"]),
+                        _safe_csv_cell(row["province"]),
+                        "",
+                        "",
+                        "",
+                    )
+                )
+    except OSError as exc:
+        raise ManualWebsiteEvidenceError(
+            f"Unable to write manual website template {output_path}: {exc}"
+        ) from exc
+    return {
+        "output_path": str(output_path),
+        "rows": len(rows),
+        "network_used": False,
+    }
+
+
 def import_manual_website_evidence(
     connection: sqlite3.Connection,
     *,
@@ -198,3 +258,10 @@ def _parse_file(
     except OSError as exc:
         raise ManualWebsiteEvidenceError(f"Unable to read {path}: {exc}") from exc
     return tuple(rows), ParseResult(tuple(import_rows), tuple(errors))
+
+
+def _safe_csv_cell(value: object) -> str:
+    text = "" if value is None else str(value)
+    if text.startswith(("=", "+", "-", "@", "\t", "\r")):
+        return "'" + text
+    return text

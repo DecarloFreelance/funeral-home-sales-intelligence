@@ -26,6 +26,7 @@ from canada_funeral_intel.verification.discovery import (
 )
 from canada_funeral_intel.verification.manual import (
     ManualWebsiteEvidenceError,
+    export_manual_website_template,
     import_manual_website_evidence,
 )
 from canada_funeral_intel.verification.models import WebsiteReviewStatus
@@ -49,6 +50,22 @@ from canada_funeral_intel.verification.storage import (
 
 class WebsiteCommandError(RuntimeError):
     """Raised when a website CLI command cannot complete safely."""
+
+
+def run_website_manual_template(
+    connection: sqlite3.Connection,
+    *,
+    output_path: Path,
+    limit: int | None = None,
+) -> dict[str, object]:
+    try:
+        return export_manual_website_template(
+            connection,
+            output_path=output_path,
+            limit=limit,
+        )
+    except ManualWebsiteEvidenceError as exc:
+        raise WebsiteCommandError(str(exc)) from exc
 
 
 def run_website_import_manual(

@@ -141,6 +141,7 @@ from .verification.website_cli import (
     run_website_extract_people,
     run_website_import_manual,
     run_website_list,
+    run_website_manual_template,
     run_website_pages,
     run_website_people,
     run_website_populate_candidates,
@@ -425,6 +426,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Registered manual evidence source name.",
     )
     website_manual_parser.add_argument("--dry-run", action="store_true")
+    website_template_parser = website_subparsers.add_parser(
+        "manual-template",
+        help="Write a deterministic CSV template for entities lacking website candidates.",
+    )
+    website_template_parser.add_argument("--output", type=Path, required=True)
+    website_template_parser.add_argument("--limit", type=int)
     website_populate_parser = website_subparsers.add_parser(
         "populate-candidates",
         help="Populate website candidates offline from trusted source provenance.",
@@ -1522,6 +1529,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                         input_path=args.path,
                         source_dataset_id=int(source_row["id"]),
                         dry_run=args.dry_run,
+                    )
+
+                elif args.website_command == "manual-template":
+                    apply_pending_migrations(connection, _MIGRATION_DIR)
+                    payload = run_website_manual_template(
+                        connection,
+                        output_path=args.output,
+                        limit=args.limit,
                     )
 
                 elif args.website_command == "batch-verify":
