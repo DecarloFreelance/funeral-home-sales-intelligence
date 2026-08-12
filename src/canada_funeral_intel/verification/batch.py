@@ -135,6 +135,7 @@ def populate_candidates(
         "social_candidates": result.social_candidates,
         "branch_page_candidates": result.branch_page_candidates,
         "alternate_domain_candidates": result.alternate_domain_candidates,
+        "suppressed_generic_email_signals": result.suppressed_generic_email_signals,
     }
 
 

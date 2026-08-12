@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import sqlite3
 from collections import Counter, defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from urllib.parse import urlsplit
 
 from canada_funeral_intel.normalization.scalars import normalize_domain, normalize_url
 from canada_funeral_intel.verification.models import (
     WebsiteEvidence,
+    WebsiteEvidenceClass,
     WebsiteEvidenceType,
     WebsiteKind,
     WebsiteStatus,
@@ -36,6 +37,7 @@ class WebsiteCandidateDiscoveryRun:
     shared_domain_candidates: int
     branch_page_candidates: int
     alternate_domain_candidates: int
+    suppressed_generic_email_signals: int = 0
     source_method_counts: tuple[tuple[str, int], ...] = ()
 
 
@@ -48,6 +50,9 @@ class _SourceWebsiteSignal:
     normalized_url: str
     domain: str
     discovery_method: str
+    normalized_value_id: int
+    evidence_class: WebsiteEvidenceClass
+    raw_value: str
 
 
 _SOCIAL_DOMAINS = frozenset(
@@ -67,12 +72,23 @@ _EMAIL_DISCOVERY_METHOD = "normalized_email_domain_v1"
 _GENERIC_EMAIL_DOMAINS = frozenset(
     {
         "gmail.com",
-        "mymts.net",
-        "mts.net",
         "outlook.com",
-        "shaw.ca",
+        "hotmail.com",
+        "icloud.com",
+        "proton.me",
+        "protonmail.com",
     }
 )
+_GENERIC_EMAIL_POLICY_VERSION = "generic-email-domain-v1"
+_EVIDENCE_WEIGHTS = {
+    WebsiteEvidenceClass.EXPLICIT_SOURCE_WEBSITE: 700,
+    WebsiteEvidenceClass.EXPLICIT_SOURCE_URL: 600,
+    WebsiteEvidenceClass.SOURCE_DOMAIN: 500,
+    WebsiteEvidenceClass.NORMALIZED_URL: 400,
+    WebsiteEvidenceClass.NORMALIZED_DOMAIN: 300,
+    WebsiteEvidenceClass.MANUAL: 200,
+    WebsiteEvidenceClass.EMAIL_DOMAIN: 100,
+}
 
 
 def discover_website_candidates(
@@ -102,35 +118,48 @@ def discover_website_candidates(
                 (entity_id, entity_id, source_dataset_id, source_dataset_id),
             ).fetchone()[0]
         )
-        source_signals = _load_source_website_signals(connection, entity_id=entity_id, source_dataset_id=source_dataset_id)
-        signals = (
-            *source_signals,
-            *_load_email_domain_signals(
-                connection,
-                existing_signals=source_signals,
-                entity_id=entity_id,
-                source_dataset_id=source_dataset_id,
-            ),
+        source_signals = _load_source_website_signals(
+            connection, entity_id=entity_id, source_dataset_id=source_dataset_id
         )
+        email_signals, suppressed_generic = _load_email_domain_signals(
+            connection,
+            existing_signals=source_signals,
+            entity_id=entity_id,
+            source_dataset_id=source_dataset_id,
+        )
+        signals = (*source_signals, *email_signals)
     except sqlite3.Error as exc:
         raise WebsiteCandidateDiscoveryError(
             f"Website candidate discovery query failed: {exc}"
         ) from exc
 
     shared_domains = _shared_domains(signals)
-    preferred_domains = _preferred_domains(signals)
-    selected: list[_SourceWebsiteSignal] = []
-    per_entity: Counter[int] = Counter()
+    explicit_urls: dict[tuple[int, str], set[str]] = defaultdict(set)
     for signal in signals:
-        if entity_limit is not None and signal.entity_id not in {item.entity_id for item in signals}:
-            continue
-        if candidate_limit is not None and per_entity[signal.entity_id] >= candidate_limit:
-            continue
-        selected.append(signal)
-        per_entity[signal.entity_id] += 1
+        if signal.evidence_class is WebsiteEvidenceClass.EXPLICIT_SOURCE_URL:
+            explicit_urls[(signal.entity_id, signal.domain)].add(signal.normalized_url)
+    remapped: list[_SourceWebsiteSignal] = []
+    for signal in signals:
+        targets = explicit_urls.get((signal.entity_id, signal.domain), set())
+        if (
+            signal.evidence_class is not WebsiteEvidenceClass.EXPLICIT_SOURCE_URL
+            and len(targets) == 1
+        ):
+            signal = replace(signal, normalized_url=next(iter(targets)))
+        remapped.append(signal)
+    signals = tuple(remapped)
+    preferred_domains = _preferred_domains(signals)
+    grouped: dict[tuple[int, str], list[_SourceWebsiteSignal]] = defaultdict(list)
+    for signal in signals:
+        grouped[(signal.entity_id, signal.normalized_url)].append(signal)
+    entity_ids = sorted({entity_id for entity_id, _ in grouped})
     if entity_limit is not None:
-        selected = [signal for signal in selected if signal.entity_id in sorted(per_entity)[:entity_limit]]
-    signals = tuple(selected)
+        entity_ids = entity_ids[:entity_limit]
+    selected_keys: list[tuple[int, str]] = []
+    for selected_entity_id in entity_ids:
+        keys = [key for key in grouped if key[0] == selected_entity_id]
+        keys.sort(key=lambda key: _candidate_sort_key(key, grouped[key], shared_domains))
+        selected_keys.extend(keys[:candidate_limit] if candidate_limit is not None else keys)
 
     inserted = 0
     unchanged = 0
@@ -141,7 +170,9 @@ def discover_website_candidates(
     branch = 0
     alternate = 0
 
-    for signal in signals:
+    for key in selected_keys:
+        candidate_signals = tuple(grouped[key])
+        signal = _strongest_signal(candidate_signals)
         kind, confidence, needs_review = _classify_signal(
             signal,
             shared_domains=shared_domains,
@@ -157,7 +188,7 @@ def discover_website_candidates(
             website_kind=kind,
             status=(WebsiteStatus.REVIEW if needs_review else WebsiteStatus.CANDIDATE),
         )
-        evidence = _candidate_evidence(signal, kind=kind)
+        evidence = _candidate_evidence(candidate_signals, kind=kind)
 
         try:
             result = upsert_website_candidate(
@@ -193,7 +224,8 @@ def discover_website_candidates(
         shared_domain_candidates=shared,
         branch_page_candidates=branch,
         alternate_domain_candidates=alternate,
-        source_method_counts=tuple(sorted(Counter(signal.discovery_method for signal in signals).items())),
+        suppressed_generic_email_signals=suppressed_generic,
+        source_method_counts=tuple(sorted(Counter(signal.discovery_method for key in selected_keys for signal in grouped[key]).items())),
     )
 
 
@@ -205,62 +237,35 @@ def _load_source_website_signals(
 ) -> tuple[_SourceWebsiteSignal, ...]:
     rows = connection.execute(
         """
-        WITH latest AS (
-            SELECT
-                source_record_id,
-                field_name,
-                MAX(id) AS normalized_value_id
-            FROM normalized_values
-            WHERE field_name IN ('url', 'domain')
-              AND normalized_value IS NOT NULL
-            GROUP BY source_record_id, field_name
-        ),
-        values_by_record AS (
-            SELECT
-                latest.source_record_id,
-                MAX(
-                    CASE
-                        WHEN nv.field_name = 'url' THEN nv.normalized_value
-                    END
-                ) AS normalized_url,
-                MAX(
-                    CASE
-                        WHEN nv.field_name = 'domain' THEN nv.normalized_value
-                    END
-                ) AS normalized_domain
-            FROM latest
-            JOIN normalized_values AS nv
-              ON nv.id = latest.normalized_value_id
-            GROUP BY latest.source_record_id
-        )
         SELECT
             esr.entity_id,
             e.entity_type,
             sr.id AS source_record_id,
             sr.source_url AS provenance_url,
-            values_by_record.normalized_url,
-            values_by_record.normalized_domain
+            nv.id AS normalized_value_id,
+            nv.field_name,
+            nv.original_value,
+            nv.normalized_value
         FROM entity_source_records AS esr
         JOIN entities AS e
           ON e.id = esr.entity_id
         JOIN source_records AS sr
           ON sr.id = esr.source_record_id
-        JOIN values_by_record
-          ON values_by_record.source_record_id = sr.id
+        JOIN normalized_values AS nv
+          ON nv.source_record_id = sr.id
         WHERE e.status = 'active'
           AND (? IS NULL OR e.id = ?)
           AND (? IS NULL OR sr.source_dataset_id = ?)
-        ORDER BY esr.entity_id, sr.id
-        """
-        , (entity_id, entity_id, source_dataset_id, source_dataset_id)).fetchall()
+          AND nv.field_name IN ('url', 'domain')
+          AND nv.normalized_value IS NOT NULL
+        ORDER BY esr.entity_id, sr.id, nv.id
+        """, (entity_id, entity_id, source_dataset_id, source_dataset_id)).fetchall()
 
     signals: list[_SourceWebsiteSignal] = []
-    seen: set[tuple[int, str]] = set()
-
     for row in rows:
         normalized_url = _resolve_normalized_url(
-            row["normalized_url"],
-            row["normalized_domain"],
+            row["normalized_value"] if row["field_name"] == "url" else None,
+            row["normalized_value"] if row["field_name"] == "domain" else None,
         )
         if normalized_url is None:
             continue
@@ -269,11 +274,7 @@ def _load_source_website_signals(
         if domain_result.value is None:
             continue
 
-        key = (int(row["entity_id"]), normalized_url)
-        if key in seen:
-            continue
-        seen.add(key)
-
+        field_name = str(row["field_name"])
         signals.append(
             _SourceWebsiteSignal(
                 entity_id=int(row["entity_id"]),
@@ -287,6 +288,13 @@ def _load_source_website_signals(
                 normalized_url=normalized_url,
                 domain=domain_result.value,
                 discovery_method=_DISCOVERY_METHOD,
+                normalized_value_id=int(row["normalized_value_id"]),
+                evidence_class=(
+                    WebsiteEvidenceClass.EXPLICIT_SOURCE_URL
+                    if field_name == "url"
+                    else WebsiteEvidenceClass.SOURCE_DOMAIN
+                ),
+                raw_value=str(row["original_value"] or row["normalized_value"]),
             )
         )
 
@@ -299,72 +307,53 @@ def _load_email_domain_signals(
     existing_signals: tuple[_SourceWebsiteSignal, ...],
     entity_id: int | None = None,
     source_dataset_id: int | None = None,
-) -> tuple[_SourceWebsiteSignal, ...]:
+) -> tuple[tuple[_SourceWebsiteSignal, ...], int]:
     rows = connection.execute(
         """
-        WITH latest AS (
-            SELECT
-                source_record_id,
-                MAX(id) AS normalized_value_id
-            FROM normalized_values
-            WHERE field_name = 'email'
-            GROUP BY source_record_id
-        )
         SELECT
             esr.entity_id,
             e.entity_type,
             sr.id AS source_record_id,
             sr.source_url AS provenance_url,
+            nv.id AS normalized_value_id,
+            nv.original_value,
             nv.normalized_value AS normalized_email
         FROM entity_source_records AS esr
         JOIN entities AS e
           ON e.id = esr.entity_id
         JOIN source_records AS sr
           ON sr.id = esr.source_record_id
-        JOIN latest
-          ON latest.source_record_id = sr.id
         JOIN normalized_values AS nv
-          ON nv.id = latest.normalized_value_id
+          ON nv.source_record_id = sr.id
         WHERE e.status = 'active'
           AND (? IS NULL OR e.id = ?)
           AND (? IS NULL OR sr.source_dataset_id = ?)
+          AND nv.field_name = 'email'
           AND nv.normalized_value IS NOT NULL
-        ORDER BY esr.entity_id, sr.id
+        ORDER BY esr.entity_id, sr.id, nv.id
         """
         , (entity_id, entity_id, source_dataset_id, source_dataset_id)).fetchall()
 
-    entities_with_explicit_signal = {
-        signal.entity_id
-        for signal in existing_signals
-    }
-    seen: set[tuple[int, str]] = {
-        (signal.entity_id, signal.normalized_url)
-        for signal in existing_signals
-    }
     signals: list[_SourceWebsiteSignal] = []
+    suppressed = 0
 
     for row in rows:
         entity_id = int(row["entity_id"])
-        if entity_id in entities_with_explicit_signal:
-            continue
-
         email = str(row["normalized_email"]).strip()
         if email.count("@") != 1:
             continue
 
         domain_result = normalize_domain(email.rsplit("@", 1)[1])
         domain = domain_result.value
-        if domain is None or domain in _GENERIC_EMAIL_DOMAINS:
+        if domain is None:
+            continue
+        if _is_generic_email_domain(domain):
+            suppressed += 1
             continue
 
         url_result = normalize_url(f"https://{domain}/")
         if url_result.value is None:
             continue
-
-        key = (entity_id, url_result.value)
-        if key in seen:
-            continue
-        seen.add(key)
 
         signals.append(
             _SourceWebsiteSignal(
@@ -379,10 +368,13 @@ def _load_email_domain_signals(
                 normalized_url=url_result.value,
                 domain=domain,
                 discovery_method=_EMAIL_DISCOVERY_METHOD,
+                normalized_value_id=int(row["normalized_value_id"]),
+                evidence_class=WebsiteEvidenceClass.EMAIL_DOMAIN,
+                raw_value=str(row["original_value"] or row["normalized_email"]),
             )
         )
 
-    return tuple(signals)
+    return tuple(signals), suppressed
 
 
 def _resolve_normalized_url(
@@ -443,7 +435,7 @@ def _classify_signal(
     shared_domains: frozenset[str],
     preferred_domains: dict[int, str],
 ) -> tuple[WebsiteKind, float, bool]:
-    if signal.discovery_method == _EMAIL_DISCOVERY_METHOD:
+    if signal.evidence_class is WebsiteEvidenceClass.EMAIL_DOMAIN:
         if signal.domain in shared_domains:
             return WebsiteKind.SHARED, 0.45, True
         return WebsiteKind.CANDIDATE, 0.65, True
@@ -468,56 +460,73 @@ def _classify_signal(
 
 
 def _candidate_evidence(
-    signal: _SourceWebsiteSignal,
+    signals: tuple[_SourceWebsiteSignal, ...],
     *,
     kind: WebsiteKind,
 ) -> tuple[WebsiteEvidence, ...]:
-    if signal.discovery_method == _EMAIL_DISCOVERY_METHOD:
-        return (
-            WebsiteEvidence(
-                evidence_type=WebsiteEvidenceType.DOMAIN,
-                source_record_id=signal.source_record_id,
-                evidence_value=signal.domain,
-                contribution=0.30,
-            ),
+    evidence: list[WebsiteEvidence] = []
+    for signal in signals:
+        evidence_type = (
+            WebsiteEvidenceType.NORMALIZED_URL
+            if signal.evidence_class is WebsiteEvidenceClass.EXPLICIT_SOURCE_URL
+            else WebsiteEvidenceType.DOMAIN
         )
-
-    evidence = [
-        WebsiteEvidence(
-            evidence_type=WebsiteEvidenceType.NORMALIZED_URL,
+        contribution = 0.45 if evidence_type is WebsiteEvidenceType.NORMALIZED_URL else 0.30
+        evidence.append(WebsiteEvidence(
+            evidence_type=evidence_type,
+            evidence_class=signal.evidence_class,
             source_record_id=signal.source_record_id,
-            evidence_value=signal.normalized_url,
-            contribution=0.45,
-        ),
-        WebsiteEvidence(
-            evidence_type=WebsiteEvidenceType.DOMAIN,
-            source_record_id=signal.source_record_id,
-            evidence_value=signal.domain,
-            contribution=0.25,
-        ),
-    ]
-
-    if signal.provenance_url is not None:
-        evidence.append(
-            WebsiteEvidence(
+            normalized_value_id=signal.normalized_value_id,
+            evidence_value=signal.normalized_url if evidence_type is WebsiteEvidenceType.NORMALIZED_URL else signal.domain,
+            raw_value=signal.raw_value,
+            contribution=contribution,
+            derivation_method=signal.discovery_method,
+        ))
+        if signal.provenance_url is not None and signal.evidence_class is WebsiteEvidenceClass.EXPLICIT_SOURCE_URL:
+            evidence.append(WebsiteEvidence(
                 evidence_type=WebsiteEvidenceType.SOURCE_URL,
+                evidence_class=signal.evidence_class,
                 source_record_id=signal.source_record_id,
+                normalized_value_id=signal.normalized_value_id,
                 evidence_value=signal.provenance_url,
+                raw_value=signal.provenance_url,
                 contribution=0.10,
-            )
-        )
-
+                derivation_method=signal.discovery_method,
+            ))
     if kind is WebsiteKind.BRANCH:
-        evidence.append(
-            WebsiteEvidence(
-                evidence_type=WebsiteEvidenceType.LOCATION,
-                source_record_id=signal.source_record_id,
-                evidence_value="branch-specific URL path",
-                contribution=0.10,
-            )
-        )
-
+        evidence.append(WebsiteEvidence(
+            evidence_type=WebsiteEvidenceType.LOCATION,
+            evidence_class=WebsiteEvidenceClass.EXPLICIT_SOURCE_URL,
+            evidence_value="branch-specific URL path",
+            contribution=0.10,
+        ))
     return tuple(evidence)
+
+
+def _is_generic_email_domain(domain: str) -> bool:
+    return domain in _GENERIC_EMAIL_DOMAINS or domain.endswith((".yahoo.com", ".yahoo.ca"))
+
+
+def _strongest_signal(signals: tuple[_SourceWebsiteSignal, ...]) -> _SourceWebsiteSignal:
+    return min(signals, key=lambda signal: (-_EVIDENCE_WEIGHTS[signal.evidence_class], signal.normalized_value_id, signal.source_record_id))
+
+
+def _candidate_sort_key(
+    key: tuple[int, str],
+    signals: list[_SourceWebsiteSignal],
+    shared_domains: frozenset[str],
+) -> tuple[object, ...]:
+    strongest = _strongest_signal(tuple(signals))
+    source_count = len({signal.source_record_id for signal in signals})
+    path_rank = int(urlsplit(key[1]).path in {"", "/"})
+    return (
+        -_EVIDENCE_WEIGHTS[strongest.evidence_class],
+        -source_count,
+        path_rank,
+        int(strongest.domain in shared_domains),
+        key[1],
+        key[0],
+    )
 
 
 def _is_social_domain(domain: str) -> bool:

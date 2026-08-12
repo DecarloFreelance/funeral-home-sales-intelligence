@@ -34,6 +34,16 @@ class WebsiteEvidenceType(StrEnum):
     MANUAL = "manual"
 
 
+class WebsiteEvidenceClass(StrEnum):
+    EXPLICIT_SOURCE_WEBSITE = "explicit_source_website"
+    EXPLICIT_SOURCE_URL = "explicit_source_url"
+    SOURCE_DOMAIN = "source_domain"
+    NORMALIZED_URL = "normalized_url"
+    NORMALIZED_DOMAIN = "normalized_domain"
+    EMAIL_DOMAIN = "email_domain"
+    MANUAL = "manual"
+
+
 class WebsiteReviewStatus(StrEnum):
     PENDING = "pending"
     APPROVED = "approved"
@@ -85,11 +95,20 @@ class WebsiteEvidence:
     contribution: float
     evidence_value: str | None = None
     source_record_id: int | None = None
+    normalized_value_id: int | None = None
+    evidence_class: WebsiteEvidenceClass | None = None
+    derivation_method: str = "website-candidate-evidence-v1"
+    derivation_version: str = "website-candidate-evidence-v1"
+    raw_value: str | None = None
 
     def validate(self) -> None:
         if self.source_record_id is not None and self.source_record_id < 1:
             raise WebsiteDiscoveryError(
                 "source_record_id must be a positive integer when provided"
+            )
+        if self.normalized_value_id is not None and self.normalized_value_id < 1:
+            raise WebsiteDiscoveryError(
+                "normalized_value_id must be positive when provided"
             )
         if not -1.0 <= self.contribution <= 1.0:
             raise WebsiteDiscoveryError("contribution must be between -1.0 and 1.0")
@@ -97,6 +116,8 @@ class WebsiteEvidence:
             raise WebsiteDiscoveryError(
                 "evidence_value must not be blank when provided"
             )
+        if not self.derivation_method.strip() or not self.derivation_version.strip():
+            raise WebsiteDiscoveryError("evidence derivation metadata must not be blank")
 
 
 @dataclass(frozen=True, slots=True)

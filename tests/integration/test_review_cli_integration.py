@@ -29,7 +29,7 @@ def _run_cli(*args: str, database_path: Path) -> subprocess.CompletedProcess[str
 def _seed_review_candidate(database_path: Path) -> int:
     with database_session(database_path) as connection:
         result = apply_pending_migrations(connection, MIGRATIONS)
-        assert result.status.current_version == 21
+        assert result.status.current_version == 22
         connection.execute(
             """
             INSERT INTO source_datasets (id, name, source_type, jurisdiction, is_active)

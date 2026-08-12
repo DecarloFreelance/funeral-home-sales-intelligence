@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
+from collections import defaultdict
 from dataclasses import dataclass
 
 from canada_funeral_intel.normalization.scalars import normalize_domain, normalize_url
@@ -9,6 +10,7 @@ from canada_funeral_intel.verification.models import (
     WebsiteCandidate,
     WebsiteDiscoveryError,
     WebsiteEvidence,
+    WebsiteEvidenceClass,
     WebsiteKind,
     WebsiteRecord,
     WebsiteStatus,
@@ -161,18 +163,18 @@ def upsert_website_candidate(
                     SELECT 1
                     FROM website_evidence
                     WHERE website_id = ?
-                      AND evidence_type = ?
-                      AND source_record_id IS ?
-                      AND evidence_value IS ?
-                      AND contribution = ?
+                      AND evidence_class IS ?
+                      AND COALESCE(source_record_id, 0) = COALESCE(?, 0)
+                      AND COALESCE(normalized_value_id, 0) = COALESCE(?, 0)
+                      AND COALESCE(evidence_value, '') = COALESCE(?, '')
                     LIMIT 1
                     """,
                     (
                         website_id,
-                        item.evidence_type.value,
+                        (item.evidence_class.value if item.evidence_class else item.evidence_type.value),
                         item.source_record_id,
+                        item.normalized_value_id,
                         item.evidence_value,
-                        item.contribution,
                     ),
                 ).fetchone()
                 if exists is not None:
@@ -184,9 +186,14 @@ def upsert_website_candidate(
                         source_record_id,
                         evidence_type,
                         evidence_value,
-                        contribution
+                        contribution,
+                        normalized_value_id,
+                        evidence_class,
+                        derivation_method,
+                        derivation_version,
+                        raw_value
                     )
-                    VALUES (?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         website_id,
@@ -194,6 +201,11 @@ def upsert_website_candidate(
                         item.evidence_type.value,
                         item.evidence_value,
                         item.contribution,
+                        item.normalized_value_id,
+                        (item.evidence_class.value if item.evidence_class else item.evidence_type.value),
+                        item.derivation_method,
+                        item.derivation_version,
+                        item.raw_value or item.evidence_value,
                     ),
                 )
                 evidence_inserted += 1
@@ -264,6 +276,72 @@ def list_website_candidates(
         )
         for row in rows
     )
+
+
+def website_candidate_evidence_summaries(
+    connection: sqlite3.Connection,
+    *,
+    website_ids: tuple[int, ...] | None = None,
+) -> dict[int, dict[str, object]]:
+    """Return one batched, deterministic evidence summary per website."""
+    parameters: tuple[object, ...] = ()
+    where = ""
+    if website_ids is not None:
+        if any(item < 1 for item in website_ids):
+            raise WebsiteStorageError("website_ids must be positive integers")
+        if not website_ids:
+            return {}
+        placeholders = ",".join("?" for _ in website_ids)
+        where = f"WHERE we.website_id IN ({placeholders})"
+        parameters = tuple(website_ids)
+    rows = connection.execute(
+        f"""
+        SELECT we.website_id, we.evidence_class, we.evidence_type,
+               we.source_record_id, we.normalized_value_id,
+               sr.source_dataset_id
+        FROM website_evidence AS we
+        LEFT JOIN source_records AS sr ON sr.id = we.source_record_id
+        {where}
+        ORDER BY we.website_id, we.evidence_class, we.source_record_id,
+                 we.normalized_value_id, we.evidence_value
+        """,
+        parameters,
+    ).fetchall()
+    grouped: dict[int, list[sqlite3.Row]] = defaultdict(list)
+    for row in rows:
+        grouped[int(row["website_id"])].append(row)
+
+    weights = {
+        WebsiteEvidenceClass.EXPLICIT_SOURCE_WEBSITE.value: 700,
+        WebsiteEvidenceClass.EXPLICIT_SOURCE_URL.value: 600,
+        WebsiteEvidenceClass.SOURCE_DOMAIN.value: 500,
+        WebsiteEvidenceClass.NORMALIZED_URL.value: 400,
+        WebsiteEvidenceClass.NORMALIZED_DOMAIN.value: 300,
+        WebsiteEvidenceClass.MANUAL.value: 200,
+        WebsiteEvidenceClass.EMAIL_DOMAIN.value: 100,
+    }
+    summaries: dict[int, dict[str, object]] = {}
+    for website_id, items in grouped.items():
+        logical = {
+            (
+                row["source_record_id"],
+                row["normalized_value_id"],
+                row["evidence_class"] or row["evidence_type"],
+            )
+            for row in items
+        }
+        classes = sorted({str(row["evidence_class"] or row["evidence_type"]) for row in items})
+        strongest = min(classes, key=lambda item: (-weights.get(item, 0), item))
+        summaries[website_id] = {
+            "strongest_evidence": strongest,
+            "strongest_evidence_weight": weights.get(strongest, 0),
+            "supporting_evidence_count": len(logical),
+            "evidence_classes": classes,
+            "source_dataset_ids": sorted({int(row["source_dataset_id"]) for row in items if row["source_dataset_id"] is not None}),
+            "source_record_ids": sorted({int(row["source_record_id"]) for row in items if row["source_record_id"] is not None}),
+            "normalized_value_ids": sorted({int(row["normalized_value_id"]) for row in items if row["normalized_value_id"] is not None}),
+        }
+    return summaries
 
 
 def website_review_priority(confidence: float) -> int:

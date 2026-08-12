@@ -25,7 +25,7 @@ MIGRATIONS = ROOT / "database" / "migrations"
 
 def _fixture(path: Path) -> None:
     with database_session(path) as connection:
-        assert apply_pending_migrations(connection, MIGRATIONS).status.current_version == 21
+        assert apply_pending_migrations(connection, MIGRATIONS).status.current_version == 22
         connection.execute("INSERT INTO source_datasets (id,name,source_type,jurisdiction,is_active) VALUES (1,'Fixture','manual','AB',1)")
         for entity_id, name in ((1, "Alpha Funeral"), (2, "Beta Funeral")):
             connection.execute("INSERT INTO entities (id,entity_type,canonical_name,status) VALUES (?, 'branch', ?, 'active')", (entity_id, name))
