@@ -137,6 +137,37 @@ def test_nova_scotia_style_explicit_website_field_is_importable_offline(
     assert row["normalized_value"] == "https://example.ca/"
 
 
+def test_nova_scotia_actual_field_aliases_preserve_category_and_name(
+    tmp_path: Path,
+) -> None:
+    database_path, dataset_id = _prepare_database(tmp_path)
+    input_path = tmp_path / "nova-scotia-actual.csv"
+    input_path.write_text(
+        "License Type,Licensee Name,Address,City,Province,Postal Code\n"
+        "Funeral Home,Example Funeral Home,1 Main Street,Halifax,NS,B3H 1A1\n",
+        encoding="utf-8",
+    )
+
+    with database_session(database_path) as connection:
+        import_file(
+            connection,
+            source_dataset_id=dataset_id,
+            input_path=input_path,
+            input_format=ImportFormat.CSV,
+        )
+        normalize_source_records(connection, source_dataset_id=dataset_id)
+        values = {
+            row["field_name"]: row["normalized_value"]
+            for row in connection.execute(
+                "SELECT field_name, normalized_value FROM normalized_values"
+            )
+        }
+
+    assert values["business_name"] == "example funeral home"
+    assert values["source_category"] == "Funeral Home"
+    assert values["postal_code"] == "B3H 1A1"
+
+
 def test_normalization_is_idempotent_for_same_source_record(tmp_path: Path) -> None:
     database_path, dataset_id = _prepare_database(tmp_path)
     input_path = tmp_path / "records.json"

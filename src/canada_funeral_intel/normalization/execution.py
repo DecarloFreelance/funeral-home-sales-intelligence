@@ -19,6 +19,7 @@ from canada_funeral_intel.normalization.scalars import (
     normalize_phone,
     normalize_postal_code,
     normalize_province,
+    normalize_text,
     normalize_url,
 )
 from canada_funeral_intel.storage.database import transaction
@@ -42,6 +43,7 @@ _FIELD_ALIASES = {
     "business_name": "business_name",
     "funeral_home_name": "business_name",
     "organization_name": "business_name",
+    "licensee name": "business_name",
     "parent_organization": "parent_organization",
     "parent_organization_name": "parent_organization",
     "parent_company": "parent_organization",
@@ -57,6 +59,7 @@ _FIELD_ALIASES = {
     "province_code": "province",
     "postal": "postal_code",
     "postal_code": "postal_code",
+    "postal code": "postal_code",
     "postcode": "postal_code",
     "phone": "phone",
     "telephone": "phone",
@@ -76,6 +79,8 @@ _FIELD_ALIASES = {
     "domain": "domain",
     "official_domain": "explicit_website_domain",
     "organization_domain": "explicit_website_domain",
+    "license type": "source_category",
+    "category": "source_category",
 }
 
 
@@ -260,6 +265,7 @@ def _normalize_field(
         "domain": normalize_domain,
         "explicit_website_url": normalize_url,
         "explicit_website_domain": normalize_domain,
+        "source_category": normalize_text,
     }
     normalizer = normalizers[field_name]
     result = normalizer(original_value)
