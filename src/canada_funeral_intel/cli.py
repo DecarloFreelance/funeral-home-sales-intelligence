@@ -97,6 +97,14 @@ from .people.models import PersonReviewStatus
 from .people.remediation import TASK_TYPES, RemediationStatus
 from .people.triage import TriageFilters, TriageSeverity
 from .people.work_queue import WorkQueueFilters
+from .pipeline.cli import (
+    run_pipeline,
+    run_pipeline_list,
+    run_pipeline_resume,
+    run_pipeline_show,
+    run_pipeline_stages,
+)
+from .pipeline.orchestrator import PipelineError
 from .quality.cli import (
     parse_reference_time,
     quality_database_session,
@@ -689,6 +697,26 @@ def build_parser() -> argparse.ArgumentParser:
     refresh_changes_parser.add_argument("--subject-key")
     refresh_changes_parser.add_argument("--change-type", choices=("added", "changed", "missing", "reappeared"))
 
+    pipeline_parser = subparsers.add_parser("pipeline", help="Run the offline import and entity preparation pipeline.")
+    pipeline_subparsers = pipeline_parser.add_subparsers(dest="pipeline_command")
+    pipeline_run = pipeline_subparsers.add_parser("run", help="Run a local offline pipeline.")
+    pipeline_run.add_argument("--source", required=True)
+    pipeline_run.add_argument("--path", required=True, type=Path)
+    pipeline_run.add_argument("--format", required=True, choices=("csv", "json"), dest="input_format")
+    pipeline_run.add_argument("--external-id-field")
+    pipeline_run.add_argument("--through-stage", choices=("import", "normalize", "deterministic_match", "fuzzy_match", "review_queue", "materialize"), default="materialize")
+    pipeline_run.add_argument("--skip-fuzzy", action="store_true")
+    pipeline_run.add_argument("--dry-run", action="store_true")
+    pipeline_resume = pipeline_subparsers.add_parser("resume", help="Resume a failed or cancelled pipeline run.")
+    pipeline_resume.add_argument("--run-id", required=True, type=int)
+    pipeline_show = pipeline_subparsers.add_parser("show", help="Show one pipeline run.")
+    pipeline_show.add_argument("--run-id", required=True, type=int)
+    pipeline_list = pipeline_subparsers.add_parser("list", help="List pipeline runs.")
+    pipeline_list.add_argument("--status", choices=("pending", "running", "completed", "failed", "cancelled"))
+    pipeline_list.add_argument("--limit", type=int)
+    pipeline_stages = pipeline_subparsers.add_parser("stages", help="List stages for one pipeline run.")
+    pipeline_stages.add_argument("--run-id", required=True, type=int)
+
     verticals_parser = subparsers.add_parser("verticals", help="Inspect and classify business verticals.")
     verticals_subparsers = verticals_parser.add_subparsers(dest="verticals_command")
     verticals_subparsers.add_parser("list", help="List vertical profiles.")
@@ -1090,6 +1118,31 @@ def main(argv: Sequence[str] | None = None) -> int:
         except (DatabaseError, ValueError) as exc:
             print(f"refresh error: {exc}", file=sys.stderr)
             return 15
+
+    if args.command == "pipeline":
+        if args.pipeline_command is None:
+            parser.parse_args(["pipeline", "--help"])
+            return 2
+        try:
+            with database_session(settings.database_path) as connection:
+                if args.pipeline_command == "run":
+                    payload = run_pipeline(connection, source_name=args.source, input_path=args.path, input_format=ImportFormat(args.input_format), external_id_field=args.external_id_field, through_stage=args.through_stage, skip_fuzzy=args.skip_fuzzy, dry_run=args.dry_run)
+                elif args.pipeline_command == "resume":
+                    payload = run_pipeline_resume(connection, args.run_id)
+                elif args.pipeline_command == "show":
+                    payload = run_pipeline_show(connection, args.run_id)
+                elif args.pipeline_command == "list":
+                    payload = run_pipeline_list(connection, status=args.status, limit=args.limit)
+                elif args.pipeline_command == "stages":
+                    payload = run_pipeline_stages(connection, args.run_id)
+                else:
+                    parser.parse_args(["pipeline", "--help"])
+                    return 2
+            print(json.dumps(payload, indent=2, sort_keys=True))
+            return 0
+        except (DatabaseError, PipelineError, ValueError) as exc:
+            print(f"pipeline error: {exc}", file=sys.stderr)
+            return 17
 
     if args.command == "verticals":
         if args.verticals_command is None:
