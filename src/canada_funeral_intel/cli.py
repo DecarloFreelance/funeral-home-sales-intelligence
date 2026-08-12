@@ -25,6 +25,11 @@ from .collectors.source_registry import (
 )
 from .collectors.source_registry_storage import seed_source_registry
 from .config import ConfigurationError, load_settings
+from .deduplication.entity_cli import (
+    EntityCommandError,
+    print_entity_payload,
+    run_entity_materialize,
+)
 from .deduplication.match_cli import (
     MatchCommandError,
     MatchMode,
@@ -199,6 +204,18 @@ def build_parser() -> argparse.ArgumentParser:
     normalize_parser.add_argument(
         "--source",
         help="Optional registered source name to normalize.",
+    )
+
+    entity_parser = subparsers.add_parser(
+        "entity",
+        help="Materialize and inspect resolved entities.",
+    )
+    entity_subparsers = entity_parser.add_subparsers(
+        dest="entity_command",
+    )
+    entity_subparsers.add_parser(
+        "materialize",
+        help="Create baseline entities from source records.",
     )
 
     match_parser = subparsers.add_parser(
@@ -670,6 +687,31 @@ def main(argv: Sequence[str] | None = None) -> int:
         except (DatabaseError, NormalizeCommandError) as exc:
             print(f"normalize error: {exc}", file=sys.stderr)
             return 6
+
+    if args.command == "entity":
+        if args.entity_command is None:
+            parser.parse_args(["entity", "--help"])
+            return 2
+
+        try:
+            with database_session(settings.database_path) as connection:
+                if args.entity_command == "materialize":
+                    payload = run_entity_materialize(connection)
+                else:
+                    parser.parse_args(["entity", "--help"])
+                    return 2
+
+            print_entity_payload(payload)
+            return 0
+        except (
+            DatabaseError,
+            EntityCommandError,
+        ) as exc:
+            print(
+                f"entity error: {exc}",
+                file=sys.stderr,
+            )
+            return 11
 
     if args.command == "match":
         if args.match_command is None:
