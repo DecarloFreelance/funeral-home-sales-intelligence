@@ -59,6 +59,11 @@ from .normalization.cli import (
 from .people.cli import (
     PeopleCommandError,
     print_people_payload,
+    run_anomaly_review_decide,
+    run_anomaly_review_history,
+    run_anomaly_review_list,
+    run_anomaly_review_show,
+    run_anomaly_sync,
     run_people_audit,
     run_people_audit_list,
     run_people_export,
@@ -72,6 +77,7 @@ from .people.cli import (
     run_people_show,
     run_people_triage,
 )
+from .people.dispositions import DispositionStatus
 from .people.models import PersonReviewStatus
 from .people.triage import TriageFilters, TriageSeverity
 from .storage import DatabaseError, database_session
@@ -599,6 +605,8 @@ def build_parser() -> argparse.ArgumentParser:
         parser.add_argument("--website-id", type=int)
         parser.add_argument("--page-id", type=int)
         parser.add_argument("--review-status", choices=("pending", "accepted", "rejected", "deferred"))
+        parser.add_argument("--disposition-status", choices=tuple(item.value for item in DispositionStatus))
+        parser.add_argument("--unreviewed-only", action="store_true")
         parser.add_argument("--has-email", action="store_true")
         parser.add_argument("--has-phone", action="store_true")
         parser.add_argument("--include-historical", action="store_true")
@@ -608,6 +616,29 @@ def build_parser() -> argparse.ArgumentParser:
     add_triage_options(people_triage_parser)
     people_triage_queue_parser = people_subparsers.add_parser("triage-queue", help="List ranked read-only anomaly triage.")
     add_triage_options(people_triage_queue_parser)
+    anomaly_review_parser = people_subparsers.add_parser("anomaly-review", help="Review durable person anomaly dispositions.")
+    anomaly_review_subparsers = anomaly_review_parser.add_subparsers(dest="anomaly_review_command")
+    anomaly_list_parser = anomaly_review_subparsers.add_parser("list", help="List anomaly dispositions.")
+    anomaly_list_parser.add_argument("--person-id", type=int)
+    anomaly_list_parser.add_argument("--anomaly")
+    anomaly_list_parser.add_argument("--status", choices=tuple(item.value for item in DispositionStatus))
+    anomaly_list_parser.add_argument("--include-stale", action="store_true")
+    anomaly_list_parser.add_argument("--actor")
+    anomaly_list_parser.add_argument("--limit", type=int)
+    anomaly_show_parser = anomaly_review_subparsers.add_parser("show", help="Show one anomaly disposition.")
+    anomaly_show_parser.add_argument("--disposition-id", required=True, type=int)
+    anomaly_history_parser = anomaly_review_subparsers.add_parser("history", help="Show disposition history.")
+    anomaly_history_parser.add_argument("--disposition-id", required=True, type=int)
+    anomaly_decide_parser = anomaly_review_subparsers.add_parser("decide", help="Apply a disposition decision to an exact anomaly.")
+    anomaly_decide_parser.add_argument("--person-id", required=True, type=int)
+    anomaly_decide_parser.add_argument("--anomaly", required=True)
+    anomaly_decide_parser.add_argument("--fingerprint", required=True)
+    anomaly_decide_parser.add_argument("--status", required=True, choices=("acknowledged", "dismissed", "reopened"))
+    anomaly_decide_parser.add_argument("--actor", required=True)
+    anomaly_decide_parser.add_argument("--note")
+    anomaly_sync_parser = people_subparsers.add_parser("anomaly-sync", help="Mark changed dispositions stale.")
+    anomaly_sync_parser.add_argument("--person-id", type=int)
+    anomaly_sync_parser.add_argument("--actor", default="anomaly-sync")
 
     return parser
 
@@ -972,12 +1003,28 @@ def main(argv: Sequence[str] | None = None) -> int:
                             website_id=args.website_id,
                             page_id=args.page_id,
                             review_status=args.review_status,
+                            disposition_status=None if args.disposition_status is None else DispositionStatus(args.disposition_status),
+                            unreviewed_only=args.unreviewed_only,
                             has_email=args.has_email,
                             has_phone=args.has_phone,
                             include_historical=args.include_historical,
                             limit=args.limit,
                         ),
                     )
+                elif args.people_command == "anomaly-review":
+                    if args.anomaly_review_command == "list":
+                        payload = run_anomaly_review_list(connection, person_id=args.person_id, anomaly_code=args.anomaly, status=None if args.status is None else DispositionStatus(args.status), include_stale=args.include_stale, actor=args.actor, limit=args.limit)
+                    elif args.anomaly_review_command == "show":
+                        payload = run_anomaly_review_show(connection, args.disposition_id)
+                    elif args.anomaly_review_command == "history":
+                        payload = run_anomaly_review_history(connection, args.disposition_id)
+                    elif args.anomaly_review_command == "decide":
+                        payload = run_anomaly_review_decide(connection, person_id=args.person_id, anomaly_code=args.anomaly, fingerprint=args.fingerprint, status=DispositionStatus(args.status), actor=args.actor, note=args.note)
+                    else:
+                        parser.parse_args(["people", "anomaly-review", "--help"])
+                        return 2
+                elif args.people_command == "anomaly-sync":
+                    payload = run_anomaly_sync(connection, person_id=args.person_id, actor=args.actor)
                 else:
                     parser.parse_args(["people", "--help"])
                     return 2

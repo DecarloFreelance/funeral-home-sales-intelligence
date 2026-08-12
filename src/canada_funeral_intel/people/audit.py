@@ -394,7 +394,9 @@ _EXPORTS: dict[str, tuple[str, ...]] = {
     "person_reviews": ("person_id", "review_queue_id", "observation_id", "status", "reviewer_note", "created_at", "reviewed_at"),
     "person_merge_history": ("person_id", "merge_id", "survivor_person_id", "absorbed_person_id", "merge_reason", "actor", "created_at", "state", "rolled_back_at", "rollback_actor", "rollback_reason"),
     "person_anomalies": ("person_id", "code", "affiliation_id", "contact_id", "merge_id", "observation_ids", "reasons", "values", "entity_ids"),
-    "person_triage": ("person_id", "person_status", "display_name", "triage_priority", "severity", "anomaly_count", "anomaly_codes", "traceability_status", "entity_ids", "branch_ids", "website_ids", "page_ids", "observation_count", "active_affiliation_count", "active_contact_count", "merge_count", "rollback_count"),
+    "person_triage": ("person_id", "person_status", "display_name", "triage_priority", "severity", "anomaly_count", "anomaly_codes", "anomaly_fingerprints", "disposition_statuses", "disposition_ids", "disposition_actors", "disposition_updated_at", "traceability_status", "entity_ids", "branch_ids", "website_ids", "page_ids", "observation_count", "active_affiliation_count", "active_contact_count", "merge_count", "rollback_count"),
+    "person_anomaly_dispositions": ("disposition_id", "person_id", "anomaly_code", "anomaly_fingerprint", "status", "reviewer_actor", "reviewer_note", "created_at", "updated_at", "acknowledged_at", "dismissed_at", "reopened_at", "stale_at"),
+    "person_anomaly_disposition_history": ("id", "disposition_id", "person_id", "anomaly_code", "anomaly_fingerprint", "previous_status", "new_status", "actor", "note", "changed_at"),
 }
 
 
@@ -407,6 +409,13 @@ def export_people_csv(connection: sqlite3.Connection, output: Path, *, include_h
     from canada_funeral_intel.people.triage import TriageFilters, triage_people
 
     triage_rows = triage_people(connection, TriageFilters(include_historical=include_historical))
+    person_ids = [int(audit["person"]["person_id"]) for audit in audits]
+    if person_ids:
+        marks = ",".join("?" for _ in person_ids)
+        disposition_rows = connection.execute(f"SELECT * FROM person_anomaly_dispositions WHERE person_id IN ({marks}) ORDER BY person_id, anomaly_code, id", tuple(person_ids)).fetchall()
+        history_rows = connection.execute(f"SELECT * FROM person_anomaly_disposition_history WHERE person_id IN ({marks}) ORDER BY person_id, disposition_id, id", tuple(person_ids)).fetchall()
+        rows["person_anomaly_dispositions"].extend(dict(row) for row in disposition_rows)
+        rows["person_anomaly_disposition_history"].extend(dict(row) for row in history_rows)
     for audit in audits:
         person_id = int(audit["person"]["person_id"])
         rows["people"].append(audit["person"])
@@ -429,9 +438,15 @@ def export_people_csv(connection: sqlite3.Connection, output: Path, *, include_h
         for item in audit["anomalies"]:
             rows["person_anomalies"].append({"person_id": person_id, **item})
     for item in triage_rows:
+        dispositions = [row["disposition"] for row in item["anomalies"] if row.get("disposition") is not None]
         rows["person_triage"].append({
             **item,
             "anomaly_codes": "|".join(str(code) for code in item["anomaly_codes"]),
+            "anomaly_fingerprints": "|".join(sorted(str(row["fingerprint"]) for row in item["anomalies"])),
+            "disposition_statuses": "|".join(sorted(str(row["status"]) for row in dispositions)),
+            "disposition_ids": "|".join(sorted(str(row["disposition_id"]) for row in dispositions)),
+            "disposition_actors": "|".join(sorted(str(row["reviewer_actor"]) for row in dispositions)),
+            "disposition_updated_at": "|".join(sorted(str(row["updated_at"]) for row in dispositions)),
             "entity_ids": "|".join(str(value) for value in item["entity_ids"]),
             "branch_ids": "|".join(str(value) for value in item["branch_ids"]),
             "website_ids": "|".join(str(value) for value in item["website_ids"]),

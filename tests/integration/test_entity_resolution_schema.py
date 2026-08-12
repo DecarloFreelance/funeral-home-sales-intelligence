@@ -14,7 +14,7 @@ def test_entity_resolution_schema(tmp_path: Path) -> None:
 
     with database_session(database_path) as connection:
         applied = apply_pending_migrations(connection, MIGRATION_DIR)
-        assert len(applied.applied) == 14
+        assert len(applied.applied) == 15
 
         tables = {
             row["name"]

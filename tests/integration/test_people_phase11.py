@@ -108,6 +108,8 @@ def test_csv_export_is_deterministic_and_preserves_history(tmp_path: Path) -> No
             "people.csv",
             "person_affiliations.csv",
             "person_anomalies.csv",
+            "person_anomaly_disposition_history.csv",
+            "person_anomaly_dispositions.csv",
             "person_contacts.csv",
             "person_merge_history.csv",
             "person_observations.csv",

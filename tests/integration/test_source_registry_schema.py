@@ -22,7 +22,7 @@ def test_source_registry_metadata_schema(tmp_path: Path) -> None:
             for row in connection.execute("PRAGMA index_list(source_datasets)")
         }
 
-        assert status.current_version == 14
+        assert status.current_version == 15
     assert {
         "source_format",
         "trust_level",

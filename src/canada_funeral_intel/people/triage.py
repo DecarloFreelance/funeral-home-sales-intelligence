@@ -62,6 +62,8 @@ class TriageFilters:
     review_status: str | None = None
     has_email: bool = False
     has_phone: bool = False
+    disposition_status: str | None = None
+    unreviewed_only: bool = False
     include_historical: bool = False
     limit: int | None = None
 
@@ -75,6 +77,8 @@ class TriageFilters:
             raise PersonResolutionError("invalid traceability status")
         if self.review_status is not None and self.review_status not in {"pending", "accepted", "rejected", "deferred"}:
             raise PersonResolutionError("invalid review status")
+        if self.disposition_status is not None and self.disposition_status not in {"open", "acknowledged", "dismissed", "reopened", "stale"}:
+            raise PersonResolutionError("invalid disposition status")
 
 
 def _ids(values: list[object]) -> list[int]:
@@ -135,7 +139,15 @@ def _record_matches(record: dict[str, object], filters: TriageFilters) -> bool:
         return False
     if filters.has_email and not record["emails"]:
         return False
-    return not (filters.has_phone and not record["phones"])
+    if filters.has_phone and not record["phones"]:
+        return False
+    if filters.disposition_status is not None or filters.unreviewed_only:
+        anomaly_dispositions = [item.get("disposition") for item in record["anomalies"]]
+        if filters.unreviewed_only and not any(item is None for item in anomaly_dispositions):
+            return False
+        if filters.disposition_status is not None and not any(item is not None and item["status"] == filters.disposition_status for item in anomaly_dispositions):
+            return False
+    return True
 
 
 def _build_record(connection: sqlite3.Connection, audit: dict[str, object]) -> dict[str, object]:
@@ -166,6 +178,7 @@ def _build_record(connection: sqlite3.Connection, audit: dict[str, object]) -> d
             "severity": severity.value,
             "message": MESSAGE_BY_CODE.get(code, "unclassified audit anomaly"),
             "supporting_ids": _supporting_ids(audit, raw),
+            "values": sorted({str(value) for value in raw.get("values", [])}),
         })
     anomalies.sort(key=lambda row: (SEVERITY_RANK[TriageSeverity(row["severity"])], row["code"], tuple(row["supporting_ids"]["merge_ids"] + row["supporting_ids"]["affiliation_ids"] + row["supporting_ids"]["contact_ids"])))
     highest = TriageSeverity.LOW if not anomalies else TriageSeverity(min(anomalies, key=lambda row: SEVERITY_RANK[TriageSeverity(row["severity"])])["severity"])
@@ -210,14 +223,31 @@ def triage_people(connection: sqlite3.Connection, filters: TriageFilters | None 
         summaries = audit_people_list(connection, include_historical=filters.include_historical)
         person_ids = [int(row["person_id"]) for row in summaries]
     records: list[dict[str, object]] = []
+    from canada_funeral_intel.people.dispositions import (
+        dispositions_for_fingerprints,
+        fingerprint_anomaly,
+    )
+
     for person_id in person_ids:
         audit = audit_person(connection, person_id)
         if not filters.include_historical and audit["person"]["status"] != PersonStatus.ACTIVE.value:
             continue
         record = _build_record(connection, audit)
-        if _record_matches(record, filters):
-            record.pop("_audit")
-            records.append(record)
+        records.append(record)
+    disposition_keys = []
+    for record in records:
+        for anomaly in record["anomalies"]:
+            disposition_keys.append((int(record["person_id"]), str(anomaly["code"]), fingerprint_anomaly(int(record["person_id"]), anomaly)))
+    dispositions = dispositions_for_fingerprints(connection, disposition_keys)
+    for record in records:
+        for anomaly in record["anomalies"]:
+            fingerprint = fingerprint_anomaly(int(record["person_id"]), anomaly)
+            anomaly["fingerprint"] = fingerprint
+            disposition = dispositions.get((int(record["person_id"]), str(anomaly["code"]), fingerprint))
+            anomaly["disposition"] = disposition
+    records = [record for record in records if _record_matches(record, filters)]
+    for record in records:
+        record.pop("_audit")
     records.sort(key=lambda row: (int(row["triage_priority"]), -int(row["anomaly_count"]), int(row["person_id"])))
     if filters.limit is not None:
         records = records[: filters.limit]

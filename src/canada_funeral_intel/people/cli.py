@@ -9,6 +9,13 @@ from canada_funeral_intel.people.audit import (
     audit_person,
     export_people_csv,
 )
+from canada_funeral_intel.people.dispositions import (
+    decide_disposition,
+    disposition_history,
+    list_dispositions,
+    show_disposition,
+    sync_dispositions,
+)
 from canada_funeral_intel.people.merge import merge_people, rollback_person_merge
 from canada_funeral_intel.people.models import (
     PersonMergeDecision,
@@ -138,6 +145,52 @@ def run_people_export(connection: sqlite3.Connection, *, output: Path, include_h
 def run_people_triage(connection: sqlite3.Connection, filters: TriageFilters) -> list[dict[str, object]]:
     try:
         return triage_people(connection, filters)
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+
+
+def run_anomaly_review_list(connection: sqlite3.Connection, **kwargs: object) -> list[dict[str, object]]:
+    try:
+        return list_dispositions(connection, **kwargs)
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+
+
+def run_anomaly_review_show(connection: sqlite3.Connection, disposition_id: int) -> dict[str, object]:
+    try:
+        return show_disposition(connection, disposition_id)
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+
+
+def run_anomaly_review_history(connection: sqlite3.Connection, disposition_id: int) -> list[dict[str, object]]:
+    try:
+        return disposition_history(connection, disposition_id)
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+
+
+def run_anomaly_review_decide(connection: sqlite3.Connection, **kwargs: object) -> dict[str, object]:
+    try:
+        result = decide_disposition(connection, **kwargs)
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+    return {
+        "disposition_id": result.disposition_id,
+        "person_id": result.person_id,
+        "anomaly_code": result.anomaly_code,
+        "anomaly_fingerprint": result.anomaly_fingerprint,
+        "status": result.status.value,
+        "actor": result.actor,
+        "note": result.note,
+        "changed_at": result.changed_at,
+        "changed": result.changed,
+    }
+
+
+def run_anomaly_sync(connection: sqlite3.Connection, *, person_id: int | None, actor: str) -> dict[str, int]:
+    try:
+        return sync_dispositions(connection, person_id=person_id, actor=actor)
     except PersonResolutionError as exc:
         raise PeopleCommandError(str(exc)) from exc
 
