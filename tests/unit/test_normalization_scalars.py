@@ -89,6 +89,7 @@ def test_normalize_email_rejects_invalid_address() -> None:
         ("403-555-0100", "+14035550100"),
         ("+1 (403) 555-0100", "+14035550100"),
         ("403 555 0100 ext 42", "+14035550100 x42"),
+        ("204-982-7550 x. 1", "+12049827550 x1"),
     ],
 )
 def test_normalize_phone(value: str, expected: str) -> None:

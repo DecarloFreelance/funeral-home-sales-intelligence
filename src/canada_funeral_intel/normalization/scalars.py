@@ -133,7 +133,7 @@ def normalize_phone(value: str | None) -> ScalarNormalization:
         return text
 
     extension_match = re.search(
-        r"(?:ext\.?|extension|x)\s*(\d+)\s*$",
+        r"(?:ext\.?|extension|x\.?)\s*(\d+)\s*$",
         text.value,
         flags=re.IGNORECASE,
     )

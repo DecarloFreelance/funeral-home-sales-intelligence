@@ -100,6 +100,7 @@ def test_normalize_source_records_persists_supported_fields(tmp_path: Path) -> N
     assert values["domain"]["normalized_value"] == "example.ca"
     assert values["province"]["normalizer_name"] == "province"
     assert values["province"]["normalizer_version"] == "1"
+    assert values["phone"]["normalizer_version"] == "2"
     assert json.loads(values["province"]["warnings"])
 
 

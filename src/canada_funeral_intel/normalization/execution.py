@@ -25,6 +25,18 @@ from canada_funeral_intel.storage.database import transaction
 
 _NORMALIZER_VERSION = "1"
 
+_NORMALIZER_VERSIONS = {
+    "phone": "2",
+}
+
+
+def _normalizer_version(field_name: str) -> str:
+    return _NORMALIZER_VERSIONS.get(
+        field_name,
+        _NORMALIZER_VERSION,
+    )
+
+
 _FIELD_ALIASES = {
     "name": "business_name",
     "business_name": "business_name",
@@ -213,7 +225,7 @@ def _normalize_field(
             original_value=original_value,
             normalized_value=result.comparison_key,
             normalizer_name=field_name,
-            normalizer_version=_NORMALIZER_VERSION,
+            normalizer_version=_normalizer_version(field_name),
             warnings=result.warnings,
         )
 
@@ -225,7 +237,7 @@ def _normalize_field(
             original_value=original_value,
             normalized_value=result.comparison_key,
             normalizer_name="address",
-            normalizer_version=_NORMALIZER_VERSION,
+            normalizer_version=_normalizer_version(field_name),
             warnings=result.warnings,
         )
 
@@ -246,7 +258,7 @@ def _normalize_field(
         original_value=original_value,
         normalized_value=result.value,
         normalizer_name=field_name,
-        normalizer_version=_NORMALIZER_VERSION,
+        normalizer_version=_normalizer_version(field_name),
         warnings=result.warnings,
     )
 
