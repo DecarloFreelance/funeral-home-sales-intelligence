@@ -66,7 +66,16 @@ _FIELD_ALIASES = {
     "url": "url",
     "website": "url",
     "website_url": "url",
+    "official_website": "explicit_website_url",
+    "official_website_url": "explicit_website_url",
+    "homepage": "explicit_website_url",
+    "home_page": "explicit_website_url",
+    "organization_website": "explicit_website_url",
+    "organization_url": "explicit_website_url",
+    "contact_url": "explicit_website_url",
     "domain": "domain",
+    "official_domain": "explicit_website_domain",
+    "organization_domain": "explicit_website_domain",
 }
 
 
@@ -249,6 +258,8 @@ def _normalize_field(
         "email": normalize_email,
         "url": normalize_url,
         "domain": normalize_domain,
+        "explicit_website_url": normalize_url,
+        "explicit_website_domain": normalize_domain,
     }
     normalizer = normalizers[field_name]
     result = normalizer(original_value)

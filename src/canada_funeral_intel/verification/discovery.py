@@ -136,13 +136,20 @@ def discover_website_candidates(
     shared_domains = _shared_domains(signals)
     explicit_urls: dict[tuple[int, str], set[str]] = defaultdict(set)
     for signal in signals:
-        if signal.evidence_class is WebsiteEvidenceClass.EXPLICIT_SOURCE_URL:
+        if signal.evidence_class in {
+            WebsiteEvidenceClass.EXPLICIT_SOURCE_URL,
+            WebsiteEvidenceClass.EXPLICIT_SOURCE_WEBSITE,
+        }:
             explicit_urls[(signal.entity_id, signal.domain)].add(signal.normalized_url)
     remapped: list[_SourceWebsiteSignal] = []
     for signal in signals:
         targets = explicit_urls.get((signal.entity_id, signal.domain), set())
         if (
-            signal.evidence_class is not WebsiteEvidenceClass.EXPLICIT_SOURCE_URL
+            signal.evidence_class
+            not in {
+                WebsiteEvidenceClass.EXPLICIT_SOURCE_URL,
+                WebsiteEvidenceClass.EXPLICIT_SOURCE_WEBSITE,
+            }
             and len(targets) == 1
         ):
             signal = replace(signal, normalized_url=next(iter(targets)))
@@ -256,7 +263,9 @@ def _load_source_website_signals(
         WHERE e.status = 'active'
           AND (? IS NULL OR e.id = ?)
           AND (? IS NULL OR sr.source_dataset_id = ?)
-          AND nv.field_name IN ('url', 'domain')
+          AND nv.field_name IN (
+              'url', 'domain', 'explicit_website_url', 'explicit_website_domain'
+          )
           AND nv.normalized_value IS NOT NULL
         ORDER BY esr.entity_id, sr.id, nv.id
         """, (entity_id, entity_id, source_dataset_id, source_dataset_id)).fetchall()
@@ -264,8 +273,12 @@ def _load_source_website_signals(
     signals: list[_SourceWebsiteSignal] = []
     for row in rows:
         normalized_url = _resolve_normalized_url(
-            row["normalized_value"] if row["field_name"] == "url" else None,
-            row["normalized_value"] if row["field_name"] == "domain" else None,
+            row["normalized_value"]
+            if row["field_name"] in {"url", "explicit_website_url"}
+            else None,
+            row["normalized_value"]
+            if row["field_name"] in {"domain", "explicit_website_domain"}
+            else None,
         )
         if normalized_url is None:
             continue
@@ -290,9 +303,13 @@ def _load_source_website_signals(
                 discovery_method=_DISCOVERY_METHOD,
                 normalized_value_id=int(row["normalized_value_id"]),
                 evidence_class=(
-                    WebsiteEvidenceClass.EXPLICIT_SOURCE_URL
-                    if field_name == "url"
-                    else WebsiteEvidenceClass.SOURCE_DOMAIN
+                    WebsiteEvidenceClass.EXPLICIT_SOURCE_WEBSITE
+                    if field_name.startswith("explicit_website_")
+                    else (
+                        WebsiteEvidenceClass.EXPLICIT_SOURCE_URL
+                        if field_name == "url"
+                        else WebsiteEvidenceClass.SOURCE_DOMAIN
+                    )
                 ),
                 raw_value=str(row["original_value"] or row["normalized_value"]),
             )
@@ -468,7 +485,11 @@ def _candidate_evidence(
     for signal in signals:
         evidence_type = (
             WebsiteEvidenceType.NORMALIZED_URL
-            if signal.evidence_class is WebsiteEvidenceClass.EXPLICIT_SOURCE_URL
+            if signal.evidence_class
+            in {
+                WebsiteEvidenceClass.EXPLICIT_SOURCE_URL,
+                WebsiteEvidenceClass.EXPLICIT_SOURCE_WEBSITE,
+            }
             else WebsiteEvidenceType.DOMAIN
         )
         contribution = 0.45 if evidence_type is WebsiteEvidenceType.NORMALIZED_URL else 0.30
@@ -482,7 +503,14 @@ def _candidate_evidence(
             contribution=contribution,
             derivation_method=signal.discovery_method,
         ))
-        if signal.provenance_url is not None and signal.evidence_class is WebsiteEvidenceClass.EXPLICIT_SOURCE_URL:
+        if (
+            signal.provenance_url is not None
+            and signal.evidence_class
+            in {
+                WebsiteEvidenceClass.EXPLICIT_SOURCE_URL,
+                WebsiteEvidenceClass.EXPLICIT_SOURCE_WEBSITE,
+            }
+        ):
             evidence.append(WebsiteEvidence(
                 evidence_type=WebsiteEvidenceType.SOURCE_URL,
                 evidence_class=signal.evidence_class,
