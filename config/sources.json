@@ -41,5 +41,21 @@
     "jurisdiction": "CA",
     "licensing_notes": "User-supplied or manually researched public business records.",
     "notes": "Fallback metadata source for records supplied manually."
+  },
+  {
+    "name": "Funeral Board of Manitoba",
+    "source_type": "regulator",
+    "source_format": "pdf",
+    "trust_level": "authoritative",
+    "coverage": [
+      "MB"
+    ],
+    "refresh_interval_days": 30,
+    "enabled": true,
+    "source_url": "https://www.gov.mb.ca/funeraldirectorsboard/pdf/2026_licenced_funeral_homes.pdf",
+    "publisher": "Funeral Board of Manitoba",
+    "jurisdiction": "MB",
+    "licensing_notes": "Official Province of Manitoba Funeral Board list of licenced funeral homes.",
+    "notes": "2026 authoritative PDF source. Raw source rows, missing fields, and repeated source rows are preserved during collection."
   }
 ]

@@ -144,6 +144,22 @@ def build_parser() -> argparse.ArgumentParser:
         help="Registered source name; defaults to the Alberta regulator.",
     )
 
+    sources_collect_parser = sources_subparsers.add_parser(
+        "collect",
+        help="Collect a supported live registered source into raw source records.",
+    )
+    sources_collect_parser.add_argument(
+        "name",
+        nargs="?",
+        default="Funeral Board of Manitoba",
+        help="Registered live source name; defaults to Funeral Board of Manitoba.",
+    )
+    sources_collect_parser.add_argument(
+        "--timeout",
+        type=float,
+        help="Optional HTTP timeout in seconds.",
+    )
+
     import_parser = subparsers.add_parser(
         "import",
         help="Import a registered CSV or JSON source dataset.",
@@ -568,6 +584,33 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
         parser.parse_args(["config", "--help"])
         return 2
+
+    if args.command == "sources" and args.sources_command == "collect":
+        from canada_funeral_intel.collectors.manitoba_cli import (
+            ManitobaCollectCommandError,
+            run_manitoba_collect_command,
+        )
+
+        try:
+            timeout_seconds = (
+                args.timeout
+                if args.timeout is not None
+                else settings.http_timeout_seconds
+            )
+            with database_session(settings.database_path) as connection:
+                payload = run_manitoba_collect_command(
+                    connection,
+                    migration_dir=_MIGRATION_DIR,
+                    registry_path=_SOURCE_REGISTRY_PATH,
+                    source_name=args.name,
+                    user_agent=settings.http_user_agent,
+                    timeout_seconds=timeout_seconds,
+                )
+            print(json.dumps(payload, indent=2, sort_keys=True))
+            return 0
+        except (DatabaseError, ManitobaCollectCommandError) as exc:
+            print(f"collection error: {exc}", file=sys.stderr)
+            return 5
 
     if args.command == "import":
         try:
