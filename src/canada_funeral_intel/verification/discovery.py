@@ -68,6 +68,7 @@ _SOCIAL_DOMAINS = frozenset(
     }
 )
 _DISCOVERY_METHOD = "normalized_source_record_v1"
+_MANUAL_DISCOVERY_METHOD = "manual_website_evidence_v1"
 _EMAIL_DISCOVERY_METHOD = "normalized_email_domain_v1"
 _GENERIC_EMAIL_DOMAINS = frozenset(
     {
@@ -264,7 +265,8 @@ def _load_source_website_signals(
           AND (? IS NULL OR e.id = ?)
           AND (? IS NULL OR sr.source_dataset_id = ?)
           AND nv.field_name IN (
-              'url', 'domain', 'explicit_website_url', 'explicit_website_domain'
+              'url', 'domain', 'explicit_website_url', 'explicit_website_domain',
+              'manual_website_url'
           )
           AND nv.normalized_value IS NOT NULL
         ORDER BY esr.entity_id, sr.id, nv.id
@@ -274,7 +276,9 @@ def _load_source_website_signals(
     for row in rows:
         normalized_url = _resolve_normalized_url(
             row["normalized_value"]
-            if row["field_name"] in {"url", "explicit_website_url"}
+            if row["field_name"] in {
+                "url", "explicit_website_url", "manual_website_url"
+            }
             else None,
             row["normalized_value"]
             if row["field_name"] in {"domain", "explicit_website_domain"}
@@ -300,15 +304,23 @@ def _load_source_website_signals(
                 ),
                 normalized_url=normalized_url,
                 domain=domain_result.value,
-                discovery_method=_DISCOVERY_METHOD,
+                discovery_method=(
+                    _MANUAL_DISCOVERY_METHOD
+                    if field_name == "manual_website_url"
+                    else _DISCOVERY_METHOD
+                ),
                 normalized_value_id=int(row["normalized_value_id"]),
                 evidence_class=(
-                    WebsiteEvidenceClass.EXPLICIT_SOURCE_WEBSITE
-                    if field_name.startswith("explicit_website_")
+                    WebsiteEvidenceClass.MANUAL
+                    if field_name == "manual_website_url"
                     else (
-                        WebsiteEvidenceClass.EXPLICIT_SOURCE_URL
-                        if field_name == "url"
-                        else WebsiteEvidenceClass.SOURCE_DOMAIN
+                        WebsiteEvidenceClass.EXPLICIT_SOURCE_WEBSITE
+                        if field_name.startswith("explicit_website_")
+                        else (
+                            WebsiteEvidenceClass.EXPLICIT_SOURCE_URL
+                            if field_name == "url"
+                            else WebsiteEvidenceClass.SOURCE_DOMAIN
+                        )
                     )
                 ),
                 raw_value=str(row["original_value"] or row["normalized_value"]),
@@ -457,6 +469,16 @@ def _classify_signal(
             return WebsiteKind.SHARED, 0.45, True
         return WebsiteKind.CANDIDATE, 0.65, True
 
+    if signal.evidence_class is WebsiteEvidenceClass.MANUAL:
+        if signal.domain in shared_domains:
+            return WebsiteKind.SHARED, 0.60, True
+        if _is_social_domain(signal.domain):
+            return WebsiteKind.SOCIAL, 0.20, True
+        path = urlsplit(signal.normalized_url).path or "/"
+        if signal.entity_type == "branch" and path not in {"", "/"}:
+            return WebsiteKind.BRANCH, 0.85, True
+        return WebsiteKind.CANDIDATE, 0.75, True
+
     if _is_social_domain(signal.domain):
         return WebsiteKind.SOCIAL, 0.20, True
 
@@ -489,6 +511,7 @@ def _candidate_evidence(
             in {
                 WebsiteEvidenceClass.EXPLICIT_SOURCE_URL,
                 WebsiteEvidenceClass.EXPLICIT_SOURCE_WEBSITE,
+                WebsiteEvidenceClass.MANUAL,
             }
             else WebsiteEvidenceType.DOMAIN
         )

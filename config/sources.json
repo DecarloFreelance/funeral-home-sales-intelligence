@@ -1,5 +1,20 @@
 [
   {
+    "name": "Manual Website Evidence Intake",
+    "source_type": "manual",
+    "source_format": "csv",
+    "trust_level": "medium",
+    "coverage": [
+      "CA"
+    ],
+    "refresh_interval_days": 90,
+    "enabled": true,
+    "publisher": "Canada Funeral Intelligence",
+    "jurisdiction": "CA",
+    "licensing_notes": "Researcher-supplied public business evidence. Retain source URLs, notes, and retrieval dates in the raw payload.",
+    "notes": "Offline intake for manually researched website URLs attached to existing entity IDs. It creates reviewable candidates only and never approves or selects primary websites."
+  },
+  {
     "name": "Ontario Bereavement Authority Public Register",
     "source_type": "regulator",
     "source_format": "html",

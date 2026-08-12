@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from pathlib import Path
 
 from canada_funeral_intel.extraction.page_people import extract_website_people
 from canada_funeral_intel.extraction.storage import (
@@ -22,6 +23,10 @@ from canada_funeral_intel.verification.checks import (
 from canada_funeral_intel.verification.discovery import (
     WebsiteCandidateDiscoveryError,
     discover_website_candidates,
+)
+from canada_funeral_intel.verification.manual import (
+    ManualWebsiteEvidenceError,
+    import_manual_website_evidence,
 )
 from canada_funeral_intel.verification.models import WebsiteReviewStatus
 from canada_funeral_intel.verification.page_discovery import (
@@ -44,6 +49,36 @@ from canada_funeral_intel.verification.storage import (
 
 class WebsiteCommandError(RuntimeError):
     """Raised when a website CLI command cannot complete safely."""
+
+
+def run_website_import_manual(
+    connection: sqlite3.Connection,
+    *,
+    input_path: Path,
+    source_dataset_id: int,
+    dry_run: bool = False,
+) -> dict[str, object]:
+    try:
+        result = import_manual_website_evidence(
+            connection,
+            input_path=input_path,
+            source_dataset_id=source_dataset_id,
+            dry_run=dry_run,
+        )
+    except ManualWebsiteEvidenceError as exc:
+        raise WebsiteCommandError(str(exc)) from exc
+    return {
+        "import_run_id": result.import_run_id,
+        "rows_seen": result.rows_seen,
+        "rows_valid": result.rows_valid,
+        "rows_failed": result.rows_failed,
+        "candidates_inserted": result.candidates_inserted,
+        "candidates_unchanged": result.candidates_unchanged,
+        "evidence_inserted": result.evidence_inserted,
+        "review_entries_queued": result.review_entries_queued,
+        "dry_run": result.dry_run,
+        "network_used": False,
+    }
 
 
 def run_website_discover(

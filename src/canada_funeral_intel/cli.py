@@ -139,6 +139,7 @@ from .verification.website_cli import (
     run_website_crawl,
     run_website_discover,
     run_website_extract_people,
+    run_website_import_manual,
     run_website_list,
     run_website_pages,
     run_website_people,
@@ -409,6 +410,21 @@ def build_parser() -> argparse.ArgumentParser:
         "discover",
         help="Discover website candidates from normalized source data.",
     )
+    website_manual_parser = website_subparsers.add_parser(
+        "import-manual",
+        help="Import manually researched website URLs for existing entities offline.",
+    )
+    website_manual_parser.add_argument(
+        "path",
+        type=Path,
+        help="CSV with entity_id and website_url columns.",
+    )
+    website_manual_parser.add_argument(
+        "--source",
+        default="Manual Website Evidence Intake",
+        help="Registered manual evidence source name.",
+    )
+    website_manual_parser.add_argument("--dry-run", action="store_true")
     website_populate_parser = website_subparsers.add_parser(
         "populate-candidates",
         help="Populate website candidates offline from trusted source provenance.",
@@ -1474,6 +1490,37 @@ def main(argv: Sequence[str] | None = None) -> int:
                         source_dataset_id=args.source_dataset_id,
                         entity_limit=args.entity_limit,
                         candidate_limit=args.candidate_limit,
+                        dry_run=args.dry_run,
+                    )
+
+                elif args.website_command == "import-manual":
+                    apply_pending_migrations(connection, _MIGRATION_DIR)
+                    registry = load_source_registry(_SOURCE_REGISTRY_PATH)
+                    seed_source_registry(connection, registry)
+                    source = next(
+                        (
+                            item
+                            for item in registry
+                            if item.name.casefold() == args.source.casefold()
+                        ),
+                        None,
+                    )
+                    if source is None:
+                        raise WebsiteCommandError(
+                            f"Source not found: {args.source}"
+                        )
+                    source_row = connection.execute(
+                        "SELECT id FROM source_datasets WHERE name = ?",
+                        (source.name,),
+                    ).fetchone()
+                    if source_row is None:
+                        raise WebsiteCommandError(
+                            f"Source registry seed failed for: {source.name}"
+                        )
+                    payload = run_website_import_manual(
+                        connection,
+                        input_path=args.path,
+                        source_dataset_id=int(source_row["id"]),
                         dry_run=args.dry_run,
                     )
 
