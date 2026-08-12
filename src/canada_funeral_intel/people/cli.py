@@ -2,7 +2,13 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from pathlib import Path
 
+from canada_funeral_intel.people.audit import (
+    audit_people_list,
+    audit_person,
+    export_people_csv,
+)
 from canada_funeral_intel.people.merge import merge_people, rollback_person_merge
 from canada_funeral_intel.people.models import (
     PersonMergeDecision,
@@ -104,6 +110,28 @@ def run_people_rollback(connection: sqlite3.Connection, *, merge_id: int, reason
         "restored_evidence": result.restored_evidence,
         "rolled_back_at": result.rolled_back_at,
     }
+
+
+def run_people_audit(connection: sqlite3.Connection, person_id: int) -> dict[str, object]:
+    try:
+        return audit_person(connection, person_id)
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+
+
+def run_people_audit_list(connection: sqlite3.Connection, *, include_historical: bool = False) -> list[dict[str, object]]:
+    try:
+        return audit_people_list(connection, include_historical=include_historical)
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+
+
+def run_people_export(connection: sqlite3.Connection, *, output: Path, include_historical: bool = False) -> dict[str, object]:
+    try:
+        paths = export_people_csv(connection, output, include_historical=include_historical)
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+    return {"format": "csv", "output": str(output), "files": [path.name for path in paths]}
 
 
 def print_people_payload(payload: object) -> None:

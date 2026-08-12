@@ -59,6 +59,9 @@ from .normalization.cli import (
 from .people.cli import (
     PeopleCommandError,
     print_people_payload,
+    run_people_audit,
+    run_people_audit_list,
+    run_people_export,
     run_people_list,
     run_people_merge,
     run_people_resolve,
@@ -576,6 +579,14 @@ def build_parser() -> argparse.ArgumentParser:
     people_rollback_parser = people_subparsers.add_parser("rollback", help="Roll back a canonical person merge.")
     people_rollback_parser.add_argument("--merge-id", required=True, type=int)
     people_rollback_parser.add_argument("--reason", required=True)
+    people_audit_parser = people_subparsers.add_parser("audit", help="Audit one canonical person and its provenance.")
+    people_audit_parser.add_argument("--person-id", required=True, type=int)
+    people_audit_list_parser = people_subparsers.add_parser("audit-list", help="List canonical person audit summaries.")
+    people_audit_list_parser.add_argument("--include-historical", action="store_true")
+    people_export_parser = people_subparsers.add_parser("export", help="Export canonical person audit data.")
+    people_export_parser.add_argument("--format", required=True, choices=("csv",))
+    people_export_parser.add_argument("--output", required=True, type=Path)
+    people_export_parser.add_argument("--include-historical", action="store_true")
 
     return parser
 
@@ -921,6 +932,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                     payload = run_people_merge(connection, survivor_person_id=args.survivor_person_id, absorbed_person_id=args.absorbed_person_id, reason=args.reason)
                 elif args.people_command == "rollback":
                     payload = run_people_rollback(connection, merge_id=args.merge_id, reason=args.reason)
+                elif args.people_command == "audit":
+                    payload = run_people_audit(connection, args.person_id)
+                elif args.people_command == "audit-list":
+                    payload = run_people_audit_list(connection, include_historical=args.include_historical)
+                elif args.people_command == "export":
+                    payload = run_people_export(connection, output=args.output, include_historical=args.include_historical)
                 else:
                     parser.parse_args(["people", "--help"])
                     return 2
