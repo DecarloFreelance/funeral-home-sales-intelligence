@@ -3,6 +3,11 @@ from __future__ import annotations
 import json
 import sqlite3
 
+from canada_funeral_intel.extraction.page_people import extract_website_people
+from canada_funeral_intel.extraction.storage import (
+    PersonObservationStorageError,
+    list_page_person_observations,
+)
 from canada_funeral_intel.verification.checks import (
     WebsiteCheckStorageError,
     insert_website_check,
@@ -258,6 +263,61 @@ def run_website_pages(
     except PageDiscoveryError as exc:
         raise WebsiteCommandError(str(exc)) from exc
 
+    return list(rows)
+
+
+def run_website_extract_people(
+    connection: sqlite3.Connection,
+    *,
+    website_id: int,
+    page_id: int | None,
+    user_agent: str,
+    timeout_seconds: int,
+    max_redirects: int,
+) -> dict[str, object]:
+    try:
+        result = extract_website_people(
+            connection,
+            website_id=website_id,
+            page_id=page_id,
+            user_agent=user_agent,
+            timeout_seconds=timeout_seconds,
+            max_redirects=max_redirects,
+        )
+    except (RuntimeError, ValueError) as exc:
+        raise WebsiteCommandError(str(exc)) from exc
+
+    return {
+        "website_id": result.website_id,
+        "pages_considered": result.pages_considered,
+        "pages_fetched": result.pages_fetched,
+        "pages_skipped": result.pages_skipped,
+        "skip_reasons": result.skip_reasons,
+        "candidates_found": result.candidates_found,
+        "observations_inserted": result.observations_inserted,
+        "observations_unchanged": result.observations_unchanged,
+        "ambiguous_observations": result.ambiguous_observations,
+        "rejected_candidates": result.rejected_candidates,
+        "extractor_version": result.extractor_version,
+    }
+
+
+def run_website_people(
+    connection: sqlite3.Connection,
+    *,
+    website_id: int | None,
+    entity_id: int | None,
+    page_id: int | None,
+) -> list[dict[str, object]]:
+    try:
+        rows = list_page_person_observations(
+            connection,
+            website_id=website_id,
+            entity_id=entity_id,
+            page_id=page_id,
+        )
+    except PersonObservationStorageError as exc:
+        raise WebsiteCommandError(str(exc)) from exc
     return list(rows)
 
 

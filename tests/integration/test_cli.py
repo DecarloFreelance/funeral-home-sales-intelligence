@@ -68,9 +68,9 @@ def test_db_status_before_migration(tmp_path: Path) -> None:
     payload = json.loads(result.stdout)
     assert payload["database_path"] == str(database_path)
     assert payload["database_exists"] is False
-    assert payload["discovered_migrations"] == 11
+    assert payload["discovered_migrations"] == 12
     assert payload["applied_migrations"] == 0
-    assert payload["pending_migrations"] == 11
+    assert payload["pending_migrations"] == 12
     assert payload["current_version"] == 0
     assert payload["consistent"] is True
 
@@ -89,10 +89,10 @@ def test_db_init_applies_migration_and_is_idempotent(tmp_path: Path) -> None:
     first_payload = json.loads(first.stdout)
     second_payload = json.loads(second.stdout)
 
-    assert first_payload["applied_migrations"] == 11
-    assert first_payload["current_version"] == 11
+    assert first_payload["applied_migrations"] == 12
+    assert first_payload["current_version"] == 12
     assert second_payload["applied_migrations"] == 0
-    assert second_payload["current_version"] == 11
+    assert second_payload["current_version"] == 12
 
 
 def test_db_migrate_applies_pending_then_noops(tmp_path: Path) -> None:
@@ -104,7 +104,7 @@ def test_db_migrate_applies_pending_then_noops(tmp_path: Path) -> None:
 
     assert first.returncode == 0
     assert second.returncode == 0
-    assert json.loads(first.stdout)["applied_migrations"] == 11
+    assert json.loads(first.stdout)["applied_migrations"] == 12
     assert json.loads(second.stdout)["applied_migrations"] == 0
 
 
@@ -120,10 +120,10 @@ def test_db_status_after_migration(tmp_path: Path) -> None:
 
     payload = json.loads(status.stdout)
     assert payload["database_exists"] is True
-    assert payload["discovered_migrations"] == 11
-    assert payload["applied_migrations"] == 11
+    assert payload["discovered_migrations"] == 12
+    assert payload["applied_migrations"] == 12
     assert payload["pending_migrations"] == 0
-    assert payload["current_version"] == 11
+    assert payload["current_version"] == 12
     assert payload["consistent"] is True
 
 
@@ -244,6 +244,13 @@ def test_sources_show_missing_returns_exit_four() -> None:
     assert result.returncode == 4
     assert "source registry error" in result.stderr
     assert "Source not found" in result.stderr
+
+
+def test_website_people_commands_are_exposed() -> None:
+    result = run_cli("website", "--help")
+    assert result.returncode == 0
+    assert "extract-people" in result.stdout
+    assert "people" in result.stdout
 
 
 def test_website_verify_help_is_exposed() -> None:

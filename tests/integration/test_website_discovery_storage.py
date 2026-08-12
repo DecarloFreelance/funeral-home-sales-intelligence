@@ -81,7 +81,7 @@ def test_website_schema_and_candidate_persistence(tmp_path: Path) -> None:
 
     with database_session(database_path) as connection:
         result = apply_pending_migrations(connection, MIGRATION_DIR)
-        assert result.status.current_version == 11
+        assert result.status.current_version == 12
 
         entity_id, source_record_id = _seed_entity(connection)
         candidate = make_website_candidate(

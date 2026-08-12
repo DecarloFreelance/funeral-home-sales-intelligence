@@ -24,7 +24,7 @@ def test_import_history_schema(tmp_path: Path) -> None:
             for row in connection.execute("PRAGMA table_info(source_records)")
         }
 
-    assert status.current_version == 11
+    assert status.current_version == 12
     assert "import_runs" in tables
     assert "import_run_errors" in tables
     assert "import_run_id" in source_record_columns

@@ -69,8 +69,10 @@ from .verification.website_cli import (
     run_website_checks,
     run_website_crawl,
     run_website_discover,
+    run_website_extract_people,
     run_website_list,
     run_website_pages,
+    run_website_people,
     run_website_review_decide,
     run_website_review_list,
     run_website_verify,
@@ -424,6 +426,59 @@ def build_parser() -> argparse.ArgumentParser:
         "--website-id",
         type=int,
         help="Optional website candidate ID to filter.",
+    )
+
+    website_extract_people_parser = website_subparsers.add_parser(
+        "extract-people",
+        help="Extract conservative page-level people observations.",
+    )
+    website_extract_people_parser.add_argument(
+        "--website-id",
+        type=int,
+        required=True,
+        help="Website candidate ID to extract.",
+    )
+    website_extract_people_parser.add_argument(
+        "--page-id",
+        type=int,
+        help="Optional discovered page ID to extract.",
+    )
+    website_extract_people_parser.add_argument(
+        "--user-agent",
+        default="CanadaFuneralIntel/0.1",
+        help="HTTP User-Agent for bounded page fetches.",
+    )
+    website_extract_people_parser.add_argument(
+        "--timeout",
+        type=int,
+        default=10,
+        help="Per-network-operation timeout in seconds (default: 10).",
+    )
+    website_extract_people_parser.add_argument(
+        "--max-redirects",
+        type=int,
+        default=5,
+        help="Maximum redirects per page (default: 5).",
+    )
+
+    website_people_parser = website_subparsers.add_parser(
+        "people",
+        help="List page-level people observations.",
+    )
+    website_people_parser.add_argument(
+        "--website-id",
+        type=int,
+        help="Optional website candidate ID to filter.",
+    )
+    website_people_parser.add_argument(
+        "--entity-id",
+        type=int,
+        help="Optional entity ID to filter.",
+    )
+    website_people_parser.add_argument(
+        "--page-id",
+        type=int,
+        help="Optional discovered page ID to filter.",
     )
 
     website_review_parser = website_subparsers.add_parser(
@@ -834,6 +889,24 @@ def main(argv: Sequence[str] | None = None) -> int:
                     payload = run_website_pages(
                         connection,
                         website_id=args.website_id,
+                    )
+
+                elif args.website_command == "extract-people":
+                    payload = run_website_extract_people(
+                        connection,
+                        website_id=args.website_id,
+                        page_id=args.page_id,
+                        user_agent=args.user_agent,
+                        timeout_seconds=args.timeout,
+                        max_redirects=args.max_redirects,
+                    )
+
+                elif args.website_command == "people":
+                    payload = run_website_people(
+                        connection,
+                        website_id=args.website_id,
+                        entity_id=args.entity_id,
+                        page_id=args.page_id,
                     )
 
                 elif args.website_command == "review":
