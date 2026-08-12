@@ -134,7 +134,7 @@ def test_sources_validate() -> None:
 
     payload = json.loads(result.stdout)
     assert payload["valid"] is True
-    assert payload["count"] == 4
+    assert payload["count"] == 5
     assert payload["registry_path"].endswith("config/sources.json")
 
 
@@ -154,16 +154,16 @@ def test_sources_seed_initializes_registry_and_is_idempotent(
     second_payload = json.loads(second.stdout)
 
     assert first_payload["database_path"] == str(database_path)
-    assert first_payload["definitions"] == 4
-    assert first_payload["inserted"] == 4
+    assert first_payload["definitions"] == 5
+    assert first_payload["inserted"] == 5
     assert first_payload["updated"] == 0
     assert first_payload["unchanged"] == 0
-    assert first_payload["total"] == 4
+    assert first_payload["total"] == 5
 
     assert second_payload["inserted"] == 0
     assert second_payload["updated"] == 0
-    assert second_payload["unchanged"] == 4
-    assert second_payload["total"] == 4
+    assert second_payload["unchanged"] == 5
+    assert second_payload["total"] == 5
 
     with sqlite3.connect(database_path) as connection:
         names = [
@@ -178,6 +178,7 @@ def test_sources_seed_initializes_registry_and_is_idempotent(
         "Funeral Board of Manitoba",
         "Manual Canadian Funeral Home Source",
         "Nova Scotia Licensed Funeral Homes and Related Sellers",
+        "Ontario Bereavement Authority Public Register",
     ]
 
 
@@ -191,7 +192,7 @@ def test_sources_list_is_deterministic() -> None:
 
     payload = json.loads(first.stdout)
 
-    assert len(payload) == 4
+    assert len(payload) == 5
 
     names = [item["name"] for item in payload]
     assert names == sorted(names, key=str.casefold)

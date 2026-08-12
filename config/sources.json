@@ -1,5 +1,21 @@
 [
   {
+    "name": "Ontario Bereavement Authority Public Register",
+    "source_type": "regulator",
+    "source_format": "html",
+    "trust_level": "authoritative",
+    "coverage": [
+      "ON"
+    ],
+    "refresh_interval_days": 30,
+    "enabled": true,
+    "source_url": "https://portal.thebao.ca/public-register/",
+    "publisher": "Bereavement Authority of Ontario",
+    "jurisdiction": "ON",
+    "licensing_notes": "Public regulator register. Confirm terms and current access conditions before any automated acquisition.",
+    "notes": "Interactive public register for licensed funeral establishments, transfer services, cemeteries, crematoriums, and alternative disposition operators. No bulk collector is enabled; preserve search/exported records as locally supplied source data until an approved acquisition contract exists."
+  },
+  {
     "name": "Nova Scotia Licensed Funeral Homes and Related Sellers",
     "source_type": "government",
     "source_format": "csv",

@@ -163,3 +163,12 @@ def test_load_project_seed_registry() -> None:
     assert nova_scotia.source_format is SourceFormat.CSV
     assert nova_scotia.trust_level is TrustLevel.AUTHORITATIVE
     assert nova_scotia.coverage == ("NS",)
+
+    ontario = next(
+        item
+        for item in registry
+        if item.name == "Ontario Bereavement Authority Public Register"
+    )
+    assert ontario.source_format is SourceFormat.HTML
+    assert ontario.trust_level is TrustLevel.AUTHORITATIVE
+    assert ontario.coverage == ("ON",)
