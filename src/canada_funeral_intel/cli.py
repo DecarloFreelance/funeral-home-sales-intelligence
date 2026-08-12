@@ -6,6 +6,11 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
+from .business_intelligence.cli import (
+    run_business_facts_export,
+    run_business_facts_list,
+    run_business_facts_summary,
+)
 from .collectors.afsrb_cli import (
     AFSRB_SOURCE_NAME,
     AfsrbProbeCommandError,
@@ -575,6 +580,21 @@ def build_parser() -> argparse.ArgumentParser:
     website_people_review_decide.add_argument("--status", required=True, choices=("accepted", "rejected", "deferred"))
     website_people_review_decide.add_argument("--note")
 
+    facts_parser = subparsers.add_parser("business-facts", help="Read evidence-backed business fact observations.")
+    facts_subparsers = facts_parser.add_subparsers(dest="business_facts_command")
+    def add_fact_filters(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--entity-id", type=int)
+        parser.add_argument("--website-id", type=int)
+        parser.add_argument("--page-id", type=int)
+        parser.add_argument("--fact-key")
+    facts_list_parser = facts_subparsers.add_parser("list", help="List business fact observations.")
+    add_fact_filters(facts_list_parser)
+    facts_summary_parser = facts_subparsers.add_parser("summary", help="Summarize business fact observations.")
+    add_fact_filters(facts_summary_parser)
+    facts_export_parser = facts_subparsers.add_parser("export", help="Export business fact observations.")
+    facts_export_parser.add_argument("--output", required=True, type=Path)
+    add_fact_filters(facts_export_parser)
+
     people_parser = subparsers.add_parser("people", help="Review and resolve canonical people.")
     people_subparsers = people_parser.add_subparsers(dest="people_command")
     people_review_parser = people_subparsers.add_parser("people-review", help="Review page-level person observations.")
@@ -885,6 +905,24 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
         parser.parse_args(["config", "--help"])
         return 2
+
+    if args.command == "business-facts":
+        if args.business_facts_command is None:
+            parser.parse_args(["business-facts", "--help"])
+            return 2
+        filters = {"entity_id": args.entity_id, "website_id": args.website_id, "page_id": args.page_id, "fact_key": args.fact_key}
+        with database_session(settings.database_path) as connection:
+            if args.business_facts_command == "list":
+                payload = run_business_facts_list(connection, **filters)
+            elif args.business_facts_command == "summary":
+                payload = run_business_facts_summary(connection, **filters)
+            elif args.business_facts_command == "export":
+                payload = run_business_facts_export(connection, output=args.output, **filters)
+            else:
+                parser.parse_args(["business-facts", "--help"])
+                return 2
+        print(json.dumps(payload, indent=2, sort_keys=True))
+        return 0
 
     if args.command == "sources" and args.sources_command == "collect":
         from canada_funeral_intel.collectors.manitoba_cli import (
