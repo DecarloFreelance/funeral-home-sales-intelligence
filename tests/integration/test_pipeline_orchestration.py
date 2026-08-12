@@ -26,7 +26,7 @@ REGISTRY = ROOT / "config" / "sources.json"
 
 def _database(path: Path) -> tuple[Path, int]:
     with database_session(path) as connection:
-        assert apply_pending_migrations(connection, MIGRATIONS).status.current_version == 20
+        assert apply_pending_migrations(connection, MIGRATIONS).status.current_version == 21
         seed_source_registry(connection, load_source_registry(REGISTRY))
         connection.commit()
         row = connection.execute("SELECT id FROM source_datasets WHERE name = ?", ("Manual Canadian Funeral Home Source",)).fetchone()

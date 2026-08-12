@@ -36,6 +36,7 @@ class WebsiteCandidateDiscoveryRun:
     shared_domain_candidates: int
     branch_page_candidates: int
     alternate_domain_candidates: int
+    source_method_counts: tuple[tuple[str, int], ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,25 +77,39 @@ _GENERIC_EMAIL_DOMAINS = frozenset(
 
 def discover_website_candidates(
     connection: sqlite3.Connection,
+    *,
+    entity_id: int | None = None,
+    source_dataset_id: int | None = None,
+    entity_limit: int | None = None,
+    candidate_limit: int | None = None,
 ) -> WebsiteCandidateDiscoveryRun:
     """Create website candidates from existing normalized source-record signals only."""
     try:
         memberships_seen = int(
             connection.execute(
                 """
-                SELECT COUNT(*)
+                SELECT COUNT(DISTINCT esr.entity_id)
                 FROM entity_source_records AS esr
                 JOIN entities AS e ON e.id = esr.entity_id
                 WHERE e.status = 'active'
-                """
+                  AND (? IS NULL OR e.id = ?)
+                  AND (? IS NULL OR EXISTS (
+                      SELECT 1 FROM source_records filtered_sr
+                      WHERE filtered_sr.id = esr.source_record_id
+                        AND filtered_sr.source_dataset_id = ?
+                  ))
+                """,
+                (entity_id, entity_id, source_dataset_id, source_dataset_id),
             ).fetchone()[0]
         )
-        source_signals = _load_source_website_signals(connection)
+        source_signals = _load_source_website_signals(connection, entity_id=entity_id, source_dataset_id=source_dataset_id)
         signals = (
             *source_signals,
             *_load_email_domain_signals(
                 connection,
                 existing_signals=source_signals,
+                entity_id=entity_id,
+                source_dataset_id=source_dataset_id,
             ),
         )
     except sqlite3.Error as exc:
@@ -104,6 +119,18 @@ def discover_website_candidates(
 
     shared_domains = _shared_domains(signals)
     preferred_domains = _preferred_domains(signals)
+    selected: list[_SourceWebsiteSignal] = []
+    per_entity: Counter[int] = Counter()
+    for signal in signals:
+        if entity_limit is not None and signal.entity_id not in {item.entity_id for item in signals}:
+            continue
+        if candidate_limit is not None and per_entity[signal.entity_id] >= candidate_limit:
+            continue
+        selected.append(signal)
+        per_entity[signal.entity_id] += 1
+    if entity_limit is not None:
+        selected = [signal for signal in selected if signal.entity_id in sorted(per_entity)[:entity_limit]]
+    signals = tuple(selected)
 
     inserted = 0
     unchanged = 0
@@ -166,11 +193,15 @@ def discover_website_candidates(
         shared_domain_candidates=shared,
         branch_page_candidates=branch,
         alternate_domain_candidates=alternate,
+        source_method_counts=tuple(sorted(Counter(signal.discovery_method for signal in signals).items())),
     )
 
 
 def _load_source_website_signals(
     connection: sqlite3.Connection,
+    *,
+    entity_id: int | None = None,
+    source_dataset_id: int | None = None,
 ) -> tuple[_SourceWebsiteSignal, ...]:
     rows = connection.execute(
         """
@@ -217,9 +248,11 @@ def _load_source_website_signals(
         JOIN values_by_record
           ON values_by_record.source_record_id = sr.id
         WHERE e.status = 'active'
+          AND (? IS NULL OR e.id = ?)
+          AND (? IS NULL OR sr.source_dataset_id = ?)
         ORDER BY esr.entity_id, sr.id
         """
-    ).fetchall()
+        , (entity_id, entity_id, source_dataset_id, source_dataset_id)).fetchall()
 
     signals: list[_SourceWebsiteSignal] = []
     seen: set[tuple[int, str]] = set()
@@ -264,6 +297,8 @@ def _load_email_domain_signals(
     connection: sqlite3.Connection,
     *,
     existing_signals: tuple[_SourceWebsiteSignal, ...],
+    entity_id: int | None = None,
+    source_dataset_id: int | None = None,
 ) -> tuple[_SourceWebsiteSignal, ...]:
     rows = connection.execute(
         """
@@ -291,10 +326,12 @@ def _load_email_domain_signals(
         JOIN normalized_values AS nv
           ON nv.id = latest.normalized_value_id
         WHERE e.status = 'active'
+          AND (? IS NULL OR e.id = ?)
+          AND (? IS NULL OR sr.source_dataset_id = ?)
           AND nv.normalized_value IS NOT NULL
         ORDER BY esr.entity_id, sr.id
         """
-    ).fetchall()
+        , (entity_id, entity_id, source_dataset_id, source_dataset_id)).fetchall()
 
     entities_with_explicit_signal = {
         signal.entity_id

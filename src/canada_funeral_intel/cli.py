@@ -134,6 +134,7 @@ from .verification.models import WebsiteReviewStatus
 from .verification.website_cli import (
     WebsiteCommandError,
     print_website_payload,
+    run_website_batch_verify,
     run_website_checks,
     run_website_crawl,
     run_website_discover,
@@ -141,6 +142,7 @@ from .verification.website_cli import (
     run_website_list,
     run_website_pages,
     run_website_people,
+    run_website_populate_candidates,
     run_website_review_decide,
     run_website_review_list,
     run_website_verify,
@@ -407,6 +409,29 @@ def build_parser() -> argparse.ArgumentParser:
         "discover",
         help="Discover website candidates from normalized source data.",
     )
+    website_populate_parser = website_subparsers.add_parser(
+        "populate-candidates",
+        help="Populate website candidates offline from trusted source provenance.",
+    )
+    website_populate_parser.add_argument("--entity-id", type=int)
+    website_populate_parser.add_argument("--source-dataset-id", type=int)
+    website_populate_parser.add_argument("--entity-limit", type=int, default=10)
+    website_populate_parser.add_argument("--candidate-limit", type=int, default=1)
+    website_populate_parser.add_argument("--dry-run", action="store_true")
+    website_batch_parser = website_subparsers.add_parser(
+        "batch-verify",
+        help="Verify a bounded candidate batch; requires explicit network authorization.",
+    )
+    website_batch_parser.add_argument("--allow-network", action="store_true")
+    website_batch_parser.add_argument("--dry-run", action="store_true")
+    website_batch_parser.add_argument("--entity-id", type=int)
+    website_batch_parser.add_argument("--entity-limit", type=int, default=10)
+    website_batch_parser.add_argument("--candidate-limit", type=int, default=1)
+    website_batch_parser.add_argument("--timeout", type=int, default=10)
+    website_batch_parser.add_argument("--max-redirects", type=int, default=5)
+    website_batch_parser.add_argument("--max-retries", type=int, default=1)
+    website_batch_parser.add_argument("--resume-run-id", type=int)
+    website_batch_parser.add_argument("--user-agent", default="CanadaFuneralIntel/0.1")
     website_list_parser = website_subparsers.add_parser(
         "list",
         help="List discovered website candidates.",
@@ -1442,7 +1467,32 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         try:
             with database_session(settings.database_path) as connection:
-                if args.website_command == "discover":
+                if args.website_command == "populate-candidates":
+                    payload = run_website_populate_candidates(
+                        connection,
+                        entity_id=args.entity_id,
+                        source_dataset_id=args.source_dataset_id,
+                        entity_limit=args.entity_limit,
+                        candidate_limit=args.candidate_limit,
+                        dry_run=args.dry_run,
+                    )
+
+                elif args.website_command == "batch-verify":
+                    payload = run_website_batch_verify(
+                        connection,
+                        allow_network=args.allow_network,
+                        entity_id=args.entity_id,
+                        entity_limit=args.entity_limit,
+                        candidate_limit=args.candidate_limit,
+                        timeout_seconds=args.timeout,
+                        max_redirects=args.max_redirects,
+                        max_retries=args.max_retries,
+                        resume_run_id=args.resume_run_id,
+                        user_agent=args.user_agent,
+                        dry_run=args.dry_run,
+                    )
+
+                elif args.website_command == "discover":
                     payload = run_website_discover(connection)
 
                 elif args.website_command == "list":

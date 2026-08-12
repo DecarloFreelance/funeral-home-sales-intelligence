@@ -8,6 +8,12 @@ from canada_funeral_intel.extraction.storage import (
     PersonObservationStorageError,
     list_page_person_observations,
 )
+from canada_funeral_intel.verification.batch import (
+    BatchLimits,
+    WebsiteBatchError,
+    batch_verify,
+    populate_candidates,
+)
 from canada_funeral_intel.verification.checks import (
     WebsiteCheckStorageError,
     insert_website_check,
@@ -60,7 +66,57 @@ def run_website_discover(
         "shared_domain_candidates": result.shared_domain_candidates,
         "branch_page_candidates": result.branch_page_candidates,
         "alternate_domain_candidates": result.alternate_domain_candidates,
+        "source_method_counts": dict(result.source_method_counts),
     }
+
+
+def run_website_populate_candidates(
+    connection: sqlite3.Connection,
+    *,
+    entity_id: int | None = None,
+    source_dataset_id: int | None = None,
+    entity_limit: int = 10,
+    candidate_limit: int = 1,
+    dry_run: bool = False,
+) -> dict[str, object]:
+    try:
+        return populate_candidates(
+            connection,
+            entity_id=entity_id,
+            source_dataset_id=source_dataset_id,
+            limits=BatchLimits(entity_limit=entity_limit, candidate_limit=candidate_limit),
+            dry_run=dry_run,
+        )
+    except WebsiteBatchError as exc:
+        raise WebsiteCommandError(str(exc)) from exc
+
+
+def run_website_batch_verify(
+    connection: sqlite3.Connection,
+    *,
+    allow_network: bool,
+    entity_id: int | None = None,
+    entity_limit: int = 10,
+    candidate_limit: int = 1,
+    timeout_seconds: int = 10,
+    max_redirects: int = 5,
+    max_retries: int = 1,
+    resume_run_id: int | None = None,
+    user_agent: str = "CanadaFuneralIntel/0.1",
+    dry_run: bool = False,
+) -> dict[str, object]:
+    try:
+        return batch_verify(
+            connection,
+            allow_network=allow_network,
+            entity_id=entity_id,
+            limits=BatchLimits(entity_limit, candidate_limit, timeout_seconds, max_redirects, max_retries),
+            resume_run_id=resume_run_id,
+            user_agent=user_agent,
+            dry_run=dry_run,
+        )
+    except WebsiteBatchError as exc:
+        raise WebsiteCommandError(str(exc)) from exc
 
 
 def run_website_list(
