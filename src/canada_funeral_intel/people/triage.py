@@ -71,6 +71,7 @@ class TriageFilters:
     overdue_remediation: bool = False
     include_historical: bool = False
     limit: int | None = None
+    reference_time: str | None = None
 
     def validate(self) -> None:
         for name, value in (("person_id", self.person_id), ("entity_id", self.entity_id), ("branch_id", self.branch_id), ("website_id", self.website_id), ("page_id", self.page_id)):
@@ -260,7 +261,7 @@ def triage_people(connection: sqlite3.Connection, filters: TriageFilters | None 
         for anomaly in record["anomalies"]:
             disposition_keys.append((int(record["person_id"]), str(anomaly["code"]), fingerprint_anomaly(int(record["person_id"]), anomaly)))
     dispositions = dispositions_for_fingerprints(connection, disposition_keys)
-    remediations = summaries_for_fingerprints(connection, disposition_keys)
+    remediations = summaries_for_fingerprints(connection, disposition_keys, now=filters.reference_time)
     for record in records:
         for anomaly in record["anomalies"]:
             fingerprint = fingerprint_anomaly(int(record["person_id"]), anomaly)

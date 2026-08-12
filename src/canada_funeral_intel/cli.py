@@ -82,11 +82,16 @@ from .people.cli import (
     run_remediation_show,
     run_remediation_sync,
     run_remediation_update,
+    run_work_queue_export,
+    run_work_queue_list,
+    run_work_queue_owners,
+    run_work_queue_show,
 )
 from .people.dispositions import DispositionStatus
 from .people.models import PersonReviewStatus
 from .people.remediation import TASK_TYPES, RemediationStatus
 from .people.triage import TriageFilters, TriageSeverity
+from .people.work_queue import WorkQueueFilters
 from .storage import DatabaseError, database_session
 from .storage.migrations import (
     MigrationError,
@@ -690,6 +695,39 @@ def build_parser() -> argparse.ArgumentParser:
     remediation_sync_parser = people_subparsers.add_parser("remediation-sync", help="Mark changed remediation tasks stale.")
     remediation_sync_parser.add_argument("--person-id", type=int)
     remediation_sync_parser.add_argument("--actor", default="remediation-sync")
+    work_queue_parser = people_subparsers.add_parser("work-queue", help="Show the read-only reviewer operations queue.")
+    work_queue_subparsers = work_queue_parser.add_subparsers(dest="work_queue_command")
+    def add_work_queue_filters(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--person-id", type=int)
+        parser.add_argument("--entity-id", type=int)
+        parser.add_argument("--anomaly")
+        parser.add_argument("--severity", choices=("critical", "high", "medium", "low"))
+        parser.add_argument("--traceability", choices=("traceable", "incomplete", "orphaned"))
+        parser.add_argument("--disposition-status")
+        parser.add_argument("--queue-state")
+        parser.add_argument("--owner")
+        parser.add_argument("--unassigned-only", action="store_true")
+        parser.add_argument("--has-remediation", action="store_true")
+        parser.add_argument("--no-remediation", action="store_true")
+        parser.add_argument("--overdue-only", action="store_true")
+        parser.add_argument("--blocked-only", action="store_true")
+        parser.add_argument("--stale-only", action="store_true")
+        parser.add_argument("--include-stale", action="store_true")
+        parser.add_argument("--include-historical", action="store_true")
+        parser.add_argument("--due-before")
+        parser.add_argument("--due-after")
+        parser.add_argument("--limit", type=int)
+    work_queue_list_parser = work_queue_subparsers.add_parser("list", help="List current reviewer work.")
+    add_work_queue_filters(work_queue_list_parser)
+    work_queue_show_parser = work_queue_subparsers.add_parser("show", help="Show one exact current anomaly work item.")
+    work_queue_show_parser.add_argument("--person-id", required=True, type=int)
+    work_queue_show_parser.add_argument("--fingerprint", required=True)
+    work_queue_show_parser.add_argument("--include-historical", action="store_true")
+    work_queue_owners_parser = work_queue_subparsers.add_parser("owners", help="Summarize persisted remediation ownership.")
+    work_queue_owners_parser.add_argument("--include-historical", action="store_true")
+    work_queue_export_parser = work_queue_subparsers.add_parser("export", help="Export the read-only reviewer work queue.")
+    work_queue_export_parser.add_argument("--output", required=True, type=Path)
+    work_queue_export_parser.add_argument("--include-historical", action="store_true")
 
     return parser
 
@@ -1097,6 +1135,18 @@ def main(argv: Sequence[str] | None = None) -> int:
                         return 2
                 elif args.people_command == "remediation-sync":
                     payload = run_remediation_sync(connection, person_id=args.person_id, actor=args.actor)
+                elif args.people_command == "work-queue":
+                    if args.work_queue_command == "list":
+                        payload = run_work_queue_list(connection, WorkQueueFilters(person_id=args.person_id, entity_id=args.entity_id, anomaly=args.anomaly, severity=args.severity, traceability=args.traceability, disposition_status=args.disposition_status, queue_state=args.queue_state, owner=args.owner, unassigned_only=args.unassigned_only, has_remediation=args.has_remediation, no_remediation=args.no_remediation, overdue_only=args.overdue_only, blocked_only=args.blocked_only, stale_only=args.stale_only, include_stale=args.include_stale, include_historical=args.include_historical, due_before=args.due_before, due_after=args.due_after, limit=args.limit))
+                    elif args.work_queue_command == "show":
+                        payload = run_work_queue_show(connection, person_id=args.person_id, fingerprint=args.fingerprint, include_historical=args.include_historical)
+                    elif args.work_queue_command == "owners":
+                        payload = run_work_queue_owners(connection, include_historical=args.include_historical)
+                    elif args.work_queue_command == "export":
+                        payload = run_work_queue_export(connection, output=args.output, include_historical=args.include_historical)
+                    else:
+                        parser.parse_args(["people", "work-queue", "--help"])
+                        return 2
                 else:
                     parser.parse_args(["people", "--help"])
                     return 2

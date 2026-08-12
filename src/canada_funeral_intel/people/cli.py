@@ -38,6 +38,13 @@ from canada_funeral_intel.people.resolution import (
     show_person,
 )
 from canada_funeral_intel.people.triage import TriageFilters, triage_people
+from canada_funeral_intel.people.work_queue import (
+    WorkQueueFilters,
+    export_work_queue_csv,
+    list_work_queue,
+    owner_workload,
+    show_work_item,
+)
 
 
 class PeopleCommandError(RuntimeError):
@@ -243,6 +250,35 @@ def run_remediation_history(connection: sqlite3.Connection, task_id: int) -> lis
 def run_remediation_sync(connection: sqlite3.Connection, *, person_id: int | None, actor: str) -> dict[str, int]:
     try:
         return sync_tasks(connection, person_id=person_id, actor=actor)
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+
+
+def run_work_queue_list(connection: sqlite3.Connection, filters: WorkQueueFilters) -> list[dict[str, object]]:
+    try:
+        return list_work_queue(connection, filters)
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+
+
+def run_work_queue_show(connection: sqlite3.Connection, *, person_id: int, fingerprint: str, include_historical: bool = False) -> dict[str, object]:
+    try:
+        return show_work_item(connection, person_id=person_id, fingerprint=fingerprint, include_historical=include_historical)
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+
+
+def run_work_queue_owners(connection: sqlite3.Connection, *, include_historical: bool = False) -> list[dict[str, object]]:
+    try:
+        return owner_workload(connection, include_historical=include_historical)
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+
+
+def run_work_queue_export(connection: sqlite3.Connection, *, output: Path, include_historical: bool = False) -> dict[str, object]:
+    try:
+        paths = export_work_queue_csv(connection, output, include_historical=include_historical)
+        return {"format": "csv", "output": str(output), "files": [path.name for path in paths]}
     except PersonResolutionError as exc:
         raise PeopleCommandError(str(exc)) from exc
 

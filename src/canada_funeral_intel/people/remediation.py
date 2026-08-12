@@ -228,5 +228,20 @@ def summaries_for_fingerprints(connection: sqlite3.Connection, keys: list[tuple[
         matches = [row for row in rows if (int(row["person_id"]), str(row["anomaly_code"]), str(row["anomaly_fingerprint"])) == key]
         active = [row for row in matches if row["status"] in {item.value for item in ACTIVE_STATUSES}]
         overdue = [row for row in active if row["due_at"] and str(row["due_at"]) < reference]
-        result[key] = {"remediation_task_count": len(matches), "open_remediation_task_count": len(active), "overdue_remediation_task_count": len(overdue), "remediation_statuses": sorted({str(row["status"]) for row in matches}), "remediation_task_ids": sorted(int(row["id"]) for row in matches), "remediation_owners": sorted({str(row["owner"]) for row in matches if row["owner"]})}
+        active_due = [str(row["due_at"]) for row in active if row["due_at"]]
+        result[key] = {
+            "remediation_task_count": len(matches),
+            "active_remediation_task_count": len(active),
+            "open_remediation_task_count": sum(row["status"] == RemediationStatus.OPEN.value for row in matches),
+            "in_progress_remediation_task_count": sum(row["status"] == RemediationStatus.IN_PROGRESS.value for row in matches),
+            "blocked_remediation_task_count": sum(row["status"] == RemediationStatus.BLOCKED.value for row in matches),
+            "overdue_remediation_task_count": len(overdue),
+            "stale_remediation_task_count": sum(row["status"] == RemediationStatus.STALE.value for row in matches),
+            "completed_remediation_task_count": sum(row["status"] == RemediationStatus.COMPLETED.value for row in matches),
+            "cancelled_remediation_task_count": sum(row["status"] == RemediationStatus.CANCELLED.value for row in matches),
+            "remediation_statuses": sorted({str(row["status"]) for row in matches}),
+            "remediation_task_ids": sorted(int(row["id"]) for row in matches),
+            "remediation_owners": sorted({str(row["owner"]) for row in matches if row["owner"]}),
+            "next_due_at": min(active_due) if active_due else None,
+        }
     return result
