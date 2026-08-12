@@ -104,6 +104,39 @@ def test_normalize_source_records_persists_supported_fields(tmp_path: Path) -> N
     assert json.loads(values["province"]["warnings"])
 
 
+def test_nova_scotia_style_explicit_website_field_is_importable_offline(
+    tmp_path: Path,
+) -> None:
+    database_path, dataset_id = _prepare_database(tmp_path)
+    input_path = tmp_path / "nova-scotia.csv"
+    input_path.write_text(
+        "id,name,address,city,province,postal_code,website,category\n"
+        "NS-1,Example Funeral Home,1 Main Street,Halifax,NS,B3H 1A1,"
+        "https://example.ca/,Funeral Home\n",
+        encoding="utf-8",
+    )
+
+    with database_session(database_path) as connection:
+        import_file(
+            connection,
+            source_dataset_id=dataset_id,
+            input_path=input_path,
+            input_format=ImportFormat.CSV,
+            external_id_field="id",
+        )
+        result = normalize_source_records(
+            connection,
+            source_dataset_id=dataset_id,
+        )
+        row = connection.execute(
+            "SELECT field_name, normalized_value FROM normalized_values "
+            "WHERE field_name = 'url' ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+
+    assert result.records_seen == 1
+    assert row["normalized_value"] == "https://example.ca/"
+
+
 def test_normalization_is_idempotent_for_same_source_record(tmp_path: Path) -> None:
     database_path, dataset_id = _prepare_database(tmp_path)
     input_path = tmp_path / "records.json"

@@ -154,3 +154,12 @@ def test_load_project_seed_registry() -> None:
 
     for definition in registry:
         definition.validate()
+
+    nova_scotia = next(
+        item
+        for item in registry
+        if item.name == "Nova Scotia Licensed Funeral Homes and Related Sellers"
+    )
+    assert nova_scotia.source_format is SourceFormat.CSV
+    assert nova_scotia.trust_level is TrustLevel.AUTHORITATIVE
+    assert nova_scotia.coverage == ("NS",)

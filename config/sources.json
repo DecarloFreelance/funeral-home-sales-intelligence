@@ -1,5 +1,23 @@
 [
   {
+    "name": "Nova Scotia Licensed Funeral Homes and Related Sellers",
+    "source_type": "government",
+    "source_format": "csv",
+    "trust_level": "authoritative",
+    "coverage": [
+      "NS"
+    ],
+    "refresh_interval_days": 90,
+    "enabled": true,
+    "source_url": "https://data.novascotia.ca/api/views/if4h-78fy/rows.csv?accessType=DOWNLOAD",
+    "publisher": "Government of Nova Scotia",
+    "jurisdiction": "NS",
+    "license_name": "Open Government Licence - Nova Scotia",
+    "license_url": "https://data.novascotia.ca/opendata/licence",
+    "licensing_notes": "Official open dataset. Verify the current licence and dataset metadata before redistribution.",
+    "notes": "Includes licensed funeral homes, crematoriums, cemeteries, and funeral sellers. Importers must preserve the source category and filter it explicitly; absence is not a closure signal."
+  },
+  {
     "name": "Alberta Funeral Services Regulatory Board",
     "source_type": "regulator",
     "source_format": "html",
