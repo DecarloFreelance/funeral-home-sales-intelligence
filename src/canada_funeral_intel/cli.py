@@ -105,6 +105,15 @@ from .quality.cli import (
     run_quality_summary,
 )
 from .quality.scoring import READINESS, SUBJECT_TYPES
+from .refresh.cli import (
+    run_refresh_begin,
+    run_refresh_changes,
+    run_refresh_complete,
+    run_refresh_fail,
+    run_refresh_record,
+    run_refresh_runs,
+    run_refresh_show,
+)
 from .reporting.cli import parse_reference_time as parse_report_reference_time
 from .reporting.cli import run_report, run_report_export
 from .storage import DatabaseError, database_session
@@ -640,6 +649,39 @@ def build_parser() -> argparse.ArgumentParser:
     report_export.add_argument("--reference-time")
     report_export.add_argument("--include-historical", action="store_true")
 
+    refresh_parser = subparsers.add_parser("refresh", help="Manage offline refresh comparisons.")
+    refresh_subparsers = refresh_parser.add_subparsers(dest="refresh_command")
+    refresh_begin = refresh_subparsers.add_parser("begin", help="Begin an offline refresh run.")
+    refresh_begin.add_argument("--run-type", required=True, choices=("website_page", "person_observation", "business_fact"))
+    refresh_begin.add_argument("--scope-type", required=True)
+    refresh_begin.add_argument("--scope-value")
+    refresh_begin.add_argument("--reference-time", required=True)
+    refresh_begin.add_argument("--extractor-version")
+    refresh_begin.add_argument("--config-fingerprint")
+    refresh_record = refresh_subparsers.add_parser("record", help="Record one offline observation.")
+    refresh_record.add_argument("--run-id", required=True, type=int)
+    refresh_record.add_argument("--subject-type", required=True, choices=("website_page", "person_observation", "business_fact"))
+    refresh_record.add_argument("--subject-key", required=True)
+    refresh_record.add_argument("--fingerprint", required=True)
+    refresh_record.add_argument("--reference-id", type=int)
+    refresh_record.add_argument("--metadata-json", default="{}")
+    refresh_complete = refresh_subparsers.add_parser("complete", help="Complete and compare a refresh run.")
+    refresh_complete.add_argument("--run-id", required=True, type=int)
+    refresh_fail = refresh_subparsers.add_parser("fail", help="Fail or cancel a refresh run.")
+    refresh_fail.add_argument("--run-id", required=True, type=int)
+    refresh_fail.add_argument("--error", required=True)
+    refresh_fail.add_argument("--cancelled", action="store_true")
+    refresh_runs_parser = refresh_subparsers.add_parser("runs", help="List refresh runs.")
+    refresh_runs_parser.add_argument("--run-type", choices=("website_page", "person_observation", "business_fact"))
+    refresh_runs_parser.add_argument("--status", choices=("running", "completed", "failed", "cancelled"))
+    refresh_show = refresh_subparsers.add_parser("show", help="Show one refresh run.")
+    refresh_show.add_argument("--run-id", required=True, type=int)
+    refresh_changes_parser = refresh_subparsers.add_parser("changes", help="List immutable change events.")
+    refresh_changes_parser.add_argument("--run-id", type=int)
+    refresh_changes_parser.add_argument("--subject-type", choices=("website_page", "person_observation", "business_fact"))
+    refresh_changes_parser.add_argument("--subject-key")
+    refresh_changes_parser.add_argument("--change-type", choices=("added", "changed", "missing", "reappeared"))
+
     people_parser = subparsers.add_parser("people", help="Review and resolve canonical people.")
     people_subparsers = people_parser.add_subparsers(dest="people_command")
     people_review_parser = people_subparsers.add_parser("people-review", help="Review page-level person observations.")
@@ -1004,6 +1046,28 @@ def main(argv: Sequence[str] | None = None) -> int:
         except (DatabaseError, ValueError) as exc:
             print(f"report error: {exc}", file=sys.stderr)
             return 14
+
+    if args.command == "refresh":
+        if args.refresh_command is None:
+            parser.parse_args(["refresh", "--help"])
+            return 2
+        try:
+            with database_session(settings.database_path) as connection:
+                if args.refresh_command == "begin":
+                    payload = run_refresh_begin(connection, run_type=args.run_type, scope_type=args.scope_type, scope_value=args.scope_value, reference_time=parse_report_reference_time(args.reference_time), extractor_version=args.extractor_version, config_fingerprint=args.config_fingerprint)
+                elif args.refresh_command == "record":
+                    payload = run_refresh_record(connection, run_id=args.run_id, subject_type=args.subject_type, subject_key=args.subject_key, semantic_fingerprint=args.fingerprint, reference_id=args.reference_id, metadata_json=args.metadata_json)
+                elif args.refresh_command == "complete": payload = run_refresh_complete(connection, args.run_id)
+                elif args.refresh_command == "fail": payload = run_refresh_fail(connection, run_id=args.run_id, error_summary=args.error, status="cancelled" if args.cancelled else "failed")
+                elif args.refresh_command == "runs": payload = run_refresh_runs(connection, run_type=args.run_type, status=args.status)
+                elif args.refresh_command == "show": payload = run_refresh_show(connection, args.run_id)
+                elif args.refresh_command == "changes": payload = run_refresh_changes(connection, run_id=args.run_id, subject_type=args.subject_type, subject_key=args.subject_key, change_type=args.change_type)
+                else: parser.parse_args(["refresh", "--help"]); return 2
+            print(json.dumps(payload, indent=2, sort_keys=True))
+            return 0
+        except (DatabaseError, ValueError) as exc:
+            print(f"refresh error: {exc}", file=sys.stderr)
+            return 15
 
     if args.command == "sources" and args.sources_command == "collect":
         from canada_funeral_intel.collectors.manitoba_cli import (

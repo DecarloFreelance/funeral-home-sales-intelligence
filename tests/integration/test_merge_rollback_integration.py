@@ -20,7 +20,7 @@ MIGRATIONS = ROOT / "database" / "migrations"
 
 def _prepare(connection: sqlite3.Connection) -> None:
     result = apply_pending_migrations(connection, MIGRATIONS)
-    assert result.status.current_version == 17
+    assert result.status.current_version == 18
     connection.execute(
         "INSERT INTO source_datasets (id, name, source_type, jurisdiction, is_active) VALUES (1, 'Fixture Source', 'manual', 'AB', 1)"
     )

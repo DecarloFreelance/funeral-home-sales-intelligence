@@ -27,13 +27,13 @@ REGISTRY = ROOT / "config" / "sources.json"
 def prepared_database(path: Path) -> int:
     with database_session(path) as connection:
         status = apply_pending_migrations(connection, MIGRATIONS).status
-        assert status.current_version == 17
         seed_source_registry(connection, load_source_registry(REGISTRY))
         connection.commit()
         row = connection.execute(
             "SELECT id FROM source_datasets WHERE name = ?",
             ("Manual Canadian Funeral Home Source",),
         ).fetchone()
+    assert status.current_version == 18
     assert row is not None
     return int(row["id"])
 
