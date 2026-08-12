@@ -13,7 +13,7 @@ MIGRATIONS = ROOT / "database" / "migrations"
 
 def _prepare_database(connection: sqlite3.Connection) -> None:
     result = apply_pending_migrations(connection, MIGRATIONS)
-    assert result.status.current_version == 15
+    assert result.status.current_version == 16
 
     connection.execute(
         """

@@ -196,7 +196,7 @@ def _anomalies(
     return anomalies
 
 
-def audit_person(connection: sqlite3.Connection, person_id: int) -> dict[str, object]:
+def audit_person(connection: sqlite3.Connection, person_id: int, *, include_remediation: bool = True) -> dict[str, object]:
     if person_id < 1:
         raise PersonResolutionError("person_id must be positive")
     try:
@@ -268,6 +268,11 @@ def audit_person(connection: sqlite3.Connection, person_id: int) -> dict[str, ob
         observation_ids.update(int(row["observation_id"]) for row in historical_evidence_rows)
         details = _observation_details(connection, observation_ids)
         reviews = _review_rows(connection, observation_ids)
+        remediation_tasks = []
+        remediation_task_history = []
+        if include_remediation:
+            remediation_tasks = [dict(row) for row in connection.execute("SELECT * FROM person_anomaly_remediation_tasks WHERE person_id = ? ORDER BY status, due_at IS NULL, due_at, id", (person_id,)).fetchall()]
+            remediation_task_history = [dict(row) for row in connection.execute("SELECT * FROM person_anomaly_remediation_task_history WHERE person_id = ? ORDER BY task_id, id", (person_id,)).fetchall()]
 
         affiliations = []
         for row in affiliation_rows:
@@ -305,6 +310,8 @@ def audit_person(connection: sqlite3.Connection, person_id: int) -> dict[str, ob
             "historical_evidence": historical_evidence,
             "reviews": reviews,
             "merge_history": merges,
+            "remediation_tasks": remediation_tasks,
+            "remediation_task_history": remediation_task_history,
             "traceability": {"status": traceability, "observation_count": len(observation_ids), "anomaly_count": len(anomalies)},
             "anomalies": anomalies,
         }
@@ -394,9 +401,11 @@ _EXPORTS: dict[str, tuple[str, ...]] = {
     "person_reviews": ("person_id", "review_queue_id", "observation_id", "status", "reviewer_note", "created_at", "reviewed_at"),
     "person_merge_history": ("person_id", "merge_id", "survivor_person_id", "absorbed_person_id", "merge_reason", "actor", "created_at", "state", "rolled_back_at", "rollback_actor", "rollback_reason"),
     "person_anomalies": ("person_id", "code", "affiliation_id", "contact_id", "merge_id", "observation_ids", "reasons", "values", "entity_ids"),
-    "person_triage": ("person_id", "person_status", "display_name", "triage_priority", "severity", "anomaly_count", "anomaly_codes", "anomaly_fingerprints", "disposition_statuses", "disposition_ids", "disposition_actors", "disposition_updated_at", "traceability_status", "entity_ids", "branch_ids", "website_ids", "page_ids", "observation_count", "active_affiliation_count", "active_contact_count", "merge_count", "rollback_count"),
+    "person_triage": ("person_id", "person_status", "display_name", "triage_priority", "severity", "anomaly_count", "anomaly_codes", "anomaly_fingerprints", "disposition_statuses", "disposition_ids", "disposition_actors", "disposition_updated_at", "remediation_task_count", "open_remediation_task_count", "overdue_remediation_task_count", "remediation_task_ids", "traceability_status", "entity_ids", "branch_ids", "website_ids", "page_ids", "observation_count", "active_affiliation_count", "active_contact_count", "merge_count", "rollback_count"),
     "person_anomaly_dispositions": ("disposition_id", "person_id", "anomaly_code", "anomaly_fingerprint", "status", "reviewer_actor", "reviewer_note", "created_at", "updated_at", "acknowledged_at", "dismissed_at", "reopened_at", "stale_at"),
     "person_anomaly_disposition_history": ("id", "disposition_id", "person_id", "anomaly_code", "anomaly_fingerprint", "previous_status", "new_status", "actor", "note", "changed_at"),
+    "person_anomaly_remediation_tasks": ("id", "person_id", "anomaly_code", "anomaly_fingerprint", "task_type", "status", "owner", "due_at", "created_by", "created_note", "created_at", "updated_at", "completed_at", "cancelled_at", "stale_at"),
+    "person_anomaly_remediation_task_history": ("id", "task_id", "person_id", "anomaly_code", "anomaly_fingerprint", "previous_status", "new_status", "actor", "note", "previous_owner", "new_owner", "previous_due_at", "new_due_at", "changed_at"),
 }
 
 
@@ -414,8 +423,12 @@ def export_people_csv(connection: sqlite3.Connection, output: Path, *, include_h
         marks = ",".join("?" for _ in person_ids)
         disposition_rows = connection.execute(f"SELECT * FROM person_anomaly_dispositions WHERE person_id IN ({marks}) ORDER BY person_id, anomaly_code, id", tuple(person_ids)).fetchall()
         history_rows = connection.execute(f"SELECT * FROM person_anomaly_disposition_history WHERE person_id IN ({marks}) ORDER BY person_id, disposition_id, id", tuple(person_ids)).fetchall()
+        task_rows = connection.execute(f"SELECT * FROM person_anomaly_remediation_tasks WHERE person_id IN ({marks}) ORDER BY person_id, anomaly_code, id", tuple(person_ids)).fetchall()
+        task_history_rows = connection.execute(f"SELECT * FROM person_anomaly_remediation_task_history WHERE person_id IN ({marks}) ORDER BY person_id, task_id, id", tuple(person_ids)).fetchall()
         rows["person_anomaly_dispositions"].extend(dict(row) for row in disposition_rows)
         rows["person_anomaly_disposition_history"].extend(dict(row) for row in history_rows)
+        rows["person_anomaly_remediation_tasks"].extend(dict(row) for row in task_rows)
+        rows["person_anomaly_remediation_task_history"].extend(dict(row) for row in task_history_rows)
     for audit in audits:
         person_id = int(audit["person"]["person_id"])
         rows["people"].append(audit["person"])
@@ -447,6 +460,10 @@ def export_people_csv(connection: sqlite3.Connection, output: Path, *, include_h
             "disposition_ids": "|".join(sorted(str(row["disposition_id"]) for row in dispositions)),
             "disposition_actors": "|".join(sorted(str(row["reviewer_actor"]) for row in dispositions)),
             "disposition_updated_at": "|".join(sorted(str(row["updated_at"]) for row in dispositions)),
+            "remediation_task_count": sum(int(row["remediation"]["remediation_task_count"]) for row in item["anomalies"] if row.get("remediation")),
+            "open_remediation_task_count": sum(int(row["remediation"]["open_remediation_task_count"]) for row in item["anomalies"] if row.get("remediation")),
+            "overdue_remediation_task_count": sum(int(row["remediation"]["overdue_remediation_task_count"]) for row in item["anomalies"] if row.get("remediation")),
+            "remediation_task_ids": "|".join(sorted(str(task_id) for row in item["anomalies"] if row.get("remediation") for task_id in row["remediation"]["remediation_task_ids"])),
             "entity_ids": "|".join(str(value) for value in item["entity_ids"]),
             "branch_ids": "|".join(str(value) for value in item["branch_ids"]),
             "website_ids": "|".join(str(value) for value in item["website_ids"]),

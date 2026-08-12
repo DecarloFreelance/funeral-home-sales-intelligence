@@ -22,7 +22,7 @@ def test_normalization_provenance_schema(tmp_path: Path) -> None:
             for row in connection.execute("PRAGMA index_list(normalized_values)")
         }
 
-    assert status.current_version == 15
+    assert status.current_version == 16
     assert {
         "source_record_id",
         "field_name",

@@ -27,7 +27,7 @@ REGISTRY = ROOT / "config" / "sources.json"
 def prepared_database(path: Path) -> int:
     with database_session(path) as connection:
         status = apply_pending_migrations(connection, MIGRATIONS).status
-        assert status.current_version == 15
+        assert status.current_version == 16
         seed_source_registry(connection, load_source_registry(REGISTRY))
         connection.commit()
         row = connection.execute(

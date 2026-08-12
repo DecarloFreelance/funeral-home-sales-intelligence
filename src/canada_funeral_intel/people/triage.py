@@ -64,6 +64,11 @@ class TriageFilters:
     has_phone: bool = False
     disposition_status: str | None = None
     unreviewed_only: bool = False
+    has_remediation: bool = False
+    no_remediation: bool = False
+    remediation_status: str | None = None
+    remediation_owner: str | None = None
+    overdue_remediation: bool = False
     include_historical: bool = False
     limit: int | None = None
 
@@ -79,6 +84,10 @@ class TriageFilters:
             raise PersonResolutionError("invalid review status")
         if self.disposition_status is not None and self.disposition_status not in {"open", "acknowledged", "dismissed", "reopened", "stale"}:
             raise PersonResolutionError("invalid disposition status")
+        if self.has_remediation and self.no_remediation:
+            raise PersonResolutionError("has_remediation and no_remediation cannot be combined")
+        if self.remediation_status is not None and self.remediation_status not in {"open", "in_progress", "blocked", "completed", "cancelled", "stale"}:
+            raise PersonResolutionError("invalid remediation status")
 
 
 def _ids(values: list[object]) -> list[int]:
@@ -147,7 +156,18 @@ def _record_matches(record: dict[str, object], filters: TriageFilters) -> bool:
             return False
         if filters.disposition_status is not None and not any(item is not None and item["status"] == filters.disposition_status for item in anomaly_dispositions):
             return False
-    return True
+    remediation = [item.get("remediation") for item in record["anomalies"]]
+    if filters.has_remediation and not any(item is not None and item["remediation_task_count"] for item in remediation):
+        return False
+    if filters.no_remediation and any(item is not None and item["remediation_task_count"] for item in remediation):
+        return False
+    if filters.remediation_status is not None and not any(item is not None and filters.remediation_status in item["remediation_statuses"] for item in remediation):
+        return False
+    if filters.remediation_owner is not None:
+        owners = {str(owner) for item in remediation if item is not None for owner in item.get("remediation_owners", [])}
+        if filters.remediation_owner not in owners:
+            return False
+    return not (filters.overdue_remediation and not any(item is not None and item["overdue_remediation_task_count"] for item in remediation))
 
 
 def _build_record(connection: sqlite3.Connection, audit: dict[str, object]) -> dict[str, object]:
@@ -227,9 +247,10 @@ def triage_people(connection: sqlite3.Connection, filters: TriageFilters | None 
         dispositions_for_fingerprints,
         fingerprint_anomaly,
     )
+    from canada_funeral_intel.people.remediation import summaries_for_fingerprints
 
     for person_id in person_ids:
-        audit = audit_person(connection, person_id)
+        audit = audit_person(connection, person_id, include_remediation=False)
         if not filters.include_historical and audit["person"]["status"] != PersonStatus.ACTIVE.value:
             continue
         record = _build_record(connection, audit)
@@ -239,12 +260,14 @@ def triage_people(connection: sqlite3.Connection, filters: TriageFilters | None 
         for anomaly in record["anomalies"]:
             disposition_keys.append((int(record["person_id"]), str(anomaly["code"]), fingerprint_anomaly(int(record["person_id"]), anomaly)))
     dispositions = dispositions_for_fingerprints(connection, disposition_keys)
+    remediations = summaries_for_fingerprints(connection, disposition_keys)
     for record in records:
         for anomaly in record["anomalies"]:
             fingerprint = fingerprint_anomaly(int(record["person_id"]), anomaly)
             anomaly["fingerprint"] = fingerprint
             disposition = dispositions.get((int(record["person_id"]), str(anomaly["code"]), fingerprint))
             anomaly["disposition"] = disposition
+            anomaly["remediation"] = remediations.get((int(record["person_id"]), str(anomaly["code"]), fingerprint))
     records = [record for record in records if _record_matches(record, filters)]
     for record in records:
         record.pop("_audit")

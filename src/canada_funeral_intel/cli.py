@@ -76,9 +76,16 @@ from .people.cli import (
     run_people_rollback,
     run_people_show,
     run_people_triage,
+    run_remediation_create,
+    run_remediation_history,
+    run_remediation_list,
+    run_remediation_show,
+    run_remediation_sync,
+    run_remediation_update,
 )
 from .people.dispositions import DispositionStatus
 from .people.models import PersonReviewStatus
+from .people.remediation import TASK_TYPES, RemediationStatus
 from .people.triage import TriageFilters, TriageSeverity
 from .storage import DatabaseError, database_session
 from .storage.migrations import (
@@ -607,6 +614,11 @@ def build_parser() -> argparse.ArgumentParser:
         parser.add_argument("--review-status", choices=("pending", "accepted", "rejected", "deferred"))
         parser.add_argument("--disposition-status", choices=tuple(item.value for item in DispositionStatus))
         parser.add_argument("--unreviewed-only", action="store_true")
+        parser.add_argument("--has-remediation", action="store_true")
+        parser.add_argument("--no-remediation", action="store_true")
+        parser.add_argument("--remediation-status", choices=tuple(item.value for item in RemediationStatus))
+        parser.add_argument("--remediation-owner")
+        parser.add_argument("--overdue-remediation", action="store_true")
         parser.add_argument("--has-email", action="store_true")
         parser.add_argument("--has-phone", action="store_true")
         parser.add_argument("--include-historical", action="store_true")
@@ -639,6 +651,45 @@ def build_parser() -> argparse.ArgumentParser:
     anomaly_sync_parser = people_subparsers.add_parser("anomaly-sync", help="Mark changed dispositions stale.")
     anomaly_sync_parser.add_argument("--person-id", type=int)
     anomaly_sync_parser.add_argument("--actor", default="anomaly-sync")
+    remediation_parser = people_subparsers.add_parser("remediation", help="Manage manual person anomaly remediation tasks.")
+    remediation_subparsers = remediation_parser.add_subparsers(dest="remediation_command")
+    remediation_list = remediation_subparsers.add_parser("list", help="List remediation tasks.")
+    remediation_list.add_argument("--person-id", type=int)
+    remediation_list.add_argument("--anomaly")
+    remediation_list.add_argument("--fingerprint")
+    remediation_list.add_argument("--status", choices=tuple(item.value for item in RemediationStatus))
+    remediation_list.add_argument("--owner")
+    remediation_list.add_argument("--task-type", choices=TASK_TYPES)
+    remediation_list.add_argument("--due-before")
+    remediation_list.add_argument("--due-after")
+    remediation_list.add_argument("--include-stale", action="store_true")
+    remediation_list.add_argument("--overdue-only", action="store_true")
+    remediation_list.add_argument("--limit", type=int)
+    remediation_show = remediation_subparsers.add_parser("show", help="Show one remediation task.")
+    remediation_show.add_argument("--task-id", required=True, type=int)
+    remediation_history = remediation_subparsers.add_parser("history", help="Show remediation task history.")
+    remediation_history.add_argument("--task-id", required=True, type=int)
+    remediation_create = remediation_subparsers.add_parser("create", help="Create a manual remediation task.")
+    remediation_create.add_argument("--person-id", required=True, type=int)
+    remediation_create.add_argument("--anomaly", required=True)
+    remediation_create.add_argument("--fingerprint", required=True)
+    remediation_create.add_argument("--task-type", required=True, choices=TASK_TYPES)
+    remediation_create.add_argument("--actor", required=True)
+    remediation_create.add_argument("--owner")
+    remediation_create.add_argument("--due-at")
+    remediation_create.add_argument("--note")
+    remediation_update = remediation_subparsers.add_parser("update", help="Update a remediation task.")
+    remediation_update.add_argument("--task-id", required=True, type=int)
+    remediation_update.add_argument("--status", choices=tuple(item.value for item in RemediationStatus if item is not RemediationStatus.STALE))
+    remediation_update.add_argument("--actor", required=True)
+    remediation_update.add_argument("--owner")
+    remediation_update.add_argument("--clear-owner", action="store_true")
+    remediation_update.add_argument("--due-at")
+    remediation_update.add_argument("--clear-due-at", action="store_true")
+    remediation_update.add_argument("--note")
+    remediation_sync_parser = people_subparsers.add_parser("remediation-sync", help="Mark changed remediation tasks stale.")
+    remediation_sync_parser.add_argument("--person-id", type=int)
+    remediation_sync_parser.add_argument("--actor", default="remediation-sync")
 
     return parser
 
@@ -1005,6 +1056,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                             review_status=args.review_status,
                             disposition_status=None if args.disposition_status is None else DispositionStatus(args.disposition_status),
                             unreviewed_only=args.unreviewed_only,
+                            has_remediation=args.has_remediation,
+                            no_remediation=args.no_remediation,
+                            remediation_status=args.remediation_status,
+                            remediation_owner=args.remediation_owner,
+                            overdue_remediation=args.overdue_remediation,
                             has_email=args.has_email,
                             has_phone=args.has_phone,
                             include_historical=args.include_historical,
@@ -1025,6 +1081,22 @@ def main(argv: Sequence[str] | None = None) -> int:
                         return 2
                 elif args.people_command == "anomaly-sync":
                     payload = run_anomaly_sync(connection, person_id=args.person_id, actor=args.actor)
+                elif args.people_command == "remediation":
+                    if args.remediation_command == "list":
+                        payload = run_remediation_list(connection, person_id=args.person_id, anomaly_code=args.anomaly, fingerprint=args.fingerprint, status=None if args.status is None else RemediationStatus(args.status), owner=args.owner, task_type=args.task_type, due_before=args.due_before, due_after=args.due_after, include_stale=args.include_stale, overdue_only=args.overdue_only, limit=args.limit)
+                    elif args.remediation_command == "show":
+                        payload = run_remediation_show(connection, args.task_id)
+                    elif args.remediation_command == "history":
+                        payload = run_remediation_history(connection, args.task_id)
+                    elif args.remediation_command == "create":
+                        payload = run_remediation_create(connection, person_id=args.person_id, anomaly_code=args.anomaly, fingerprint=args.fingerprint, task_type=args.task_type, actor=args.actor, owner=args.owner, due_at=args.due_at, note=args.note)
+                    elif args.remediation_command == "update":
+                        payload = run_remediation_update(connection, task_id=args.task_id, status=None if args.status is None else RemediationStatus(args.status), actor=args.actor, owner=args.owner, clear_owner=args.clear_owner, due_at=args.due_at, clear_due_at=args.clear_due_at, note=args.note)
+                    else:
+                        parser.parse_args(["people", "remediation", "--help"])
+                        return 2
+                elif args.people_command == "remediation-sync":
+                    payload = run_remediation_sync(connection, person_id=args.person_id, actor=args.actor)
                 else:
                     parser.parse_args(["people", "--help"])
                     return 2

@@ -22,6 +22,14 @@ from canada_funeral_intel.people.models import (
     PersonResolutionError,
     PersonReviewStatus,
 )
+from canada_funeral_intel.people.remediation import (
+    create_task,
+    list_tasks,
+    show_task,
+    sync_tasks,
+    task_history,
+    update_task,
+)
 from canada_funeral_intel.people.resolution import (
     apply_person_review_decision,
     list_people,
@@ -191,6 +199,50 @@ def run_anomaly_review_decide(connection: sqlite3.Connection, **kwargs: object) 
 def run_anomaly_sync(connection: sqlite3.Connection, *, person_id: int | None, actor: str) -> dict[str, int]:
     try:
         return sync_dispositions(connection, person_id=person_id, actor=actor)
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+
+
+def run_remediation_create(connection: sqlite3.Connection, **kwargs: object) -> dict[str, object]:
+    try:
+        result = create_task(connection, **kwargs)
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+    return {"task_id": result.task_id, "person_id": result.person_id, "anomaly_code": result.anomaly_code, "anomaly_fingerprint": result.anomaly_fingerprint, "status": result.status.value, "actor": result.actor, "changed": result.changed}
+
+
+def run_remediation_update(connection: sqlite3.Connection, **kwargs: object) -> dict[str, object]:
+    try:
+        result = update_task(connection, **kwargs)
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+    return {"task_id": result.task_id, "person_id": result.person_id, "anomaly_code": result.anomaly_code, "anomaly_fingerprint": result.anomaly_fingerprint, "status": result.status.value, "actor": result.actor, "changed": result.changed}
+
+
+def run_remediation_list(connection: sqlite3.Connection, **kwargs: object) -> list[dict[str, object]]:
+    try:
+        return list_tasks(connection, **kwargs)
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+
+
+def run_remediation_show(connection: sqlite3.Connection, task_id: int) -> dict[str, object]:
+    try:
+        return show_task(connection, task_id)
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+
+
+def run_remediation_history(connection: sqlite3.Connection, task_id: int) -> list[dict[str, object]]:
+    try:
+        return task_history(connection, task_id)
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+
+
+def run_remediation_sync(connection: sqlite3.Connection, *, person_id: int | None, actor: str) -> dict[str, int]:
+    try:
+        return sync_tasks(connection, person_id=person_id, actor=actor)
     except PersonResolutionError as exc:
         raise PeopleCommandError(str(exc)) from exc
 
