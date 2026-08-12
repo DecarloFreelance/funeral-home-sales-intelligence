@@ -146,7 +146,9 @@ def run_website_verify(
     try:
         row = connection.execute(
             """
-            SELECT normalized_url
+            SELECT
+                normalized_url,
+                website_kind
             FROM websites
             WHERE id = ?
             """,
@@ -186,6 +188,9 @@ def run_website_verify(
             timeout_seconds=timeout_seconds,
             max_redirects=max_redirects,
             expected_business_name=expected_business_name,
+            allow_identity_mismatch=(
+                str(row["website_kind"]) != "shared"
+            ),
         )
         check_id = insert_website_check(connection, check)
         stored = list_website_checks(connection, website_id=website_id)

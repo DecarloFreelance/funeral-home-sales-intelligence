@@ -360,6 +360,7 @@ def probe_website(
     timeout_seconds: int,
     max_redirects: int = _DEFAULT_MAX_REDIRECTS,
     expected_business_name: str | None = None,
+    allow_identity_mismatch: bool = True,
 ) -> WebsiteCheck:
     if website_id < 1:
         raise WebsiteProbeError("website_id must be a positive integer")
@@ -441,12 +442,25 @@ def probe_website(
         expected_business_name=expected_business_name,
     )
 
+    identity_observable = (
+        preferred.status_code is not None
+        and 200 <= preferred.status_code < 300
+        and preferred.content_type is not None
+        and "html" in preferred.content_type.casefold()
+    )
+
     if not reachable:
         outcome = WebsiteCheckOutcome.UNREACHABLE
     elif analysis.parked_or_for_sale:
         outcome = WebsiteCheckOutcome.PARKED
-    elif analysis.identity_score is not None and analysis.identity_score < 0.25:
-        outcome = WebsiteCheckOutcome.MISMATCH
+    elif (
+        analysis.identity_score is not None
+        and analysis.identity_score < 0.25
+    ):
+        if identity_observable and allow_identity_mismatch:
+            outcome = WebsiteCheckOutcome.MISMATCH
+        else:
+            outcome = WebsiteCheckOutcome.UNKNOWN
     else:
         outcome = WebsiteCheckOutcome.REACHABLE
 
