@@ -105,6 +105,8 @@ from .quality.cli import (
     run_quality_summary,
 )
 from .quality.scoring import READINESS, SUBJECT_TYPES
+from .reporting.cli import parse_reference_time as parse_report_reference_time
+from .reporting.cli import run_report, run_report_export
 from .storage import DatabaseError, database_session
 from .storage.migrations import (
     MigrationError,
@@ -627,6 +629,17 @@ def build_parser() -> argparse.ArgumentParser:
     quality_export_parser.add_argument("--reference-time")
     quality_export_parser.add_argument("--include-historical", action="store_true")
 
+    report_parser = subparsers.add_parser("report", help="Read-only aggregate reporting and exports.")
+    report_subparsers = report_parser.add_subparsers(dest="report_command")
+    for report_name in ("coverage", "quality", "business", "people", "summary"):
+        item = report_subparsers.add_parser(report_name, help=f"Generate the {report_name} report.")
+        item.add_argument("--reference-time")
+        item.add_argument("--include-historical", action="store_true")
+    report_export = report_subparsers.add_parser("export", help="Export deterministic report files and manifest.")
+    report_export.add_argument("--output", required=True, type=Path)
+    report_export.add_argument("--reference-time")
+    report_export.add_argument("--include-historical", action="store_true")
+
     people_parser = subparsers.add_parser("people", help="Review and resolve canonical people.")
     people_subparsers = people_parser.add_subparsers(dest="people_command")
     people_review_parser = people_subparsers.add_parser("people-review", help="Review page-level person observations.")
@@ -977,6 +990,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         except (DatabaseError, ValueError) as exc:
             print(f"quality error: {exc}", file=sys.stderr)
             return 13
+
+    if args.command == "report":
+        if args.report_command is None:
+            parser.parse_args(["report", "--help"])
+            return 2
+        try:
+            reference_time = parse_report_reference_time(args.reference_time)
+            with quality_database_session(settings.database_path) as connection:
+                payload = run_report_export(connection, output=args.output, include_historical=args.include_historical, reference_time=reference_time) if args.report_command == "export" else run_report(connection, args.report_command, include_historical=args.include_historical, reference_time=reference_time)
+            print(json.dumps(payload, indent=2, sort_keys=True))
+            return 0
+        except (DatabaseError, ValueError) as exc:
+            print(f"report error: {exc}", file=sys.stderr)
+            return 14
 
     if args.command == "sources" and args.sources_command == "collect":
         from canada_funeral_intel.collectors.manitoba_cli import (
