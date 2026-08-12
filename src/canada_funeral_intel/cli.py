@@ -70,8 +70,10 @@ from .people.cli import (
     run_people_review_populate,
     run_people_rollback,
     run_people_show,
+    run_people_triage,
 )
 from .people.models import PersonReviewStatus
+from .people.triage import TriageFilters, TriageSeverity
 from .storage import DatabaseError, database_session
 from .storage.migrations import (
     MigrationError,
@@ -587,6 +589,25 @@ def build_parser() -> argparse.ArgumentParser:
     people_export_parser.add_argument("--format", required=True, choices=("csv",))
     people_export_parser.add_argument("--output", required=True, type=Path)
     people_export_parser.add_argument("--include-historical", action="store_true")
+    def add_triage_options(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--person-id", type=int)
+        parser.add_argument("--anomaly")
+        parser.add_argument("--severity", choices=tuple(item.value for item in TriageSeverity))
+        parser.add_argument("--traceability", choices=("traceable", "incomplete", "orphaned"))
+        parser.add_argument("--entity-id", type=int)
+        parser.add_argument("--branch-id", type=int)
+        parser.add_argument("--website-id", type=int)
+        parser.add_argument("--page-id", type=int)
+        parser.add_argument("--review-status", choices=("pending", "accepted", "rejected", "deferred"))
+        parser.add_argument("--has-email", action="store_true")
+        parser.add_argument("--has-phone", action="store_true")
+        parser.add_argument("--include-historical", action="store_true")
+        parser.add_argument("--limit", type=int)
+
+    people_triage_parser = people_subparsers.add_parser("triage", help="Show read-only anomaly triage.")
+    add_triage_options(people_triage_parser)
+    people_triage_queue_parser = people_subparsers.add_parser("triage-queue", help="List ranked read-only anomaly triage.")
+    add_triage_options(people_triage_queue_parser)
 
     return parser
 
@@ -938,6 +959,25 @@ def main(argv: Sequence[str] | None = None) -> int:
                     payload = run_people_audit_list(connection, include_historical=args.include_historical)
                 elif args.people_command == "export":
                     payload = run_people_export(connection, output=args.output, include_historical=args.include_historical)
+                elif args.people_command in {"triage", "triage-queue"}:
+                    payload = run_people_triage(
+                        connection,
+                        TriageFilters(
+                            person_id=args.person_id,
+                            anomaly=args.anomaly,
+                            severity=None if args.severity is None else TriageSeverity(args.severity),
+                            traceability=args.traceability,
+                            entity_id=args.entity_id,
+                            branch_id=args.branch_id,
+                            website_id=args.website_id,
+                            page_id=args.page_id,
+                            review_status=args.review_status,
+                            has_email=args.has_email,
+                            has_phone=args.has_phone,
+                            include_historical=args.include_historical,
+                            limit=args.limit,
+                        ),
+                    )
                 else:
                     parser.parse_args(["people", "--help"])
                     return 2

@@ -112,6 +112,7 @@ def test_csv_export_is_deterministic_and_preserves_history(tmp_path: Path) -> No
             "person_merge_history.csv",
             "person_observations.csv",
             "person_reviews.csv",
+            "person_triage.csv",
         ]
         assert len((first_dir / "person_merge_history.csv").read_text(encoding="utf-8").splitlines()) == 2
         for path in first_dir.iterdir():

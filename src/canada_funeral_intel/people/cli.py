@@ -22,6 +22,7 @@ from canada_funeral_intel.people.resolution import (
     resolve_accepted_observation,
     show_person,
 )
+from canada_funeral_intel.people.triage import TriageFilters, triage_people
 
 
 class PeopleCommandError(RuntimeError):
@@ -132,6 +133,13 @@ def run_people_export(connection: sqlite3.Connection, *, output: Path, include_h
     except PersonResolutionError as exc:
         raise PeopleCommandError(str(exc)) from exc
     return {"format": "csv", "output": str(output), "files": [path.name for path in paths]}
+
+
+def run_people_triage(connection: sqlite3.Connection, filters: TriageFilters) -> list[dict[str, object]]:
+    try:
+        return triage_people(connection, filters)
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
 
 
 def print_people_payload(payload: object) -> None:

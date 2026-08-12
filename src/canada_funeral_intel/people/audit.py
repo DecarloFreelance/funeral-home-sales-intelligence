@@ -394,6 +394,7 @@ _EXPORTS: dict[str, tuple[str, ...]] = {
     "person_reviews": ("person_id", "review_queue_id", "observation_id", "status", "reviewer_note", "created_at", "reviewed_at"),
     "person_merge_history": ("person_id", "merge_id", "survivor_person_id", "absorbed_person_id", "merge_reason", "actor", "created_at", "state", "rolled_back_at", "rollback_actor", "rollback_reason"),
     "person_anomalies": ("person_id", "code", "affiliation_id", "contact_id", "merge_id", "observation_ids", "reasons", "values", "entity_ids"),
+    "person_triage": ("person_id", "person_status", "display_name", "triage_priority", "severity", "anomaly_count", "anomaly_codes", "traceability_status", "entity_ids", "branch_ids", "website_ids", "page_ids", "observation_count", "active_affiliation_count", "active_contact_count", "merge_count", "rollback_count"),
 }
 
 
@@ -403,6 +404,9 @@ def export_people_csv(connection: sqlite3.Connection, output: Path, *, include_h
     output.mkdir(parents=True, exist_ok=True)
     audits = [audit_person(connection, int(row["person_id"])) for row in connection.execute("SELECT id AS person_id FROM people " + ("" if include_historical else "WHERE status = 'active'") + " ORDER BY normalized_name, id").fetchall()]
     rows: dict[str, list[dict[str, object]]] = {name: [] for name in _EXPORTS}
+    from canada_funeral_intel.people.triage import TriageFilters, triage_people
+
+    triage_rows = triage_people(connection, TriageFilters(include_historical=include_historical))
     for audit in audits:
         person_id = int(audit["person"]["person_id"])
         rows["people"].append(audit["person"])
@@ -424,6 +428,15 @@ def export_people_csv(connection: sqlite3.Connection, output: Path, *, include_h
             rows["person_merge_history"].append({"person_id": person_id, **item})
         for item in audit["anomalies"]:
             rows["person_anomalies"].append({"person_id": person_id, **item})
+    for item in triage_rows:
+        rows["person_triage"].append({
+            **item,
+            "anomaly_codes": "|".join(str(code) for code in item["anomaly_codes"]),
+            "entity_ids": "|".join(str(value) for value in item["entity_ids"]),
+            "branch_ids": "|".join(str(value) for value in item["branch_ids"]),
+            "website_ids": "|".join(str(value) for value in item["website_ids"]),
+            "page_ids": "|".join(str(value) for value in item["page_ids"]),
+        })
     paths: list[Path] = []
     for name, columns in _EXPORTS.items():
         path = output / f"{name}.csv"
