@@ -60,10 +60,12 @@ from .people.cli import (
     PeopleCommandError,
     print_people_payload,
     run_people_list,
+    run_people_merge,
     run_people_resolve,
     run_people_review_decide,
     run_people_review_list,
     run_people_review_populate,
+    run_people_rollback,
     run_people_show,
 )
 from .people.models import PersonReviewStatus
@@ -567,6 +569,13 @@ def build_parser() -> argparse.ArgumentParser:
     people_show_parser.add_argument("--person-id", required=True, type=int)
     people_resolve_parser = people_subparsers.add_parser("resolve", help="Resolve an accepted observation explicitly.")
     people_resolve_parser.add_argument("--observation-id", required=True, type=int)
+    people_merge_parser = people_subparsers.add_parser("merge", help="Merge two canonical people explicitly.")
+    people_merge_parser.add_argument("--survivor-person-id", required=True, type=int)
+    people_merge_parser.add_argument("--absorbed-person-id", required=True, type=int)
+    people_merge_parser.add_argument("--reason", required=True)
+    people_rollback_parser = people_subparsers.add_parser("rollback", help="Roll back a canonical person merge.")
+    people_rollback_parser.add_argument("--merge-id", required=True, type=int)
+    people_rollback_parser.add_argument("--reason", required=True)
 
     return parser
 
@@ -908,6 +917,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                     payload = run_people_show(connection, args.person_id)
                 elif args.people_command == "resolve":
                     payload = run_people_resolve(connection, args.observation_id)
+                elif args.people_command == "merge":
+                    payload = run_people_merge(connection, survivor_person_id=args.survivor_person_id, absorbed_person_id=args.absorbed_person_id, reason=args.reason)
+                elif args.people_command == "rollback":
+                    payload = run_people_rollback(connection, merge_id=args.merge_id, reason=args.reason)
                 else:
                     parser.parse_args(["people", "--help"])
                     return 2

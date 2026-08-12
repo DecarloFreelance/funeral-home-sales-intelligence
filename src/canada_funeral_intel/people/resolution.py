@@ -141,12 +141,13 @@ def list_people(
         SELECT DISTINCT p.id, p.canonical_name, p.normalized_name, p.status
         FROM people AS p
         LEFT JOIN person_affiliations AS a ON a.person_id = p.id
+        WHERE p.status = 'active'
     """
     parameters: tuple[object, ...] = ()
     if entity_id is not None:
         if entity_id < 1:
             raise PersonResolutionError("entity_id must be positive")
-        query += " WHERE a.entity_id = ?"
+        query += " AND a.entity_id = ?"
         parameters = (entity_id,)
     query += " ORDER BY p.normalized_name, p.id"
     try:

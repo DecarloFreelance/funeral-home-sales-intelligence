@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from canada_funeral_intel.people.models import PersonResolutionError, PersonReviewStatus
 from canada_funeral_intel.people.cli import run_people_review_list
+from canada_funeral_intel.people.models import PersonResolutionError, PersonReviewStatus
 from canada_funeral_intel.people.resolution import (
     apply_person_review_decision,
     list_person_review_queue,

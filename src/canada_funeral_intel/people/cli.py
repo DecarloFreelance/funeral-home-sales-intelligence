@@ -3,7 +3,12 @@ from __future__ import annotations
 import json
 import sqlite3
 
-from canada_funeral_intel.people.models import PersonResolutionError, PersonReviewStatus
+from canada_funeral_intel.people.merge import merge_people, rollback_person_merge
+from canada_funeral_intel.people.models import (
+    PersonMergeDecision,
+    PersonResolutionError,
+    PersonReviewStatus,
+)
 from canada_funeral_intel.people.resolution import (
     apply_person_review_decision,
     list_people,
@@ -62,6 +67,43 @@ def run_people_resolve(connection: sqlite3.Connection, observation_id: int) -> d
     except PersonResolutionError as exc:
         raise PeopleCommandError(str(exc)) from exc
     return {"observation_id": observation_id, "person_id": person_id}
+
+
+def run_people_merge(connection: sqlite3.Connection, *, survivor_person_id: int, absorbed_person_id: int, reason: str, actor: str = "manual_cli") -> dict[str, object]:
+    try:
+        result = merge_people(connection, PersonMergeDecision(survivor_person_id, absorbed_person_id, actor, reason))
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+    return {
+        "merge_id": result.merge_history_id,
+        "survivor_person_id": result.survivor_person_id,
+        "absorbed_person_id": result.absorbed_person_id,
+        "survivor_status": "active",
+        "absorbed_status": "merged",
+        "affiliations_moved": result.affiliations_moved,
+        "affiliations_deduplicated": result.affiliations_deduplicated,
+        "contacts_moved": result.contacts_moved,
+        "contacts_deduplicated": result.contacts_deduplicated,
+        "evidence_moved": result.evidence_moved,
+        "evidence_deduplicated": result.evidence_deduplicated,
+        "created_at": result.created_at,
+    }
+
+
+def run_people_rollback(connection: sqlite3.Connection, *, merge_id: int, reason: str, actor: str = "manual_cli") -> dict[str, object]:
+    try:
+        result = rollback_person_merge(connection, merge_id, actor=actor, reason=reason)
+    except PersonResolutionError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+    return {
+        "merge_id": result.merge_history_id,
+        "survivor_person_id": result.survivor_person_id,
+        "restored_person_id": result.restored_person_id,
+        "restored_affiliations": result.restored_affiliations,
+        "restored_contacts": result.restored_contacts,
+        "restored_evidence": result.restored_evidence,
+        "rolled_back_at": result.rolled_back_at,
+    }
 
 
 def print_people_payload(payload: object) -> None:
