@@ -23,6 +23,7 @@ from .collectors.source_registry import (
     SourceRegistryError,
     load_source_registry,
 )
+from .collectors.source_registry_storage import seed_source_registry
 from .config import ConfigurationError, load_settings
 from .deduplication.merge_cli import (
     MergeCommandError,
@@ -118,6 +119,10 @@ def build_parser() -> argparse.ArgumentParser:
     sources_subparsers.add_parser(
         "validate",
         help="Validate the configured source registry.",
+    )
+    sources_subparsers.add_parser(
+        "seed",
+        help="Synchronize configured source metadata into the database.",
     )
     sources_show_parser = sources_subparsers.add_parser(
         "show",
@@ -496,6 +501,27 @@ def _run_sources_validate() -> int:
     return 0
 
 
+def _run_sources_seed(database_path: Path) -> int:
+    registry = _load_registry()
+
+    with database_session(database_path) as connection:
+        apply_pending_migrations(connection, _MIGRATION_DIR)
+        result = seed_source_registry(connection, registry)
+        connection.commit()
+
+    payload = {
+        "database_path": str(database_path),
+        "registry_path": str(_SOURCE_REGISTRY_PATH),
+        "definitions": len(registry),
+        "inserted": result.inserted,
+        "updated": result.updated,
+        "unchanged": result.unchanged,
+        "total": result.total,
+    }
+    print(json.dumps(payload, indent=2, sort_keys=True))
+    return 0
+
+
 def _run_sources_list() -> int:
     registry = _load_registry()
     payload = [_source_payload(source) for source in registry]
@@ -735,6 +761,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         try:
             if args.sources_command == "validate":
                 return _run_sources_validate()
+            if args.sources_command == "seed":
+                return _run_sources_seed(settings.database_path)
             if args.sources_command == "list":
                 return _run_sources_list()
             if args.sources_command == "show":
@@ -746,7 +774,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                 )
                 print_afsrb_probe_result(payload)
                 return 0
-        except (SourceRegistryError, AfsrbProbeCommandError) as exc:
+        except (
+            SourceRegistryError,
+            AfsrbProbeCommandError,
+            DatabaseError,
+            MigrationError,
+        ) as exc:
             print(f"source registry error: {exc}", file=sys.stderr)
             return 4
 

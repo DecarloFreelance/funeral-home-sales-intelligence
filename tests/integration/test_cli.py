@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import sqlite3
 import subprocess
 import sys
 from pathlib import Path
@@ -135,6 +136,47 @@ def test_sources_validate() -> None:
     assert payload["valid"] is True
     assert payload["count"] == 2
     assert payload["registry_path"].endswith("config/sources.json")
+
+
+def test_sources_seed_initializes_registry_and_is_idempotent(
+    tmp_path: Path,
+) -> None:
+    database_path = tmp_path / "sources-seed.sqlite3"
+    env = {"DATABASE_PATH": str(database_path)}
+
+    first = run_cli("sources", "seed", env=env)
+    second = run_cli("sources", "seed", env=env)
+
+    assert first.returncode == 0
+    assert second.returncode == 0
+
+    first_payload = json.loads(first.stdout)
+    second_payload = json.loads(second.stdout)
+
+    assert first_payload["database_path"] == str(database_path)
+    assert first_payload["definitions"] == 2
+    assert first_payload["inserted"] == 2
+    assert first_payload["updated"] == 0
+    assert first_payload["unchanged"] == 0
+    assert first_payload["total"] == 2
+
+    assert second_payload["inserted"] == 0
+    assert second_payload["updated"] == 0
+    assert second_payload["unchanged"] == 2
+    assert second_payload["total"] == 2
+
+    with sqlite3.connect(database_path) as connection:
+        names = [
+            row[0]
+            for row in connection.execute(
+                "SELECT name FROM source_datasets ORDER BY name COLLATE NOCASE"
+            )
+        ]
+
+    assert names == [
+        "Alberta Funeral Services Regulatory Board",
+        "Manual Canadian Funeral Home Source",
+    ]
 
 
 def test_sources_list_is_deterministic() -> None:
