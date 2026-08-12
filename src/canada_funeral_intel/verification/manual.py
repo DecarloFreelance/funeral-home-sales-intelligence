@@ -49,7 +49,10 @@ def export_manual_website_template(
     query = """
         SELECT
             e.id,
-            e.canonical_name,
+            COALESCE(
+                e.canonical_name,
+                MAX(CASE WHEN nv.field_name = 'business_name' THEN nv.normalized_value END)
+            ) AS entity_name,
             MAX(CASE WHEN nv.field_name = 'city' THEN nv.normalized_value END) AS city,
             MAX(CASE WHEN nv.field_name = 'province' THEN nv.normalized_value END) AS province
         FROM entities AS e
@@ -61,6 +64,10 @@ def export_manual_website_template(
               WHERE w.entity_id = e.id AND w.status <> 'rejected'
           )
         GROUP BY e.id, e.canonical_name
+        HAVING TRIM(COALESCE(
+            e.canonical_name,
+            MAX(CASE WHEN nv.field_name = 'business_name' THEN nv.normalized_value END)
+        )) <> ''
         ORDER BY e.id
     """
     parameters: tuple[object, ...] = ()
@@ -78,7 +85,7 @@ def export_manual_website_template(
                 writer.writerow(
                     (
                         row["id"],
-                        _safe_csv_cell(row["canonical_name"]),
+                        _safe_csv_cell(row["entity_name"]),
                         _safe_csv_cell(row["city"]),
                         _safe_csv_cell(row["province"]),
                         "",
