@@ -8,6 +8,7 @@ from urllib.parse import urljoin, urlsplit
 
 from canada_funeral_intel.normalization.scalars import normalize_domain, normalize_url
 from canada_funeral_intel.storage.database import transaction
+from canada_funeral_intel.verification.content_analysis import analyze_website_content
 from canada_funeral_intel.verification.probe import probe_http
 
 
@@ -28,6 +29,8 @@ class DiscoveredPage:
     link_text: str | None = None
     status_code: int | None = None
     content_type: str | None = None
+    identity_score: float | None = None
+    identity_observable: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -222,16 +225,20 @@ def _same_site(
 def _load_website(
     connection: sqlite3.Connection,
     website_id: int,
-) -> tuple[str, str]:
+) -> tuple[str, str, str]:
     if website_id < 1:
         raise PageDiscoveryError("website_id must be a positive integer")
 
     try:
         row = connection.execute(
             """
-            SELECT normalized_url, domain
+            SELECT
+                websites.normalized_url,
+                websites.domain,
+                entities.canonical_name
             FROM websites
-            WHERE id = ?
+            JOIN entities ON entities.id = websites.entity_id
+            WHERE websites.id = ?
             """,
             (website_id,),
         ).fetchone()
@@ -241,7 +248,11 @@ def _load_website(
     if row is None:
         raise PageDiscoveryError(f"Website not found: {website_id}")
 
-    return str(row["normalized_url"]), str(row["domain"])
+    return (
+        str(row["normalized_url"]),
+        str(row["domain"]),
+        str(row["canonical_name"]),
+    )
 
 
 def upsert_website_page(
@@ -277,9 +288,11 @@ def upsert_website_page(
                         discovered_from_url,
                         link_text,
                         status_code,
-                        content_type
+                        content_type,
+                        identity_score,
+                        identity_observable
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         page.website_id,
@@ -293,6 +306,8 @@ def upsert_website_page(
                         page.link_text,
                         page.status_code,
                         page.content_type,
+                        page.identity_score,
+                        int(page.identity_observable),
                     ),
                 )
                 if cursor.lastrowid is None:
@@ -315,6 +330,8 @@ def upsert_website_page(
                         END,
                     status_code = ?,
                     content_type = ?,
+                    identity_score = ?,
+                    identity_observable = ?,
                     updated_at =
                         strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
                 WHERE id = ?
@@ -326,6 +343,8 @@ def upsert_website_page(
                     page.link_text,
                     page.status_code,
                     page.content_type,
+                    page.identity_score,
+                    int(page.identity_observable),
                     page_id,
                 ),
             )
@@ -356,6 +375,8 @@ def list_website_pages(
             link_text,
             status_code,
             content_type,
+            identity_score,
+            identity_observable,
             created_at,
             updated_at
         FROM website_pages
@@ -404,6 +425,12 @@ def list_website_pages(
             "content_type": (
                 None if row["content_type"] is None else str(row["content_type"])
             ),
+            "identity_score": (
+                None
+                if row["identity_score"] is None
+                else float(row["identity_score"])
+            ),
+            "identity_observable": bool(row["identity_observable"]),
             "created_at": str(row["created_at"]),
             "updated_at": str(row["updated_at"]),
         }
@@ -436,7 +463,7 @@ def discover_website_pages(
     if not user_agent.strip():
         raise PageDiscoveryError("user_agent must not be empty")
 
-    start_url, expected_domain = _load_website(
+    start_url, expected_domain, expected_business_name = _load_website(
         connection,
         website_id,
     )
@@ -511,6 +538,21 @@ def discover_website_pages(
             link_text,
         )
 
+        analysis = analyze_website_content(
+            result.body,
+            content_type=result.content_type,
+            status_code=result.status_code,
+            expected_business_name=expected_business_name,
+        )
+        identity_observable = (
+            result.status_code is not None
+            and 200 <= result.status_code < 300
+            and result.content_type is not None
+            and "html" in result.content_type.casefold()
+            and not analysis.soft_404
+            and not analysis.parked_or_for_sale
+        )
+
         page = DiscoveredPage(
             website_id=website_id,
             url=effective_normalized_value,
@@ -523,6 +565,8 @@ def discover_website_pages(
             link_text=link_text,
             status_code=result.status_code,
             content_type=result.content_type,
+            identity_score=(analysis.identity_score if identity_observable else None),
+            identity_observable=identity_observable,
         )
 
         upsert_website_page(connection, page)
