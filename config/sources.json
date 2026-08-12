@@ -1,0 +1,45 @@
+[
+  {
+    "name": "Alberta Funeral Services Regulatory Board",
+    "source_type": "regulator",
+    "source_format": "html",
+    "trust_level": "authoritative",
+    "coverage": [
+      "AB"
+    ],
+    "refresh_interval_days": 30,
+    "enabled": true,
+    "source_url": "https://www.afsrb.ab.ca/",
+    "publisher": "Alberta Funeral Services Regulatory Board",
+    "jurisdiction": "AB",
+    "licensing_notes": "Public regulatory source; verify collection terms before implementing a collector.",
+    "notes": "Seed registry metadata only. No downloading occurs in Phase 1."
+  },
+  {
+    "name": "Manual Canadian Funeral Home Source",
+    "source_type": "manual",
+    "source_format": "manual",
+    "trust_level": "medium",
+    "coverage": [
+      "AB",
+      "BC",
+      "MB",
+      "NB",
+      "NL",
+      "NS",
+      "NT",
+      "NU",
+      "ON",
+      "PE",
+      "QC",
+      "SK",
+      "YT"
+    ],
+    "refresh_interval_days": 90,
+    "enabled": true,
+    "publisher": "Canada Funeral Intelligence",
+    "jurisdiction": "CA",
+    "licensing_notes": "User-supplied or manually researched public business records.",
+    "notes": "Fallback metadata source for records supplied manually."
+  }
+]

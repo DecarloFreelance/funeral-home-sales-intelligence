@@ -1,0 +1,25 @@
+.venv/
+.env
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+logs/*.log
+database/sqlite/*.sqlite3
+database/sqlite/*.db
+data/raw/*
+data/staging/*
+data/processed/*
+data/exports/*
+!data/raw/.gitkeep
+!data/staging/.gitkeep
+!data/processed/.gitkeep
+!data/exports/.gitkeep
+
+# Python build metadata
+*.egg-info/
+build/
+dist/
+.backups/
+.continue/
