@@ -56,6 +56,17 @@ from .normalization.cli import (
     print_normalize_result,
     run_normalize_command,
 )
+from .people.cli import (
+    PeopleCommandError,
+    print_people_payload,
+    run_people_list,
+    run_people_resolve,
+    run_people_review_decide,
+    run_people_review_list,
+    run_people_review_populate,
+    run_people_show,
+)
+from .people.models import PersonReviewStatus
 from .storage import DatabaseError, database_session
 from .storage.migrations import (
     MigrationError,
@@ -525,6 +536,37 @@ def build_parser() -> argparse.ArgumentParser:
         "--note",
         help="Optional reviewer note.",
     )
+    website_people_review_parser = website_subparsers.add_parser(
+        "people-review", help="Review page-level person observations."
+    )
+    website_people_review_subparsers = website_people_review_parser.add_subparsers(
+        dest="website_people_review_command"
+    )
+    website_people_review_subparsers.add_parser("populate", help="Queue observations.")
+    website_people_review_list = website_people_review_subparsers.add_parser("list", help="List observation review entries.")
+    website_people_review_list.add_argument("--status", choices=("pending", "accepted", "rejected", "deferred", "all"), default="pending")
+    website_people_review_decide = website_people_review_subparsers.add_parser("decide", help="Decide an observation review entry.")
+    website_people_review_decide.add_argument("--queue-id", required=True, type=int)
+    website_people_review_decide.add_argument("--status", required=True, choices=("accepted", "rejected", "deferred"))
+    website_people_review_decide.add_argument("--note")
+
+    people_parser = subparsers.add_parser("people", help="Review and resolve canonical people.")
+    people_subparsers = people_parser.add_subparsers(dest="people_command")
+    people_review_parser = people_subparsers.add_parser("people-review", help="Review page-level person observations.")
+    people_review_subparsers = people_review_parser.add_subparsers(dest="people_review_command")
+    people_review_subparsers.add_parser("populate", help="Queue page-level person observations.")
+    people_review_list_parser = people_review_subparsers.add_parser("list", help="List person observation review entries.")
+    people_review_list_parser.add_argument("--status", choices=("pending", "accepted", "rejected", "deferred", "all"), default="pending")
+    people_review_decide_parser = people_review_subparsers.add_parser("decide", help="Decide a person observation review entry.")
+    people_review_decide_parser.add_argument("--queue-id", required=True, type=int)
+    people_review_decide_parser.add_argument("--status", required=True, choices=("accepted", "rejected", "deferred"))
+    people_review_decide_parser.add_argument("--note")
+    people_list_parser = people_subparsers.add_parser("list", help="List canonical people.")
+    people_list_parser.add_argument("--entity-id", type=int)
+    people_show_parser = people_subparsers.add_parser("show", help="Show one canonical person.")
+    people_show_parser.add_argument("--person-id", required=True, type=int)
+    people_resolve_parser = people_subparsers.add_parser("resolve", help="Resolve an accepted observation explicitly.")
+    people_resolve_parser.add_argument("--observation-id", required=True, type=int)
 
     return parser
 
@@ -843,6 +885,38 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(f"review error: {exc}", file=sys.stderr)
             return 7
 
+    if args.command == "people":
+        if args.people_command is None:
+            parser.parse_args(["people", "--help"])
+            return 2
+        try:
+            with database_session(settings.database_path) as connection:
+                if args.people_command == "people-review":
+                    if args.people_review_command == "populate":
+                        payload = run_people_review_populate(connection)
+                    elif args.people_review_command == "list":
+                        status = None if args.status == "all" else PersonReviewStatus(args.status)
+                        payload = run_people_review_list(connection, status)
+                    elif args.people_review_command == "decide":
+                        payload = run_people_review_decide(connection, queue_id=args.queue_id, status=PersonReviewStatus(args.status), note=args.note)
+                    else:
+                        parser.parse_args(["people", "people-review", "--help"])
+                        return 2
+                elif args.people_command == "list":
+                    payload = run_people_list(connection, args.entity_id)
+                elif args.people_command == "show":
+                    payload = run_people_show(connection, args.person_id)
+                elif args.people_command == "resolve":
+                    payload = run_people_resolve(connection, args.observation_id)
+                else:
+                    parser.parse_args(["people", "--help"])
+                    return 2
+            print_people_payload(payload)
+            return 0
+        except (DatabaseError, PeopleCommandError) as exc:
+            print(f"people error: {exc}", file=sys.stderr)
+            return 12
+
     if args.command == "website":
         if args.website_command is None:
             parser.parse_args(["website", "--help"])
@@ -935,6 +1009,18 @@ def main(argv: Sequence[str] | None = None) -> int:
 
                     else:
                         parser.parse_args(["website", "review", "--help"])
+                        return 2
+
+                elif args.website_command == "people-review":
+                    if args.website_people_review_command == "populate":
+                        payload = run_people_review_populate(connection)
+                    elif args.website_people_review_command == "list":
+                        status = None if args.status == "all" else PersonReviewStatus(args.status)
+                        payload = run_people_review_list(connection, status)
+                    elif args.website_people_review_command == "decide":
+                        payload = run_people_review_decide(connection, queue_id=args.queue_id, status=PersonReviewStatus(args.status), note=args.note)
+                    else:
+                        parser.parse_args(["website", "people-review", "--help"])
                         return 2
 
                 else:

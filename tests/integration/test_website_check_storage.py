@@ -62,7 +62,7 @@ def test_website_checks_schema_exists(tmp_path: Path) -> None:
             MIGRATION_DIR,
         )
 
-        assert result.status.current_version == 12
+        assert result.status.current_version == 13
 
         columns = {
             row["name"]

@@ -17,7 +17,7 @@ MIGRATION_DIR = Path(__file__).resolve().parents[2] / "database" / "migrations"
 def migrate_database(database_path: Path) -> None:
     with database_session(database_path) as connection:
         result = apply_pending_migrations(connection, MIGRATION_DIR)
-        assert result.status.current_version == 12
+        assert result.status.current_version == 13
 
 
 def insert_dataset(
@@ -75,9 +75,10 @@ def test_source_foundation_migrations_apply_and_are_idempotent(
             10,
             11,
             12,
+            13,
         ]
         assert second.applied == ()
-        assert second.status.current_version == 12
+        assert second.status.current_version == 13
         assert second.status.pending == ()
 
 
@@ -352,7 +353,7 @@ def test_migration_status_reports_version_two(tmp_path: Path) -> None:
     with database_session(database_path) as connection:
         status = migration_status(connection, MIGRATION_DIR)
 
-    assert status.current_version == 12
+    assert status.current_version == 13
     assert [migration.version for migration in status.applied] == [
         1,
         2,
@@ -366,6 +367,7 @@ def test_migration_status_reports_version_two(tmp_path: Path) -> None:
         10,
         11,
         12,
+        13,
     ]
     assert status.pending == ()
     assert status.consistent is True
