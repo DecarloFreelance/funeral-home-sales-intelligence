@@ -6,6 +6,12 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
+from .collectors.afsrb_cli import (
+    AFSRB_SOURCE_NAME,
+    AfsrbProbeCommandError,
+    print_afsrb_probe_result,
+    run_afsrb_probe,
+)
 from .collectors.import_cli import (
     ImportCommandError,
     print_import_result,
@@ -120,6 +126,17 @@ def build_parser() -> argparse.ArgumentParser:
     sources_show_parser.add_argument(
         "name",
         help="Source name to display.",
+    )
+
+    sources_probe_parser = sources_subparsers.add_parser(
+        "probe",
+        help="Probe supported live source metadata without database writes.",
+    )
+    sources_probe_parser.add_argument(
+        "name",
+        nargs="?",
+        default=AFSRB_SOURCE_NAME,
+        help="Registered source name; defaults to the Alberta regulator.",
     )
 
     import_parser = subparsers.add_parser(
@@ -722,7 +739,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                 return _run_sources_list()
             if args.sources_command == "show":
                 return _run_sources_show(args.name)
-        except SourceRegistryError as exc:
+            if args.sources_command == "probe":
+                payload = run_afsrb_probe(
+                    _SOURCE_REGISTRY_PATH,
+                    source_name=args.name,
+                )
+                print_afsrb_probe_result(payload)
+                return 0
+        except (SourceRegistryError, AfsrbProbeCommandError) as exc:
             print(f"source registry error: {exc}", file=sys.stderr)
             return 4
 

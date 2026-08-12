@@ -12,8 +12,8 @@
     "source_url": "https://www.afsrb.ab.ca/",
     "publisher": "Alberta Funeral Services Regulatory Board",
     "jurisdiction": "AB",
-    "licensing_notes": "Public regulatory source; verify collection terms before implementing a collector.",
-    "notes": "Seed registry metadata only. No downloading occurs in Phase 1."
+    "licensing_notes": "Public regulatory source. Read-only establishment-type metadata is probed through the public verification session; protected establishment search is not automated.",
+    "notes": "Session-aware read-only metadata probe implemented. It reports FUN and BOTH establishment classes when available and performs no database writes or CAPTCHA-protected search."
   },
   {
     "name": "Manual Canadian Funeral Home Source",
