@@ -194,9 +194,20 @@ def batch_verify(
             raise WebsiteBatchError("no eligible website candidates")
         cursor = connection.execute(
             """INSERT INTO website_discovery_runs
-            (mode, entity_id, entity_limit, candidate_limit, timeout_seconds, max_redirects, max_retries, network_used, status)
-            VALUES ('network_verify', ?, ?, ?, ?, ?, ?, 1, 'running')""",
-            (entity_id, limits.entity_limit, limits.candidate_limit, limits.timeout_seconds, limits.max_redirects, limits.max_retries),
+            (mode, entity_id, entity_limit, candidate_limit, timeout_seconds,
+             max_redirects, max_retries, network_used, status,
+             entities_examined, candidates_considered)
+            VALUES ('network_verify', ?, ?, ?, ?, ?, ?, 1, 'running', ?, ?)""",
+            (
+                entity_id,
+                limits.entity_limit,
+                limits.candidate_limit,
+                limits.timeout_seconds,
+                limits.max_redirects,
+                limits.max_retries,
+                len({current_entity for _, current_entity in ids}),
+                len(ids),
+            ),
         )
         run_id = int(cursor.lastrowid)
         for website_id, current_entity in ids:

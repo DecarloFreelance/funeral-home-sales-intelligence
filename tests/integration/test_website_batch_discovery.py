@@ -109,6 +109,11 @@ def test_batch_verify_is_bounded_and_resumable_with_fixture_verifier(tmp_path: P
         assert result["succeeded"] == 1
         assert len(calls) == 1
         assert connection.execute("SELECT COUNT(*) FROM website_checks").fetchone()[0] == 1
+        run = connection.execute(
+            "SELECT entities_examined, candidates_considered FROM website_discovery_runs WHERE id = ?",
+            (result["run_id"],),
+        ).fetchone()
+        assert tuple(run) == (1, 1)
 
 
 def test_transient_verification_failure_retries_once(tmp_path: Path) -> None:
