@@ -1504,6 +1504,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     apply_pending_migrations(connection, _MIGRATION_DIR)
                     registry = load_source_registry(_SOURCE_REGISTRY_PATH)
                     seed_source_registry(connection, registry)
+                    connection.commit()
                     source = next(
                         (
                             item

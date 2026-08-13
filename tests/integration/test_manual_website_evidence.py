@@ -115,3 +115,40 @@ def test_manual_website_evidence_dry_run_does_not_write(tmp_path: Path) -> None:
         assert connection.total_changes == before
         assert connection.execute("SELECT COUNT(*) FROM source_records").fetchone()[0] == 0
         assert connection.execute("SELECT COUNT(*) FROM websites").fetchone()[0] == 0
+
+
+def test_manual_website_cli_import_commits_seed_boundary(tmp_path: Path) -> None:
+    import json
+    import os
+    import subprocess
+    import sys
+
+    database_path = tmp_path / "manual-website-cli.sqlite3"
+    input_path = tmp_path / "website-evidence.csv"
+    input_path.write_text(
+        "entity_id,website_url,source_url,note\n1,https://example.ca/,https://directory.test/1,match\n",
+        encoding="utf-8",
+    )
+    with database_session(database_path) as connection:
+        apply_pending_migrations(connection, MIGRATION_DIR)
+        _seed(connection)
+
+    environment = os.environ.copy()
+    environment["DATABASE_PATH"] = str(database_path)
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "canada_funeral_intel",
+            "website",
+            "import-manual",
+            str(input_path),
+        ],
+        cwd=ROOT,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout)["candidates_inserted"] == 1
