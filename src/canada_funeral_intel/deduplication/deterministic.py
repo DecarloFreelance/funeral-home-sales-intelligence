@@ -51,7 +51,7 @@ _RULES = (
         name="exact_address_postal",
         fields=("address", "postal_code"),
         score=0.99,
-        decision=MatchDecision.MATCH,
+        decision=MatchDecision.REVIEW,
     ),
     DeterministicRule(
         name="exact_business_name_postal",

@@ -9,7 +9,7 @@ from canada_funeral_intel.deduplication.deterministic import (
 from canada_funeral_intel.deduplication.models import MatchDecision
 
 
-def test_exact_address_and_postal_code_is_automatic_match() -> None:
+def test_exact_address_and_postal_code_requires_review() -> None:
     result = evaluate_deterministic_signals(
         10,
         {
@@ -25,7 +25,7 @@ def test_exact_address_and_postal_code_is_automatic_match() -> None:
 
     assert result is not None
     assert result.score == 0.99
-    assert result.decision is MatchDecision.MATCH
+    assert result.decision is MatchDecision.REVIEW
     assert "exact_address_postal" in result.matched_rules
     assert result.matched_signals == ("address", "postal_code")
 
@@ -153,3 +153,30 @@ def test_invalid_source_record_ids_are_rejected(
             right_id,
             {"phone": "+14035550100"},
         )
+
+
+def test_shared_address_postal_with_different_names_does_not_auto_match() -> None:
+    result = evaluate_deterministic_signals(
+        722,
+        {
+            "business_name": "scotia cremation centre",
+            "address": "85 sackville cross road",
+            "city": "LOWER SACKVILLE",
+            "province": "NS",
+            "postal_code": "B4C 2M2",
+        },
+        733,
+        {
+            "business_name": "t k barnard funeral home",
+            "address": "85 sackville cross road",
+            "city": "LOWER SACKVILLE",
+            "province": "NS",
+            "postal_code": "B4C 2M2",
+        },
+    )
+
+    assert result is not None
+    assert result.score == 0.99
+    assert result.decision is MatchDecision.REVIEW
+    assert "exact_address_postal" in result.matched_rules
+    assert "exact_business_name_postal" not in result.matched_rules

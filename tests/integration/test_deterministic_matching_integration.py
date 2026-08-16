@@ -139,7 +139,7 @@ def test_deterministic_match_run_persists_candidate_and_evidence(
         ).fetchone()
         assert candidate["candidate_method"] == "deterministic_v1"
         assert candidate["score"] == 0.99
-        assert candidate["decision"] == "match"
+        assert candidate["decision"] == "review"
 
         evidence = connection.execute(
             """
