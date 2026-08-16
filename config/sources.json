@@ -1,5 +1,21 @@
 [
   {
+    "name": "New Brunswick Funeral Directors Association Member Directory",
+    "source_type": "association",
+    "source_format": "html",
+    "trust_level": "medium",
+    "coverage": [
+      "NB"
+    ],
+    "refresh_interval_days": 90,
+    "enabled": true,
+    "source_url": "https://www.nbfuneraldirectors.ca/find-funeral-home/",
+    "publisher": "New Brunswick Funeral Directors and Embalmers Association",
+    "jurisdiction": "NB",
+    "licensing_notes": "Public association member directory; membership is not treated as equivalent to a provincial licence register.",
+    "notes": "Named member facilities and addresses are imported as medium-trust source records for research coverage."
+  },
+  {
     "name": "Santé Québec Funeral Services Permit Directory",
     "source_type": "government",
     "source_format": "pdf",
