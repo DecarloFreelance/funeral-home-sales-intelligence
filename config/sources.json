@@ -1,5 +1,21 @@
 [
   {
+    "name": "Consumer Protection BC Funeral Services Register",
+    "source_type": "regulator",
+    "source_format": "html",
+    "trust_level": "authoritative",
+    "coverage": [
+      "BC"
+    ],
+    "refresh_interval_days": 30,
+    "enabled": true,
+    "source_url": "https://www.consumerprotectionbc.ca/check-a-licence-search/?cpbc_type=funeral",
+    "publisher": "Consumer Protection BC",
+    "jurisdiction": "BC",
+    "licensing_notes": "Official public licence-search results for licensed funeral-service providers in British Columbia.",
+    "notes": "Rows preserve legal business name, trade name, licence number, address, dates, and current licence status. Collection is read-only and does not infer closure from absence."
+  },
+  {
     "name": "Alberta Funeral Services Regulatory Board",
     "source_type": "regulator",
     "source_format": "html",

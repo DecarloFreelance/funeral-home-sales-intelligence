@@ -43,6 +43,22 @@ def test_manitoba_source_is_registered() -> None:
     assert payload["coverage"] == ["MB"]
 
 
+def test_british_columbia_source_is_registered() -> None:
+    result = run_cli(
+        "sources",
+        "show",
+        "Consumer Protection BC Funeral Services Register",
+    )
+
+    assert result.returncode == 0
+    payload = json.loads(result.stdout)
+    assert payload["source_format"] == "html"
+    assert payload["source_type"] == "regulator"
+    assert payload["trust_level"] == "authoritative"
+    assert payload["jurisdiction"] == "BC"
+    assert payload["coverage"] == ["BC"]
+
+
 def test_unknown_live_source_returns_exit_five(tmp_path: Path) -> None:
     result = run_cli(
         "sources",

@@ -134,7 +134,7 @@ def test_sources_validate() -> None:
 
     payload = json.loads(result.stdout)
     assert payload["valid"] is True
-    assert payload["count"] == 6
+    assert payload["count"] == 7
     assert payload["registry_path"].endswith("config/sources.json")
 
 
@@ -154,16 +154,16 @@ def test_sources_seed_initializes_registry_and_is_idempotent(
     second_payload = json.loads(second.stdout)
 
     assert first_payload["database_path"] == str(database_path)
-    assert first_payload["definitions"] == 6
-    assert first_payload["inserted"] == 6
+    assert first_payload["definitions"] == 7
+    assert first_payload["inserted"] == 7
     assert first_payload["updated"] == 0
     assert first_payload["unchanged"] == 0
-    assert first_payload["total"] == 6
+    assert first_payload["total"] == 7
 
     assert second_payload["inserted"] == 0
     assert second_payload["updated"] == 0
-    assert second_payload["unchanged"] == 6
-    assert second_payload["total"] == 6
+    assert second_payload["unchanged"] == 7
+    assert second_payload["total"] == 7
 
     with sqlite3.connect(database_path) as connection:
         names = [
@@ -176,6 +176,7 @@ def test_sources_seed_initializes_registry_and_is_idempotent(
     assert names == [
         "Alberta Funeral Services Regulatory Board",
         "Bereavement Authority of Ontario Public Register",
+        "Consumer Protection BC Funeral Services Register",
         "Funeral Board of Manitoba",
         "Manual Canadian Funeral Home Source",
         "Manual Website Evidence Intake",
@@ -193,7 +194,7 @@ def test_sources_list_is_deterministic() -> None:
 
     payload = json.loads(first.stdout)
 
-    assert len(payload) == 6
+    assert len(payload) == 7
 
     names = [item["name"] for item in payload]
     assert names == sorted(names, key=str.casefold)

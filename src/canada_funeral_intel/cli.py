@@ -1570,6 +1570,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 16
 
     if args.command == "sources" and args.sources_command == "collect":
+        from canada_funeral_intel.collectors.british_columbia_cli import (
+            BritishColumbiaCollectCommandError,
+            run_british_columbia_collect_command,
+        )
         from canada_funeral_intel.collectors.manitoba_cli import (
             ManitobaCollectCommandError,
             run_manitoba_collect_command,
@@ -1582,17 +1586,34 @@ def main(argv: Sequence[str] | None = None) -> int:
                 else settings.http_timeout_seconds
             )
             with database_session(settings.database_path) as connection:
-                payload = run_manitoba_collect_command(
-                    connection,
-                    migration_dir=_MIGRATION_DIR,
-                    registry_path=_SOURCE_REGISTRY_PATH,
-                    source_name=args.name,
-                    user_agent=settings.http_user_agent,
-                    timeout_seconds=timeout_seconds,
-                )
+                if (
+                    args.name.casefold()
+                    == "consumer protection bc funeral services register"
+                ):
+                    payload = run_british_columbia_collect_command(
+                        connection,
+                        migration_dir=_MIGRATION_DIR,
+                        registry_path=_SOURCE_REGISTRY_PATH,
+                        source_name=args.name,
+                        user_agent=settings.http_user_agent,
+                        timeout_seconds=timeout_seconds,
+                    )
+                else:
+                    payload = run_manitoba_collect_command(
+                        connection,
+                        migration_dir=_MIGRATION_DIR,
+                        registry_path=_SOURCE_REGISTRY_PATH,
+                        source_name=args.name,
+                        user_agent=settings.http_user_agent,
+                        timeout_seconds=timeout_seconds,
+                    )
             print(json.dumps(payload, indent=2, sort_keys=True))
             return 0
-        except (DatabaseError, ManitobaCollectCommandError) as exc:
+        except (
+            DatabaseError,
+            ManitobaCollectCommandError,
+            BritishColumbiaCollectCommandError,
+        ) as exc:
             print(f"collection error: {exc}", file=sys.stderr)
             return 5
 
