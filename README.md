@@ -14,3 +14,17 @@ source provenance, and confidence scores.
 6. Extract public staff names, roles, emails, phones, and evidence URLs.
 7. Assign verification, completeness, and confidence scores.
 8. Export clean SQLite, CSV, and JSON datasets.
+
+## Public directory
+
+The repository also contains a curated static directory for GitHub Pages under
+`site/`. Build its public-safe snapshot with:
+
+```bash
+python scripts/build_public_directory.py
+```
+
+The exporter opens SQLite read-only and excludes raw payloads, internal review
+notes, people records, contact points, and business-fact observations. See
+[`docs/PUBLIC_DIRECTORY.md`](docs/PUBLIC_DIRECTORY.md) for the public schema
+and deployment workflow.
