@@ -40,7 +40,7 @@ input:focus, select:focus { border-color: var(--coral); box-shadow: 0 0 0 3px rg
 .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding-bottom: 80px; }
 .card { display: flex; min-height: 205px; flex-direction: column; justify-content: space-between; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; transition: transform .18s ease, box-shadow .18s ease; }
 .card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
-.card h3 { margin: 0; font: 1.45rem/1.12 Georgia, serif; }
+.card h3 { margin: 0; font: 1.45rem/1.12 Georgia, serif; text-transform: capitalize; }
 .place { color: var(--muted); margin: 9px 0 20px; }
 .tags { display: flex; flex-wrap: wrap; gap: 7px; }
 .tag { border-radius: 999px; background: #edf1eb; color: #52645e; padding: 4px 9px; font-size: .7rem; font-weight: 750; }

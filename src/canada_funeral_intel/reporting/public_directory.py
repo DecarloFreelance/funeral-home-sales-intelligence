@@ -29,7 +29,22 @@ def build_public_directory(database_path: Path) -> dict[str, Any]:
             SELECT
                 e.id AS entity_id,
                 e.entity_type,
-                e.canonical_name,
+                COALESCE(
+                    (
+                        SELECT nv.original_value
+                        FROM normalized_values AS nv
+                        JOIN entity_source_records AS esr
+                          ON esr.source_record_id = nv.source_record_id
+                        WHERE esr.entity_id = e.id
+                          AND nv.field_name = 'business_name'
+                          AND nv.original_value IS NOT NULL
+                          AND trim(nv.original_value) <> ''
+                          AND length(nv.original_value) <= 200
+                        ORDER BY nv.source_record_id DESC, nv.id DESC
+                        LIMIT 1
+                    ),
+                    e.canonical_name
+                ) AS canonical_name,
                 (
                     SELECT nv.normalized_value
                     FROM normalized_values AS nv
@@ -99,7 +114,8 @@ def build_public_directory(database_path: Path) -> dict[str, Any]:
             FROM entities AS e
             WHERE e.status = 'active'
             ORDER BY
-                COALESCE(e.canonical_name, ''),
+                CASE WHEN e.canonical_name IS NULL THEN 1 ELSE 0 END,
+                lower(COALESCE(e.canonical_name, '')),
                 e.id
             """
         ).fetchall()

@@ -70,6 +70,23 @@ def _seed_public_fixture(database_path: Path) -> None:
             )
         connection.execute(
             """
+            INSERT INTO normalized_values (
+                source_record_id, field_name, original_value, normalized_value,
+                normalizer_name, normalizer_version, normalized_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                source_record_id,
+                "business_name",
+                "Fixture Funeral Home",
+                "fixture funeral home",
+                "fixture",
+                "1",
+                "2026-01-01T00:00:00Z",
+            ),
+        )
+        connection.execute(
+            """
             INSERT INTO websites (
                 entity_id, source_record_id, url, normalized_url, domain,
                 discovery_method, status

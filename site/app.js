@@ -7,6 +7,16 @@ function labelFor(record) {
   return text(record.name) || `Unnamed ${record.entity_type || "business"}`;
 }
 
+function websiteLabel(record) {
+  const labels = {
+    candidate: "Website candidate",
+    rejected: "Website rejected",
+    review: "Website under review",
+    selected: "Website selected",
+  };
+  return labels[record.website_status] || "No website signal";
+}
+
 function populateProvinces(records) {
   const values = [...new Set(records.map((record) => text(record.province)).filter(Boolean))].sort();
   const select = byId("province");
@@ -61,7 +71,7 @@ function render() {
     body.append(heading, place);
     const tags = document.createElement("div");
     tags.className = "tags";
-    [record.entity_type, record.website_status ? `website: ${record.website_status}` : "no website signal"].forEach((value) => {
+    [record.entity_type === "branch" ? "Branch" : "Organization", websiteLabel(record)].forEach((value) => {
       const tag = document.createElement("span");
       tag.className = `tag ${record.website_status || ""}`;
       tag.textContent = value;
