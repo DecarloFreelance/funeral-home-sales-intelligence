@@ -1,5 +1,36 @@
 [
   {
+    "name": "Heritage North Funeral Home Official Contact Directory",
+    "source_type": "commercial",
+    "source_format": "html",
+    "trust_level": "medium",
+    "coverage": [
+      "YT"
+    ],
+    "refresh_interval_days": 90,
+    "enabled": true,
+    "source_url": "https://heritagenorth.ca/contact/",
+    "publisher": "Heritage North Funeral Home",
+    "jurisdiction": "YT",
+    "notes": "Official operator contact page; Yukon government material identifies Heritage North as the territory's only funeral home."
+  },
+  {
+    "name": "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes",
+    "source_type": "regulator",
+    "source_format": "html",
+    "trust_level": "authoritative",
+    "coverage": [
+      "NL"
+    ],
+    "refresh_interval_days": 30,
+    "enabled": true,
+    "source_url": "https://www.nlfuneralboard.ca/funeral-homes",
+    "publisher": "Newfoundland and Labrador Embalmers and Funeral Directors Board",
+    "jurisdiction": "NL",
+    "licensing_notes": "Official public registered-funeral-home directory maintained by the provincial board.",
+    "notes": "Registered facility names and addresses are imported as authoritative source records."
+  },
+  {
     "name": "New Brunswick Funeral Directors Association Member Directory",
     "source_type": "association",
     "source_format": "html",

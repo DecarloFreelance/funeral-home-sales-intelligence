@@ -1582,6 +1582,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             NewBrunswickCollectCommandError,
             run_new_brunswick_collect_command,
         )
+        from canada_funeral_intel.collectors.newfoundland_cli import (
+            NewfoundlandCollectCommandError,
+            run_newfoundland_collect_command,
+        )
         from canada_funeral_intel.collectors.quebec_cli import (
             QuebecCollectCommandError,
             run_quebec_collect_command,
@@ -1589,6 +1593,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         from canada_funeral_intel.collectors.saskatchewan_cli import (
             SaskatchewanCollectCommandError,
             run_saskatchewan_collect_command,
+        )
+        from canada_funeral_intel.collectors.yukon_cli import (
+            YukonCollectCommandError,
+            run_yukon_collect_command,
         )
 
         try:
@@ -1646,6 +1654,31 @@ def main(argv: Sequence[str] | None = None) -> int:
                         user_agent=settings.http_user_agent,
                         timeout_seconds=timeout_seconds,
                     )
+                elif (
+                    args.name.casefold()
+                    == "newfoundland and labrador embalmers and funeral directors "
+                    "board registered funeral homes"
+                ):
+                    payload = run_newfoundland_collect_command(
+                        connection,
+                        migration_dir=_MIGRATION_DIR,
+                        registry_path=_SOURCE_REGISTRY_PATH,
+                        source_name=args.name,
+                        user_agent=settings.http_user_agent,
+                        timeout_seconds=timeout_seconds,
+                    )
+                elif (
+                    args.name.casefold()
+                    == "heritage north funeral home official contact directory"
+                ):
+                    payload = run_yukon_collect_command(
+                        connection,
+                        migration_dir=_MIGRATION_DIR,
+                        registry_path=_SOURCE_REGISTRY_PATH,
+                        source_name=args.name,
+                        user_agent=settings.http_user_agent,
+                        timeout_seconds=timeout_seconds,
+                    )
                 else:
                     payload = run_manitoba_collect_command(
                         connection,
@@ -1664,6 +1697,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             SaskatchewanCollectCommandError,
             QuebecCollectCommandError,
             NewBrunswickCollectCommandError,
+            NewfoundlandCollectCommandError,
+            YukonCollectCommandError,
         ) as exc:
             print(f"collection error: {exc}", file=sys.stderr)
             return 5

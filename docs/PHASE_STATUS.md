@@ -42,8 +42,9 @@ complete.
 
 - Website candidate evidence and discovery-run persistence (`0021`–`0022`)
 - Offline pipeline orchestration (`0020`)
-- Provincial/source integrations for Alberta, Manitoba, Ontario, and Nova
-  Scotia, plus manual/source-registry intake paths
+- Provincial/source integrations for Alberta, Manitoba, Ontario, Nova Scotia,
+  British Columbia, Saskatchewan, Québec, New Brunswick, and Newfoundland and
+  Labrador, Yukon, plus manual/source-registry intake paths
 - Canonical People operator backlog and runbook
 - Page-level fetch-state observability (`0023`) with deterministic content
   hashes and independent file-backed state persistence
@@ -76,7 +77,11 @@ location and website coverage by jurisdiction.
 ## Recommended next work
 
 1. Add the next authoritative provincial or territorial source through the
-   existing source registry and import framework.
+   existing source registry and import framework; Prince Edward Island,
+   Prince Edward Island, Northwest Territories, and Nunavut remain uncovered
+   in the current working inventory. Yukon coverage is a bounded official
+   operator-page record corroborated by Yukon government material, not a
+   territorial licence register.
 2. Re-run normalization and entity-resolution review for the new dataset.
 3. Generate and review website candidates from the new source evidence.
 4. Verify approved website candidates in bounded batches.

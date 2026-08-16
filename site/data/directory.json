@@ -1,7 +1,7 @@
 {
   "directory_version": "public-directory-v1",
-  "generated_at": "2026-08-16T22:04:57.516311Z",
-  "record_count": 1778,
+  "generated_at": "2026-08-16T23:08:47.093714Z",
+  "record_count": 1859,
   "records": [
     {
       "city": "SPRINGHILL",
@@ -640,6 +640,30 @@
       "website_url": null
     },
     {
+      "city": "Mt. Pearl",
+      "entity_id": 1779,
+      "entity_type": "branch",
+      "name": "Barrett's Funeral Home Mt. Pearl",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "St. John's",
+      "entity_id": 1780,
+      "entity_type": "branch",
+      "name": "Barrett's Funeral Home St. John's",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "Tisdale",
       "entity_id": 913,
       "entity_type": "branch",
@@ -1072,6 +1096,18 @@
       "website_url": null
     },
     {
+      "city": "Botwood",
+      "entity_id": 1781,
+      "entity_type": "branch",
+      "name": "Botwood Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "Espanola",
       "entity_id": 145,
       "entity_type": "branch",
@@ -1259,6 +1295,18 @@
       "province": "ON",
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Brigus",
+      "entity_id": 1782,
+      "entity_type": "branch",
+      "name": "Broughton's Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -1528,6 +1576,18 @@
       "website_url": null
     },
     {
+      "city": "St. John's",
+      "entity_id": 1783,
+      "entity_type": "branch",
+      "name": "Carnell's Funeral Home - St. John's",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "Stayner",
       "entity_id": 169,
       "entity_type": "branch",
@@ -1612,6 +1672,30 @@
       "website_url": null
     },
     {
+      "city": "St. John's",
+      "entity_id": 1784,
+      "entity_type": "branch",
+      "name": "Caul's Funeral Home - St. John's",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Torbay",
+      "entity_id": 1785,
+      "entity_type": "branch",
+      "name": "Caul's Funeral Home - Torbay",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "Gravenhurst",
       "entity_id": 174,
       "entity_type": "branch",
@@ -1619,6 +1703,18 @@
       "province": "ON",
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Grand Falls-Windsor",
+      "entity_id": 1786,
+      "entity_type": "branch",
+      "name": "Central Funeral and Cremation Services",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -1936,6 +2032,18 @@
       "website_url": null
     },
     {
+      "city": "Placentia",
+      "entity_id": 1787,
+      "entity_type": "branch",
+      "name": "Coomb's Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "Jarvis",
       "entity_id": 185,
       "entity_type": "branch",
@@ -2003,6 +2111,18 @@
       "province": "NS",
       "source_names": [
         "Nova Scotia Licensed Funeral Homes and Related Sellers"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Corner Brook",
+      "entity_id": 1788,
+      "entity_type": "branch",
+      "name": "Country Haven Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -2512,6 +2632,18 @@
       "website_url": null
     },
     {
+      "city": "St. Mary's",
+      "entity_id": 1789,
+      "entity_type": "branch",
+      "name": "Don Gibbons Ltd. Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "DARTMOUTH",
       "entity_id": 724,
       "entity_type": "branch",
@@ -2620,6 +2752,18 @@
       "website_url": null
     },
     {
+      "city": "Holyrood",
+      "entity_id": 1790,
+      "entity_type": "branch",
+      "name": "Dunphy's Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "Memramcook",
       "entity_id": 1738,
       "entity_type": "branch",
@@ -2699,6 +2843,18 @@
       "province": "NS",
       "source_names": [
         "Nova Scotia Licensed Funeral Homes and Related Sellers"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Port Aux Basques",
+      "entity_id": 1791,
+      "entity_type": "branch",
+      "name": "East Haven Funeral Home Inc.",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -3016,6 +3172,30 @@
       "website_url": null
     },
     {
+      "city": "Fermeuse",
+      "entity_id": 1792,
+      "entity_type": "branch",
+      "name": "Fahey's Funeral Home - Fermeuse",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Fermeuse",
+      "entity_id": 1793,
+      "entity_type": "branch",
+      "name": "Fahey's Funeral Home - Trepassey",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": null,
       "entity_id": 1740,
       "entity_type": "branch",
@@ -3095,6 +3275,18 @@
       "province": "ON",
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Lewisporte",
+      "entity_id": 1794,
+      "entity_type": "branch",
+      "name": "Families Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -3220,6 +3412,114 @@
       "website_url": null
     },
     {
+      "city": "Clarenville",
+      "entity_id": 1795,
+      "entity_type": "branch",
+      "name": "Fewer's Funeral Home-Arnolds Cove",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Clarenville",
+      "entity_id": 1796,
+      "entity_type": "branch",
+      "name": "Fewer's Funeral Home-Clarenville",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Clarenville",
+      "entity_id": 1797,
+      "entity_type": "branch",
+      "name": "Fewer's Funeral Home-Lethbridge",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Clarenville",
+      "entity_id": 1798,
+      "entity_type": "branch",
+      "name": "Fewer's Funeral Home-Little Hearts Ease",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Corner Brook",
+      "entity_id": 1799,
+      "entity_type": "branch",
+      "name": "Fillatre's Funeral Home-Corner Brook",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Deer Lake",
+      "entity_id": 1800,
+      "entity_type": "branch",
+      "name": "Fillatre's Funeral Home-Deer Lake",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "CB",
+      "entity_id": 1801,
+      "entity_type": "branch",
+      "name": "Fillatre's Funeral Home, HV/GB",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Port Au Choix",
+      "entity_id": 1802,
+      "entity_type": "branch",
+      "name": "Fillatre's Funeral Home-Port Au Choix",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Stephenville Crossing",
+      "entity_id": 1803,
+      "entity_type": "branch",
+      "name": "Fillatre's Funeral Home-Stephenville Crossing",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "INGONISH",
       "entity_id": 654,
       "entity_type": "branch",
@@ -3268,6 +3568,18 @@
       "website_url": "https://mts.net/"
     },
     {
+      "city": "Conception Harbour",
+      "entity_id": 1804,
+      "entity_type": "branch",
+      "name": "Flaherty's Memorial Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "Radville",
       "entity_id": 916,
       "entity_type": "branch",
@@ -3311,6 +3623,18 @@
       "province": "MB",
       "source_names": [
         "Funeral Board of Manitoba"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Joe Batts Arm",
+      "entity_id": 1805,
+      "entity_type": "branch",
+      "name": "Fogo Island Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -4084,6 +4408,18 @@
       "website_url": null
     },
     {
+      "city": "Lewisporte",
+      "entity_id": 1806,
+      "entity_type": "branch",
+      "name": "Gordon Woolfrey Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "Renfrew",
       "entity_id": 282,
       "entity_type": "branch",
@@ -4144,6 +4480,18 @@
       "website_url": "https://dignitymemorial.com/"
     },
     {
+      "city": "Springdale",
+      "entity_id": 1807,
+      "entity_type": "branch",
+      "name": "Green Bay Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "PORT HAWKESBURY",
       "entity_id": 680,
       "entity_type": "branch",
@@ -4151,6 +4499,18 @@
       "province": "NS",
       "source_names": [
         "Nova Scotia Licensed Funeral Homes and Related Sellers"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Harbour Grace",
+      "entity_id": 1808,
+      "entity_type": "branch",
+      "name": "Green's Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -4600,6 +4960,18 @@
       "website_url": null
     },
     {
+      "city": "Whitehorse",
+      "entity_id": 1859,
+      "entity_type": "branch",
+      "name": "Heritage North Funeral Home",
+      "province": "YT",
+      "source_names": [
+        "Heritage North Funeral Home Official Contact Directory"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "Niagara Falls",
       "entity_id": 308,
       "entity_type": "branch",
@@ -4619,6 +4991,18 @@
       "province": "ON",
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Holyrood",
+      "entity_id": 1809,
+      "entity_type": "branch",
+      "name": "Hickey's Funeral Home-Holyrood",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -4744,6 +5128,18 @@
       "website_url": null
     },
     {
+      "city": "Whitbourne",
+      "entity_id": 1810,
+      "entity_type": "branch",
+      "name": "Holloway's Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "Thornhill",
       "entity_id": 318,
       "entity_type": "branch",
@@ -4751,6 +5147,54 @@
       "province": "ON",
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Old Perlican",
+      "entity_id": 1811,
+      "entity_type": "branch",
+      "name": "Hopkin's Funeral Home-Old Perlican",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Bishop's Falls",
+      "entity_id": 1812,
+      "entity_type": "branch",
+      "name": "Hoskins' Funeral Home-Bishops Falls",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Botwood",
+      "entity_id": 1813,
+      "entity_type": "branch",
+      "name": "Hoskins' Funeral Home-Botwood",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Grandfalls-Winsor",
+      "entity_id": 1814,
+      "entity_type": "branch",
+      "name": "Hoskins' Funeral Home-Grand Falls Windsor",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -4864,6 +5308,18 @@
       "website_url": null
     },
     {
+      "city": "St. Alban's",
+      "entity_id": 1815,
+      "entity_type": "branch",
+      "name": "Hynes's Coast of Bays Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "Grand Valley",
       "entity_id": 327,
       "entity_type": "branch",
@@ -4943,6 +5399,18 @@
       "province": "ON",
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Twillingate",
+      "entity_id": 1816,
+      "entity_type": "branch",
+      "name": "Isles Funeral Home Ltd.",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -5087,6 +5555,18 @@
       "province": "ON",
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Holyrood",
+      "entity_id": 1817,
+      "entity_type": "branch",
+      "name": "James J. Hickey Memorial Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -5291,6 +5771,30 @@
       "province": "SK",
       "source_names": [
         "Funeral and Cremation Services Council of Saskatchewan Roster"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Roddickton",
+      "entity_id": 1818,
+      "entity_type": "branch",
+      "name": "K. M. Fillatre Funeral Home-Roddickton",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "St. Anthony",
+      "entity_id": 1819,
+      "entity_type": "branch",
+      "name": "K. M. Fillatre Funeral Home-St. Anthony",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -5555,6 +6059,30 @@
       "province": "ON",
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "New-Wes-Valley",
+      "entity_id": 1821,
+      "entity_type": "branch",
+      "name": "Kittiwake Funeral Home-Musgrave Harbour",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "New-Wes-Valley",
+      "entity_id": 1820,
+      "entity_type": "branch",
+      "name": "Kittiwake Funeral Home-Pound Cove",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -6251,6 +6779,18 @@
       "province": "NB",
       "source_names": [
         "New Brunswick Funeral Directors Association Member Directory"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Placentia",
+      "entity_id": 1822,
+      "entity_type": "branch",
+      "name": "Maher's Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -7024,6 +7564,30 @@
       "website_url": null
     },
     {
+      "city": "Clarkes Beach",
+      "entity_id": 1823,
+      "entity_type": "branch",
+      "name": "Moore's Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Clarke's Beach",
+      "entity_id": 1824,
+      "entity_type": "branch",
+      "name": "Moore's Funeral Home-Bay Roberts",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "Moose Jaw Re",
       "entity_id": 973,
       "entity_type": "branch",
@@ -7384,6 +7948,18 @@
       "website_url": null
     },
     {
+      "city": "Summerford",
+      "entity_id": 1825,
+      "entity_type": "branch",
+      "name": "New World Island Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "Newcastle",
       "entity_id": 470,
       "entity_type": "branch",
@@ -7427,6 +8003,42 @@
       "province": "ON",
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Harbour Grace",
+      "entity_id": 1826,
+      "entity_type": "branch",
+      "name": "Noel's Funeral Home-Carbonear",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Harbour Grace",
+      "entity_id": 1827,
+      "entity_type": "branch",
+      "name": "Noel's Funeral Home-Harbour Grace",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Harbour Grace",
+      "entity_id": 1828,
+      "entity_type": "branch",
+      "name": "Noel's Funeral Home-Western Bay",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -7576,6 +8188,18 @@
       "website_url": null
     },
     {
+      "city": "Glovertown",
+      "entity_id": 1829,
+      "entity_type": "branch",
+      "name": "Oceanside Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "Scarborough",
       "entity_id": 482,
       "entity_type": "branch",
@@ -7631,6 +8255,30 @@
       "province": "ON",
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Glovertown",
+      "entity_id": 1830,
+      "entity_type": "branch",
+      "name": "Oram's Funeral Home-Dover",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Glovertown",
+      "entity_id": 1831,
+      "entity_type": "branch",
+      "name": "Oram's Funeral Home-Eastport",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -7787,6 +8435,18 @@
       "province": "SK",
       "source_names": [
         "Funeral and Cremation Services Council of Saskatchewan Roster"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Deer Lake",
+      "entity_id": 1832,
+      "entity_type": "branch",
+      "name": "Parson's Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -7960,6 +8620,18 @@
       "website_url": null
     },
     {
+      "city": "Bell Island",
+      "entity_id": 1833,
+      "entity_type": "branch",
+      "name": "Peddle's Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "Fonthill",
       "entity_id": 499,
       "entity_type": "branch",
@@ -7979,6 +8651,18 @@
       "province": "ON",
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Marystown",
+      "entity_id": 1834,
+      "entity_type": "branch",
+      "name": "Peninsula Funeral Home- Creston South",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -8027,6 +8711,18 @@
       "province": "NS",
       "source_names": [
         "Nova Scotia Licensed Funeral Homes and Related Sellers"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Gambo",
+      "entity_id": 1835,
+      "entity_type": "branch",
+      "name": "Pike's Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -8488,6 +9184,30 @@
       "website_url": null
     },
     {
+      "city": "Stephenville",
+      "entity_id": 1836,
+      "entity_type": "branch",
+      "name": "Russell's Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Stephenville Crossing",
+      "entity_id": 1837,
+      "entity_type": "branch",
+      "name": "Russell's Funeral Home-Stephenville Xing",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "Stratford",
       "entity_id": 528,
       "entity_type": "branch",
@@ -8495,6 +9215,18 @@
       "province": "ON",
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Bay Bulls",
+      "entity_id": 1838,
+      "entity_type": "branch",
+      "name": "Ryan's Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -8656,6 +9388,30 @@
       "website_url": null
     },
     {
+      "city": "Burin",
+      "entity_id": 1839,
+      "entity_type": "branch",
+      "name": "Serenity Funeral Home-Burin",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Burin",
+      "entity_id": 1840,
+      "entity_type": "branch",
+      "name": "Serenity Funeral Home-Grand Bank",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "Hearst",
       "entity_id": 547,
       "entity_type": "branch",
@@ -8795,6 +9551,54 @@
       "province": "ON",
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Carbonear",
+      "entity_id": 1841,
+      "entity_type": "branch",
+      "name": "Slade's Funeral Home - Bay Roberts",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Spaniards Bay",
+      "entity_id": 1843,
+      "entity_type": "branch",
+      "name": "Slade's Funeral Home - Spaniards Bay",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "UpperIsland Cove",
+      "entity_id": 1842,
+      "entity_type": "branch",
+      "name": "Slade's Funeral Home - Upper Island Cove",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Carbonear",
+      "entity_id": 1844,
+      "entity_type": "branch",
+      "name": "Slade's Memorial Services Ltd.",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -8944,6 +9748,30 @@
       "website_url": null
     },
     {
+      "city": "Harbour Breton",
+      "entity_id": 1845,
+      "entity_type": "branch",
+      "name": "Spencer's Funeral Home",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "St. Alban's",
+      "entity_id": 1846,
+      "entity_type": "branch",
+      "name": "Spencer's Funeral Home-St. Alban's",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "Fort Alexander",
       "entity_id": 73,
       "entity_type": "branch",
@@ -8956,6 +9784,18 @@
       "website_url": null
     },
     {
+      "city": "Springdale",
+      "entity_id": 1847,
+      "entity_type": "branch",
+      "name": "Springdale Funeral and Cremation Services",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "George",
       "entity_id": 1773,
       "entity_type": "branch",
@@ -8963,6 +9803,18 @@
       "province": "NB",
       "source_names": [
         "New Brunswick Funeral Directors Association Member Directory"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Gander",
+      "entity_id": 1848,
+      "entity_type": "branch",
+      "name": "Stacey's Funeral Home-Gander",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -9052,6 +9904,30 @@
       "website_url": null
     },
     {
+      "city": "Bonavista",
+      "entity_id": 1849,
+      "entity_type": "branch",
+      "name": "Strathie's Funeral Home - Bonavista",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Bonavista",
+      "entity_id": 1850,
+      "entity_type": "branch",
+      "name": "Strathie's Funeral Home - Catalina",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "Ohsweken",
       "entity_id": 571,
       "entity_type": "branch",
@@ -9083,6 +9959,30 @@
       "province": "NS",
       "source_names": [
         "Nova Scotia Licensed Funeral Homes and Related Sellers"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Baie Verte",
+      "entity_id": 1852,
+      "entity_type": "branch",
+      "name": "Sunset Memorial Funeral Home - Baie Verte",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Grand Falls/Windsor",
+      "entity_id": 1851,
+      "entity_type": "branch",
+      "name": "Sunset Memorial Funeral Home - GFW",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -9191,6 +10091,18 @@
       "province": "ON",
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Hickman's Harbour",
+      "entity_id": 1853,
+      "entity_type": "branch",
+      "name": "Temple's Funeral Home Ltd.",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null
@@ -9988,6 +10900,18 @@
       "website_url": null
     },
     {
+      "city": "Dildo",
+      "entity_id": 1854,
+      "entity_type": "branch",
+      "name": "Warren's Funeral Home-Dildo",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
       "city": "Napanee",
       "entity_id": 622,
       "entity_type": "branch",
@@ -10367,6 +11291,54 @@
       "province": "ON",
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Marystown",
+      "entity_id": 1855,
+      "entity_type": "branch",
+      "name": "Wiseman's Funeral Homes - Burin",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Marystown",
+      "entity_id": 1856,
+      "entity_type": "branch",
+      "name": "Wiseman's Funeral Homes - Fortune",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Marystown",
+      "entity_id": 1858,
+      "entity_type": "branch",
+      "name": "Wiseman's Funeral Homes - Marystown",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
+      ],
+      "website_status": null,
+      "website_url": null
+    },
+    {
+      "city": "Marystown",
+      "entity_id": 1857,
+      "entity_type": "branch",
+      "name": "Wisemen's Funeral Home - Grand Bank",
+      "province": "NL",
+      "source_names": [
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes"
       ],
       "website_status": null,
       "website_url": null

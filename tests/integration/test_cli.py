@@ -134,7 +134,7 @@ def test_sources_validate() -> None:
 
     payload = json.loads(result.stdout)
     assert payload["valid"] is True
-    assert payload["count"] == 10
+    assert payload["count"] == 12
     assert payload["registry_path"].endswith("config/sources.json")
 
 
@@ -154,16 +154,16 @@ def test_sources_seed_initializes_registry_and_is_idempotent(
     second_payload = json.loads(second.stdout)
 
     assert first_payload["database_path"] == str(database_path)
-    assert first_payload["definitions"] == 10
-    assert first_payload["inserted"] == 10
+    assert first_payload["definitions"] == 12
+    assert first_payload["inserted"] == 12
     assert first_payload["updated"] == 0
     assert first_payload["unchanged"] == 0
-    assert first_payload["total"] == 10
+    assert first_payload["total"] == 12
 
     assert second_payload["inserted"] == 0
     assert second_payload["updated"] == 0
-    assert second_payload["unchanged"] == 10
-    assert second_payload["total"] == 10
+    assert second_payload["unchanged"] == 12
+    assert second_payload["total"] == 12
 
     with sqlite3.connect(database_path) as connection:
         names = [
@@ -179,9 +179,11 @@ def test_sources_seed_initializes_registry_and_is_idempotent(
         "Consumer Protection BC Funeral Services Register",
         "Funeral and Cremation Services Council of Saskatchewan Roster",
         "Funeral Board of Manitoba",
+        "Heritage North Funeral Home Official Contact Directory",
         "Manual Canadian Funeral Home Source",
         "Manual Website Evidence Intake",
         "New Brunswick Funeral Directors Association Member Directory",
+        "Newfoundland and Labrador Embalmers and Funeral Directors Board Registered Funeral Homes",
         "Nova Scotia Licensed Funeral Homes and Related Sellers",
         "Santé Québec Funeral Services Permit Directory",
     ]
@@ -197,7 +199,7 @@ def test_sources_list_is_deterministic() -> None:
 
     payload = json.loads(first.stdout)
 
-    assert len(payload) == 10
+    assert len(payload) == 12
 
     names = [item["name"] for item in payload]
     assert names == sorted(names, key=str.casefold)
