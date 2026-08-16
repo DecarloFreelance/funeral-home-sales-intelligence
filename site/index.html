@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A preliminary, source-derived directory of Canadian funeral businesses.">
+    <title>Canadian Funeral Intelligence</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="hero">
+      <div class="shell hero-grid">
+        <div>
+          <p class="eyebrow">CANADA FUNERAL INTELLIGENCE</p>
+          <h1>A clearer view of Canada’s funeral landscape.</h1>
+          <p class="lede">A living research directory built from public and appropriately licensed sources—designed to make the sector easier to understand.</p>
+        </div>
+        <div class="hero-mark" aria-hidden="true"><span>✦</span></div>
+      </div>
+    </header>
+
+    <main class="shell">
+      <section class="intro-panel">
+        <div>
+          <p class="eyebrow accent">PRELIMINARY DIRECTORY</p>
+          <h2>Find a funeral business</h2>
+          <p class="muted">Search the current source-derived inventory. Website links and status labels are shown as research signals, not as final verification.</p>
+        </div>
+        <div class="generated" id="generated">Loading directory…</div>
+      </section>
+
+      <section class="stats" aria-label="Directory summary">
+        <div class="stat"><strong id="total-count">—</strong><span>active records</span></div>
+        <div class="stat"><strong id="named-count">—</strong><span>named businesses</span></div>
+        <div class="stat"><strong id="website-count">—</strong><span>website signals</span></div>
+        <div class="stat"><strong id="province-count">—</strong><span>regions represented</span></div>
+      </section>
+
+      <section class="controls" aria-label="Directory filters">
+        <label class="search-label" for="search">Search by name, city, or province
+          <input id="search" type="search" placeholder="Try “chapel”, “Toronto”, or “family”" autocomplete="off">
+        </label>
+        <label for="province">Region
+          <select id="province"><option value="">All regions</option></select>
+        </label>
+        <label for="website">Website signal
+          <select id="website"><option value="">All records</option><option value="yes">Has website signal</option><option value="no">No website signal</option><option value="review">Website under review</option><option value="rejected">Website rejected</option></select>
+        </label>
+      </section>
+
+      <section class="results-head">
+        <p id="result-count">Loading…</p>
+        <button id="clear" class="text-button" type="button">Clear filters</button>
+      </section>
+      <section id="cards" class="cards" aria-live="polite"></section>
+    </main>
+
+    <footer class="footer shell">
+      <p><strong>Research note:</strong> This directory is preliminary and source-derived. A record does not imply that a website, business relationship, or operating status has been independently verified.</p>
+      <p class="footer-small">Generated from the Canada Funeral Intelligence public export. Raw source payloads, internal review notes, people records, and private contact data are excluded.</p>
+    </footer>
+    <script src="app.js" defer></script>
+  </body>
+</html>
