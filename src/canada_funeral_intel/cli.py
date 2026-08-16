@@ -1578,6 +1578,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             ManitobaCollectCommandError,
             run_manitoba_collect_command,
         )
+        from canada_funeral_intel.collectors.quebec_cli import (
+            QuebecCollectCommandError,
+            run_quebec_collect_command,
+        )
         from canada_funeral_intel.collectors.saskatchewan_cli import (
             SaskatchewanCollectCommandError,
             run_saskatchewan_collect_command,
@@ -1614,6 +1618,18 @@ def main(argv: Sequence[str] | None = None) -> int:
                         user_agent=settings.http_user_agent,
                         timeout_seconds=timeout_seconds,
                     )
+                elif (
+                    args.name.casefold()
+                    == "santé québec funeral services permit directory"
+                ):
+                    payload = run_quebec_collect_command(
+                        connection,
+                        migration_dir=_MIGRATION_DIR,
+                        registry_path=_SOURCE_REGISTRY_PATH,
+                        source_name=args.name,
+                        user_agent=settings.http_user_agent,
+                        timeout_seconds=timeout_seconds,
+                    )
                 else:
                     payload = run_manitoba_collect_command(
                         connection,
@@ -1630,6 +1646,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             ManitobaCollectCommandError,
             BritishColumbiaCollectCommandError,
             SaskatchewanCollectCommandError,
+            QuebecCollectCommandError,
         ) as exc:
             print(f"collection error: {exc}", file=sys.stderr)
             return 5

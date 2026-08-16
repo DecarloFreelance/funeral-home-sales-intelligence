@@ -1,5 +1,21 @@
 [
   {
+    "name": "Santé Québec Funeral Services Permit Directory",
+    "source_type": "government",
+    "source_format": "pdf",
+    "trust_level": "authoritative",
+    "coverage": [
+      "QC"
+    ],
+    "refresh_interval_days": 30,
+    "enabled": true,
+    "source_url": "https://cdn-contenu.quebec.ca/cdn-contenu/sante/documents/Systeme_et_services_de_sante/permis-autorisations-sante-quebec/liste-entreprises-services-funeraires.pdf",
+    "publisher": "Santé Québec",
+    "jurisdiction": "QC",
+    "licensing_notes": "Official 2026 directory of permitted funeral-services businesses and facilities.",
+    "notes": "Active permit blocks are expanded into facility-level records; permit, business, director, phone, status, address, and city provenance are retained."
+  },
+  {
     "name": "Funeral and Cremation Services Council of Saskatchewan Roster",
     "source_type": "regulator",
     "source_format": "pdf",
