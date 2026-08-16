@@ -78,9 +78,17 @@ _GENERIC_EMAIL_DOMAINS = frozenset(
         "icloud.com",
         "proton.me",
         "protonmail.com",
+        "yahoo.com",
+        "yahoo.ca",
+        # Consumer / ISP mailbox domains observed in Canadian source data.
+        # These domains identify the mail provider, not the funeral home's
+        # authoritative web presence, so they must never seed candidates.
+        "mts.net",
+        "mymts.net",
+        "shaw.ca",
     }
 )
-_GENERIC_EMAIL_POLICY_VERSION = "generic-email-domain-v1"
+_GENERIC_EMAIL_POLICY_VERSION = "generic-email-domain-v2"
 _EVIDENCE_WEIGHTS = {
     WebsiteEvidenceClass.EXPLICIT_SOURCE_WEBSITE: 700,
     WebsiteEvidenceClass.EXPLICIT_SOURCE_URL: 600,

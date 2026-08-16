@@ -116,6 +116,79 @@ def test_batch_verify_is_bounded_and_resumable_with_fixture_verifier(tmp_path: P
         assert tuple(run) == (1, 1)
 
 
+
+def test_batch_verify_passes_correct_identity_policy_by_website_kind(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "identity-policy.sqlite3"
+    _fixture(path)
+
+    captured: dict[int, bool] = {}
+
+    def verifier(**kwargs: object) -> WebsiteCheck:
+        website_id = int(kwargs["website_id"])
+
+        captured[website_id] = bool(
+            kwargs["allow_identity_mismatch"]
+        )
+
+        return WebsiteCheck(
+            website_id=website_id,
+            requested_url=str(kwargs["url"]),
+            dns_status=DNSStatus.OK,
+            tls_status=TLSStatus.OK,
+            https_status_code=200,
+            outcome=WebsiteCheckOutcome.REACHABLE,
+        )
+
+    with database_session(path) as connection:
+        populate_candidates(
+            connection,
+            limits=BatchLimits(
+                entity_limit=10,
+                candidate_limit=2,
+            ),
+        )
+
+        rows = connection.execute(
+            """
+            SELECT
+                id,
+                entity_id,
+                website_kind
+            FROM websites
+            ORDER BY entity_id, id
+            """
+        ).fetchall()
+
+        assert len(rows) == 2
+
+        branch = next(
+            row for row in rows
+            if row["website_kind"] == "branch"
+        )
+
+        shared = next(
+            row for row in rows
+            if row["website_kind"] == "shared"
+        )
+
+        result = batch_verify(
+            connection,
+            allow_network=True,
+            limits=BatchLimits(
+                entity_limit=2,
+                candidate_limit=1,
+            ),
+            verifier=verifier,
+        )
+
+    assert result["status"] == "completed"
+    assert result["succeeded"] == 2
+
+    assert captured[int(branch["id"])] is True
+    assert captured[int(shared["id"])] is False
+
 def test_transient_verification_failure_retries_once(tmp_path: Path) -> None:
     path = tmp_path / "retry.sqlite3"
     _fixture(path)

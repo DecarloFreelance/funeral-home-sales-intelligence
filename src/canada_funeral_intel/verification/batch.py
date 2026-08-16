@@ -269,7 +269,7 @@ def _execute_verify_run(connection: sqlite3.Connection, run_id: int, *, user_age
             with transaction(connection):
                 connection.execute("UPDATE website_discovery_run_items SET status='running', attempts=attempts+1, updated_at=? WHERE id=? AND status IN ('pending','failed')", (_now(), item["id"]))
             try:
-                check = verifier(website_id=int(website["id"]), url=str(website["normalized_url"]), user_agent=user_agent, timeout_seconds=limits.timeout_seconds, max_redirects=limits.max_redirects, expected_business_name=website["canonical_name"], allow_identity_mismatch=str(website["website_kind"]) == "shared")
+                check = verifier(website_id=int(website["id"]), url=str(website["normalized_url"]), user_agent=user_agent, timeout_seconds=limits.timeout_seconds, max_redirects=limits.max_redirects, expected_business_name=website["canonical_name"], allow_identity_mismatch=str(website["website_kind"]) != "shared")
                 from .checks import insert_website_check
                 check_id = insert_website_check(connection, check)
                 status_code = check.https_status_code or check.http_status_code
