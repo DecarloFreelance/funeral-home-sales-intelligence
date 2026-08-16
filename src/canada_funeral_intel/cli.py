@@ -1578,6 +1578,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             ManitobaCollectCommandError,
             run_manitoba_collect_command,
         )
+        from canada_funeral_intel.collectors.saskatchewan_cli import (
+            SaskatchewanCollectCommandError,
+            run_saskatchewan_collect_command,
+        )
 
         try:
             timeout_seconds = (
@@ -1591,6 +1595,18 @@ def main(argv: Sequence[str] | None = None) -> int:
                     == "consumer protection bc funeral services register"
                 ):
                     payload = run_british_columbia_collect_command(
+                        connection,
+                        migration_dir=_MIGRATION_DIR,
+                        registry_path=_SOURCE_REGISTRY_PATH,
+                        source_name=args.name,
+                        user_agent=settings.http_user_agent,
+                        timeout_seconds=timeout_seconds,
+                    )
+                elif (
+                    args.name.casefold()
+                    == "funeral and cremation services council of saskatchewan roster"
+                ):
+                    payload = run_saskatchewan_collect_command(
                         connection,
                         migration_dir=_MIGRATION_DIR,
                         registry_path=_SOURCE_REGISTRY_PATH,
@@ -1613,6 +1629,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             DatabaseError,
             ManitobaCollectCommandError,
             BritishColumbiaCollectCommandError,
+            SaskatchewanCollectCommandError,
         ) as exc:
             print(f"collection error: {exc}", file=sys.stderr)
             return 5

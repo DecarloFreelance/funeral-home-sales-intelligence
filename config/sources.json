@@ -1,5 +1,21 @@
 [
   {
+    "name": "Funeral and Cremation Services Council of Saskatchewan Roster",
+    "source_type": "regulator",
+    "source_format": "pdf",
+    "trust_level": "authoritative",
+    "coverage": [
+      "SK"
+    ],
+    "refresh_interval_days": 30,
+    "enabled": true,
+    "source_url": "https://fcscs.ca/roster/",
+    "publisher": "Funeral and Cremation Services Council of Saskatchewan",
+    "jurisdiction": "SK",
+    "licensing_notes": "Official public roster of Saskatchewan funeral homes, crematoriums, and transfer services.",
+    "notes": "The collector imports funeral-home license codes FH and FHC; crematorium-only and transfer-only license rows remain outside the funeral-home location inventory."
+  },
+  {
     "name": "Consumer Protection BC Funeral Services Register",
     "source_type": "regulator",
     "source_format": "html",
