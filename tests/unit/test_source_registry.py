@@ -167,8 +167,8 @@ def test_load_project_seed_registry() -> None:
     ontario = next(
         item
         for item in registry
-        if item.name == "Ontario Bereavement Authority Public Register"
+        if item.name == "Bereavement Authority of Ontario Public Register"
     )
-    assert ontario.source_format is SourceFormat.HTML
+    assert ontario.source_format is SourceFormat.XLSX
     assert ontario.trust_level is TrustLevel.AUTHORITATIVE
     assert ontario.coverage == ("ON",)

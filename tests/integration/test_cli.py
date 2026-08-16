@@ -175,11 +175,11 @@ def test_sources_seed_initializes_registry_and_is_idempotent(
 
     assert names == [
         "Alberta Funeral Services Regulatory Board",
+        "Bereavement Authority of Ontario Public Register",
         "Funeral Board of Manitoba",
         "Manual Canadian Funeral Home Source",
         "Manual Website Evidence Intake",
         "Nova Scotia Licensed Funeral Homes and Related Sellers",
-        "Ontario Bereavement Authority Public Register",
     ]
 
 

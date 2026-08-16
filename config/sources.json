@@ -1,54 +1,5 @@
 [
   {
-    "name": "Manual Website Evidence Intake",
-    "source_type": "manual",
-    "source_format": "csv",
-    "trust_level": "medium",
-    "coverage": [
-      "CA"
-    ],
-    "refresh_interval_days": 90,
-    "enabled": true,
-    "publisher": "Canada Funeral Intelligence",
-    "jurisdiction": "CA",
-    "licensing_notes": "Researcher-supplied public business evidence. Retain source URLs, notes, and retrieval dates in the raw payload.",
-    "notes": "Offline intake for manually researched website URLs attached to existing entity IDs. It creates reviewable candidates only and never approves or selects primary websites."
-  },
-  {
-    "name": "Ontario Bereavement Authority Public Register",
-    "source_type": "regulator",
-    "source_format": "html",
-    "trust_level": "authoritative",
-    "coverage": [
-      "ON"
-    ],
-    "refresh_interval_days": 30,
-    "enabled": true,
-    "source_url": "https://portal.thebao.ca/public-register/",
-    "publisher": "Bereavement Authority of Ontario",
-    "jurisdiction": "ON",
-    "licensing_notes": "Public regulator register. Confirm terms and current access conditions before any automated acquisition.",
-    "notes": "Interactive public register for licensed funeral establishments, transfer services, cemeteries, crematoriums, and alternative disposition operators. No bulk collector is enabled; preserve search/exported records as locally supplied source data until an approved acquisition contract exists."
-  },
-  {
-    "name": "Nova Scotia Licensed Funeral Homes and Related Sellers",
-    "source_type": "government",
-    "source_format": "csv",
-    "trust_level": "authoritative",
-    "coverage": [
-      "NS"
-    ],
-    "refresh_interval_days": 90,
-    "enabled": true,
-    "source_url": "https://data.novascotia.ca/api/views/if4h-78fy/rows.csv?accessType=DOWNLOAD",
-    "publisher": "Government of Nova Scotia",
-    "jurisdiction": "NS",
-    "license_name": "Open Government Licence - Nova Scotia",
-    "license_url": "https://data.novascotia.ca/opendata/licence",
-    "licensing_notes": "Official open dataset. Verify the current licence and dataset metadata before redistribution.",
-    "notes": "Includes licensed funeral homes, crematoriums, cemeteries, and funeral sellers. Importers must preserve the source category and filter it explicitly; absence is not a closure signal."
-  },
-  {
     "name": "Alberta Funeral Services Regulatory Board",
     "source_type": "regulator",
     "source_format": "html",
@@ -63,6 +14,38 @@
     "jurisdiction": "AB",
     "licensing_notes": "Public regulatory source. Read-only establishment-type metadata is probed through the public verification session; protected establishment search is not automated.",
     "notes": "Session-aware read-only metadata probe implemented. It reports FUN and BOTH establishment classes when available and performs no database writes or CAPTCHA-protected search."
+  },
+  {
+    "name": "Bereavement Authority of Ontario Public Register",
+    "source_type": "regulator",
+    "source_format": "xlsx",
+    "trust_level": "authoritative",
+    "coverage": [
+      "ON"
+    ],
+    "refresh_interval_days": 30,
+    "enabled": true,
+    "source_url": "https://portal.thebao.ca/public-register/",
+    "publisher": "Bereavement Authority of Ontario",
+    "jurisdiction": "ON",
+    "licensing_notes": "Official public register of Ontario bereavement-sector licensees. Current Funeral Establishment Class 1 and Class 2 site records are imported from the public organization register export.",
+    "notes": "Authoritative Ontario funeral-establishment source. The prepared import dataset contains current Class 1 and Class 2 funeral establishment sites only; FE/TS operator licences are retained separately and are not counted as additional funeral-home locations."
+  },
+  {
+    "name": "Funeral Board of Manitoba",
+    "source_type": "regulator",
+    "source_format": "pdf",
+    "trust_level": "authoritative",
+    "coverage": [
+      "MB"
+    ],
+    "refresh_interval_days": 30,
+    "enabled": true,
+    "source_url": "https://www.gov.mb.ca/funeraldirectorsboard/pdf/2026_licenced_funeral_homes.pdf",
+    "publisher": "Funeral Board of Manitoba",
+    "jurisdiction": "MB",
+    "licensing_notes": "Official Province of Manitoba Funeral Board list of licenced funeral homes.",
+    "notes": "2026 authoritative PDF source. Raw source rows, missing fields, and repeated source rows are preserved during collection."
   },
   {
     "name": "Manual Canadian Funeral Home Source",
@@ -92,19 +75,36 @@
     "notes": "Fallback metadata source for records supplied manually."
   },
   {
-    "name": "Funeral Board of Manitoba",
-    "source_type": "regulator",
-    "source_format": "pdf",
+    "name": "Manual Website Evidence Intake",
+    "source_type": "manual",
+    "source_format": "csv",
+    "trust_level": "medium",
+    "coverage": [
+      "CA"
+    ],
+    "refresh_interval_days": 90,
+    "enabled": true,
+    "publisher": "Canada Funeral Intelligence",
+    "jurisdiction": "CA",
+    "licensing_notes": "Researcher-supplied public business evidence. Retain source URLs, notes, and retrieval dates in the raw payload.",
+    "notes": "Offline intake for manually researched website URLs attached to existing entity IDs. It creates reviewable candidates only and never approves or selects primary websites."
+  },
+  {
+    "name": "Nova Scotia Licensed Funeral Homes and Related Sellers",
+    "source_type": "government",
+    "source_format": "csv",
     "trust_level": "authoritative",
     "coverage": [
-      "MB"
+      "NS"
     ],
-    "refresh_interval_days": 30,
+    "refresh_interval_days": 90,
     "enabled": true,
-    "source_url": "https://www.gov.mb.ca/funeraldirectorsboard/pdf/2026_licenced_funeral_homes.pdf",
-    "publisher": "Funeral Board of Manitoba",
-    "jurisdiction": "MB",
-    "licensing_notes": "Official Province of Manitoba Funeral Board list of licenced funeral homes.",
-    "notes": "2026 authoritative PDF source. Raw source rows, missing fields, and repeated source rows are preserved during collection."
+    "source_url": "https://data.novascotia.ca/api/views/if4h-78fy/rows.csv?accessType=DOWNLOAD",
+    "publisher": "Government of Nova Scotia",
+    "jurisdiction": "NS",
+    "license_name": "Open Government Licence - Nova Scotia",
+    "license_url": "https://data.novascotia.ca/opendata/licence",
+    "licensing_notes": "Official open dataset. Verify the current licence and dataset metadata before redistribution.",
+    "notes": "Includes licensed funeral homes, crematoriums, cemeteries, and funeral sellers. Importers must preserve the source category and filter it explicitly; absence is not a closure signal."
   }
 ]
