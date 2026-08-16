@@ -453,10 +453,7 @@ def probe_website(
         outcome = WebsiteCheckOutcome.UNREACHABLE
     elif analysis.parked_or_for_sale:
         outcome = WebsiteCheckOutcome.PARKED
-    elif (
-        analysis.identity_score is not None
-        and analysis.identity_score < 0.25
-    ):
+    elif analysis.identity_score is not None and analysis.identity_score < 0.25:
         if identity_observable and allow_identity_mismatch:
             outcome = WebsiteCheckOutcome.MISMATCH
         else:

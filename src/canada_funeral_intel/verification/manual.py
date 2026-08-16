@@ -79,7 +79,15 @@ def export_manual_website_template(
         with output_path.open("w", encoding="utf-8", newline="") as handle:
             writer = csv.writer(handle, lineterminator="\n")
             writer.writerow(
-                ("entity_id", "entity_name", "city", "province", "website_url", "source_url", "note")
+                (
+                    "entity_id",
+                    "entity_name",
+                    "city",
+                    "province",
+                    "website_url",
+                    "source_url",
+                    "note",
+                )
             )
             for row in rows:
                 writer.writerow(
@@ -249,18 +257,28 @@ def _parse_file(
                     normalized = normalize_url(website_url)
                     if normalized.value is None:
                         raise ValueError("website_url could not be normalized")
-                    if connection.execute(
-                        "SELECT 1 FROM entities WHERE id = ? AND status = 'active'",
-                        (entity_id,),
-                    ).fetchone() is None:
+                    if (
+                        connection.execute(
+                            "SELECT 1 FROM entities WHERE id = ? AND status = 'active'",
+                            (entity_id,),
+                        ).fetchone()
+                        is None
+                    ):
                         raise ValueError(f"active entity not found: {entity_id}")
                     external_id = f"entity-{entity_id}-url-{normalized.value}"
                 except (ValueError, TypeError) as exc:
                     errors.append(ImportRowError(row_number, raw_payload, str(exc)))
                     continue
-                rows.append(_ManualRecord(row_number, entity_id, website_url, external_id))
+                rows.append(
+                    _ManualRecord(row_number, entity_id, website_url, external_id)
+                )
                 import_rows.append(
-                    ImportRow(row_number, raw_payload, payload_checksum(raw_payload), external_id)
+                    ImportRow(
+                        row_number,
+                        raw_payload,
+                        payload_checksum(raw_payload),
+                        external_id,
+                    )
                 )
     except OSError as exc:
         raise ManualWebsiteEvidenceError(f"Unable to read {path}: {exc}") from exc

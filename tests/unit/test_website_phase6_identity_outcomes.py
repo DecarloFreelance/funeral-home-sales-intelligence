@@ -100,20 +100,12 @@ def test_successful_html_low_identity_can_be_verified_mismatch(
     https = _result(
         "https://fixture.ca/",
         status=200,
-        body=(
-            b"<html><body>"
-            b"Completely Different Corporation"
-            b"</body></html>"
-        ),
+        body=(b"<html><body>Completely Different Corporation</body></html>"),
     )
     http = _result(
         "http://fixture.ca/",
         status=200,
-        body=(
-            b"<html><body>"
-            b"Completely Different Corporation"
-            b"</body></html>"
-        ),
+        body=(b"<html><body>Completely Different Corporation</body></html>"),
     )
 
     _patch_network(
@@ -141,20 +133,12 @@ def test_shared_root_low_identity_is_inconclusive(
     https = _result(
         "https://parent.example/",
         status=200,
-        body=(
-            b"<html><body>"
-            b"Parent Memorial Corporation"
-            b"</body></html>"
-        ),
+        body=(b"<html><body>Parent Memorial Corporation</body></html>"),
     )
     http = _result(
         "http://parent.example/",
         status=200,
-        body=(
-            b"<html><body>"
-            b"Parent Memorial Corporation"
-            b"</body></html>"
-        ),
+        body=(b"<html><body>Parent Memorial Corporation</body></html>"),
     )
 
     _patch_network(
@@ -182,20 +166,12 @@ def test_shared_root_strong_identity_remains_reachable(
     https = _result(
         "https://shared.example/",
         status=200,
-        body=(
-            b"<html><body>"
-            b"Mackenzie Funeral Service"
-            b"</body></html>"
-        ),
+        body=(b"<html><body>Mackenzie Funeral Service</body></html>"),
     )
     http = _result(
         "http://shared.example/",
         status=200,
-        body=(
-            b"<html><body>"
-            b"Mackenzie Funeral Service"
-            b"</body></html>"
-        ),
+        body=(b"<html><body>Mackenzie Funeral Service</body></html>"),
     )
 
     _patch_network(

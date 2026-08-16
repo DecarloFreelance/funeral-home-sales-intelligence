@@ -72,9 +72,7 @@ def test_manual_website_evidence_is_provenanced_and_idempotent(
             FROM website_evidence
             """
         ).fetchone()
-        source = connection.execute(
-            "SELECT raw_payload FROM source_records"
-        ).fetchone()
+        source = connection.execute("SELECT raw_payload FROM source_records").fetchone()
 
         assert tuple(website) == (
             entity_id,
@@ -113,7 +111,9 @@ def test_manual_website_evidence_dry_run_does_not_write(tmp_path: Path) -> None:
         assert result.rows_valid == 1
         assert result.candidates_inserted == 0
         assert connection.total_changes == before
-        assert connection.execute("SELECT COUNT(*) FROM source_records").fetchone()[0] == 0
+        assert (
+            connection.execute("SELECT COUNT(*) FROM source_records").fetchone()[0] == 0
+        )
         assert connection.execute("SELECT COUNT(*) FROM websites").fetchone()[0] == 0
 
 

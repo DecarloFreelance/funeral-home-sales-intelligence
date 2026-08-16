@@ -117,7 +117,9 @@ class WebsiteEvidence:
                 "evidence_value must not be blank when provided"
             )
         if not self.derivation_method.strip() or not self.derivation_version.strip():
-            raise WebsiteDiscoveryError("evidence derivation metadata must not be blank")
+            raise WebsiteDiscoveryError(
+                "evidence derivation metadata must not be blank"
+            )
 
 
 @dataclass(frozen=True, slots=True)

@@ -19,10 +19,14 @@ class DispositionStatus(StrEnum):
 
 
 _ALLOWED_TRANSITIONS: dict[DispositionStatus, frozenset[DispositionStatus]] = {
-    DispositionStatus.OPEN: frozenset({DispositionStatus.ACKNOWLEDGED, DispositionStatus.DISMISSED}),
+    DispositionStatus.OPEN: frozenset(
+        {DispositionStatus.ACKNOWLEDGED, DispositionStatus.DISMISSED}
+    ),
     DispositionStatus.ACKNOWLEDGED: frozenset({DispositionStatus.REOPENED}),
     DispositionStatus.DISMISSED: frozenset({DispositionStatus.REOPENED}),
-    DispositionStatus.REOPENED: frozenset({DispositionStatus.ACKNOWLEDGED, DispositionStatus.DISMISSED}),
+    DispositionStatus.REOPENED: frozenset(
+        {DispositionStatus.ACKNOWLEDGED, DispositionStatus.DISMISSED}
+    ),
     DispositionStatus.STALE: frozenset({DispositionStatus.REOPENED}),
 }
 
@@ -50,35 +54,60 @@ def fingerprint_anomaly(person_id: int, anomaly: dict[str, object]) -> str:
         "anomaly_code": str(anomaly.get("code", "")),
         "supporting": {
             key: sorted({int(value) for value in supporting.get(key, [])})
-            for key in ("person_ids", "observation_ids", "affiliation_ids", "contact_ids", "merge_ids", "entity_ids", "website_ids", "page_ids")
+            for key in (
+                "person_ids",
+                "observation_ids",
+                "affiliation_ids",
+                "contact_ids",
+                "merge_ids",
+                "entity_ids",
+                "website_ids",
+                "page_ids",
+            )
         },
     }
     if not payload["anomaly_code"]:
         raise PersonResolutionError("anomaly code is required")
     if anomaly.get("values"):
         payload["values"] = sorted({str(value) for value in anomaly["values"]})
-    serialized = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    serialized = json.dumps(
+        payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
     return hashlib.sha256(serialized).hexdigest()
 
 
-def _current_anomalies(connection: sqlite3.Connection, person_id: int) -> list[dict[str, object]]:
+def _current_anomalies(
+    connection: sqlite3.Connection, person_id: int
+) -> list[dict[str, object]]:
     from canada_funeral_intel.people.triage import TriageFilters, triage_people
 
-    records = triage_people(connection, TriageFilters(person_id=person_id, include_historical=True))
+    records = triage_people(
+        connection, TriageFilters(person_id=person_id, include_historical=True)
+    )
     if not records:
         raise PersonResolutionError(f"Person not found: {person_id}")
-    return [{**anomaly, "fingerprint": fingerprint_anomaly(person_id, anomaly)} for anomaly in records[0]["anomalies"]]
+    return [
+        {**anomaly, "fingerprint": fingerprint_anomaly(person_id, anomaly)}
+        for anomaly in records[0]["anomalies"]
+    ]
 
 
-def _find_current_anomaly(connection: sqlite3.Connection, person_id: int, anomaly_code: str, fingerprint: str) -> dict[str, object]:
+def _find_current_anomaly(
+    connection: sqlite3.Connection, person_id: int, anomaly_code: str, fingerprint: str
+) -> dict[str, object]:
     for anomaly in _current_anomalies(connection, person_id):
         if anomaly["code"] == anomaly_code and anomaly["fingerprint"] == fingerprint:
             return anomaly
-    raise PersonResolutionError("anomaly code and fingerprint do not match current triage state")
+    raise PersonResolutionError(
+        "anomaly code and fingerprint do not match current triage state"
+    )
 
 
 def _timestamp(connection: sqlite3.Connection, disposition_id: int) -> str:
-    row = connection.execute("SELECT updated_at FROM person_anomaly_dispositions WHERE id = ?", (disposition_id,)).fetchone()
+    row = connection.execute(
+        "SELECT updated_at FROM person_anomaly_dispositions WHERE id = ?",
+        (disposition_id,),
+    ).fetchone()
     if row is None:
         raise PersonResolutionError("disposition update could not be read")
     return str(row["updated_at"])
@@ -108,8 +137,13 @@ def decide_disposition(
                 (person_id, anomaly_code, fingerprint),
             ).fetchone()
             if row is None:
-                if status not in {DispositionStatus.ACKNOWLEDGED, DispositionStatus.DISMISSED}:
-                    raise PersonResolutionError("a new disposition must be acknowledged or dismissed")
+                if status not in {
+                    DispositionStatus.ACKNOWLEDGED,
+                    DispositionStatus.DISMISSED,
+                }:
+                    raise PersonResolutionError(
+                        "a new disposition must be acknowledged or dismissed"
+                    )
                 cursor = connection.execute(
                     """
                     INSERT INTO person_anomaly_dispositions
@@ -119,20 +153,59 @@ def decide_disposition(
                             CASE WHEN ? = 'acknowledged' THEN strftime('%Y-%m-%dT%H:%M:%fZ', 'now') END,
                             CASE WHEN ? = 'dismissed' THEN strftime('%Y-%m-%dT%H:%M:%fZ', 'now') END)
                     """,
-                    (person_id, anomaly_code, fingerprint, status.value, actor, note, status.value, status.value),
+                    (
+                        person_id,
+                        anomaly_code,
+                        fingerprint,
+                        status.value,
+                        actor,
+                        note,
+                        status.value,
+                        status.value,
+                    ),
                 )
                 disposition_id = int(cursor.lastrowid)
                 connection.execute(
                     "INSERT INTO person_anomaly_disposition_history (disposition_id, person_id, anomaly_code, anomaly_fingerprint, previous_status, new_status, actor, note) VALUES (?, ?, ?, ?, NULL, ?, ?, ?)",
-                    (disposition_id, person_id, anomaly_code, fingerprint, status.value, actor, note),
+                    (
+                        disposition_id,
+                        person_id,
+                        anomaly_code,
+                        fingerprint,
+                        status.value,
+                        actor,
+                        note,
+                    ),
                 )
-                return DispositionResult(disposition_id, person_id, anomaly_code, fingerprint, status, actor, note, _timestamp(connection, disposition_id), True)
+                return DispositionResult(
+                    disposition_id,
+                    person_id,
+                    anomaly_code,
+                    fingerprint,
+                    status,
+                    actor,
+                    note,
+                    _timestamp(connection, disposition_id),
+                    True,
+                )
 
             current = DispositionStatus(str(row["status"]))
             if current is status:
-                return DispositionResult(int(row["id"]), person_id, anomaly_code, fingerprint, current, str(row["reviewer_actor"]), None if row["reviewer_note"] is None else str(row["reviewer_note"]), str(row["updated_at"]), False)
+                return DispositionResult(
+                    int(row["id"]),
+                    person_id,
+                    anomaly_code,
+                    fingerprint,
+                    current,
+                    str(row["reviewer_actor"]),
+                    None if row["reviewer_note"] is None else str(row["reviewer_note"]),
+                    str(row["updated_at"]),
+                    False,
+                )
             if status not in _ALLOWED_TRANSITIONS[current]:
-                raise PersonResolutionError(f"invalid disposition transition: {current.value} -> {status.value}")
+                raise PersonResolutionError(
+                    f"invalid disposition transition: {current.value} -> {status.value}"
+                )
             connection.execute(
                 """
                 UPDATE person_anomaly_dispositions
@@ -143,22 +216,57 @@ def decide_disposition(
                     reopened_at = CASE WHEN ? = 'reopened' THEN strftime('%Y-%m-%dT%H:%M:%fZ', 'now') ELSE reopened_at END
                 WHERE id = ? AND status = ?
                 """,
-                (status.value, actor, note, status.value, status.value, status.value, int(row["id"]), current.value),
+                (
+                    status.value,
+                    actor,
+                    note,
+                    status.value,
+                    status.value,
+                    status.value,
+                    int(row["id"]),
+                    current.value,
+                ),
             )
             if connection.execute("SELECT changes()").fetchone()[0] != 1:
                 raise PersonResolutionError("disposition changed concurrently; retry")
             connection.execute(
                 "INSERT INTO person_anomaly_disposition_history (disposition_id, person_id, anomaly_code, anomaly_fingerprint, previous_status, new_status, actor, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (int(row["id"]), person_id, anomaly_code, fingerprint, current.value, status.value, actor, note),
+                (
+                    int(row["id"]),
+                    person_id,
+                    anomaly_code,
+                    fingerprint,
+                    current.value,
+                    status.value,
+                    actor,
+                    note,
+                ),
             )
-            return DispositionResult(int(row["id"]), person_id, anomaly_code, fingerprint, status, actor, note, _timestamp(connection, int(row["id"])), True)
+            return DispositionResult(
+                int(row["id"]),
+                person_id,
+                anomaly_code,
+                fingerprint,
+                status,
+                actor,
+                note,
+                _timestamp(connection, int(row["id"])),
+                True,
+            )
     except sqlite3.IntegrityError as exc:
-        raise PersonResolutionError(f"disposition update violated a database constraint: {exc}") from exc
+        raise PersonResolutionError(
+            f"disposition update violated a database constraint: {exc}"
+        ) from exc
     except sqlite3.Error as exc:
         raise PersonResolutionError(f"disposition update failed: {exc}") from exc
 
 
-def sync_dispositions(connection: sqlite3.Connection, *, person_id: int | None = None, actor: str = "anomaly-sync") -> dict[str, int]:
+def sync_dispositions(
+    connection: sqlite3.Connection,
+    *,
+    person_id: int | None = None,
+    actor: str = "anomaly-sync",
+) -> dict[str, int]:
     if not actor.strip():
         raise PersonResolutionError("actor is required")
     try:
@@ -175,20 +283,51 @@ def sync_dispositions(connection: sqlite3.Connection, *, person_id: int | None =
             checked = 0
             for row in rows:
                 checked += 1
-                current = {str(anomaly["fingerprint"]) for anomaly in _current_anomalies(connection, int(row["person_id"]))}
-                if row["status"] != DispositionStatus.STALE.value and str(row["anomaly_fingerprint"]) not in current:
-                    connection.execute("UPDATE person_anomaly_dispositions SET status = 'stale', stale_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ? AND status = ?", (int(row["id"]), str(row["status"])))
+                current = {
+                    str(anomaly["fingerprint"])
+                    for anomaly in _current_anomalies(connection, int(row["person_id"]))
+                }
+                if (
+                    row["status"] != DispositionStatus.STALE.value
+                    and str(row["anomaly_fingerprint"]) not in current
+                ):
+                    connection.execute(
+                        "UPDATE person_anomaly_dispositions SET status = 'stale', stale_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ? AND status = ?",
+                        (int(row["id"]), str(row["status"])),
+                    )
                     if connection.execute("SELECT changes()").fetchone()[0] == 1:
-                        connection.execute("INSERT INTO person_anomaly_disposition_history (disposition_id, person_id, anomaly_code, anomaly_fingerprint, previous_status, new_status, actor, note) VALUES (?, ?, ?, ?, ?, 'stale', ?, ?)", (int(row["id"]), int(row["person_id"]), row["anomaly_code"], row["anomaly_fingerprint"], row["status"], actor.strip(), "fingerprint no longer present in current triage"))
+                        connection.execute(
+                            "INSERT INTO person_anomaly_disposition_history (disposition_id, person_id, anomaly_code, anomaly_fingerprint, previous_status, new_status, actor, note) VALUES (?, ?, ?, ?, ?, 'stale', ?, ?)",
+                            (
+                                int(row["id"]),
+                                int(row["person_id"]),
+                                row["anomaly_code"],
+                                row["anomaly_fingerprint"],
+                                row["status"],
+                                actor.strip(),
+                                "fingerprint no longer present in current triage",
+                            ),
+                        )
                         stale += 1
             return {"checked": checked, "marked_stale": stale}
     except sqlite3.IntegrityError as exc:
-        raise PersonResolutionError(f"disposition sync violated a database constraint: {exc}") from exc
+        raise PersonResolutionError(
+            f"disposition sync violated a database constraint: {exc}"
+        ) from exc
     except sqlite3.Error as exc:
         raise PersonResolutionError(f"disposition sync failed: {exc}") from exc
 
 
-def list_dispositions(connection: sqlite3.Connection, *, person_id: int | None = None, anomaly_code: str | None = None, status: DispositionStatus | None = None, include_stale: bool = False, actor: str | None = None, limit: int | None = None) -> list[dict[str, object]]:
+def list_dispositions(
+    connection: sqlite3.Connection,
+    *,
+    person_id: int | None = None,
+    anomaly_code: str | None = None,
+    status: DispositionStatus | None = None,
+    include_stale: bool = False,
+    actor: str | None = None,
+    limit: int | None = None,
+) -> list[dict[str, object]]:
     conditions: list[str] = []
     parameters: list[object] = []
     if person_id is not None:
@@ -217,40 +356,86 @@ def list_dispositions(connection: sqlite3.Connection, *, person_id: int | None =
         query += " LIMIT ?"
         parameters.append(limit)
     try:
-        return [dict(row) for row in connection.execute(query, tuple(parameters)).fetchall()]
+        return [
+            dict(row) for row in connection.execute(query, tuple(parameters)).fetchall()
+        ]
     except sqlite3.Error as exc:
         raise PersonResolutionError(f"disposition listing failed: {exc}") from exc
 
 
-def show_disposition(connection: sqlite3.Connection, disposition_id: int) -> dict[str, object]:
+def show_disposition(
+    connection: sqlite3.Connection, disposition_id: int
+) -> dict[str, object]:
     if disposition_id < 1:
         raise PersonResolutionError("disposition_id must be positive")
     try:
-        row = connection.execute("SELECT * FROM person_anomaly_dispositions WHERE id = ?", (disposition_id,)).fetchone()
+        row = connection.execute(
+            "SELECT * FROM person_anomaly_dispositions WHERE id = ?", (disposition_id,)
+        ).fetchone()
         if row is None:
             raise PersonResolutionError(f"Disposition not found: {disposition_id}")
-        history = connection.execute("SELECT * FROM person_anomaly_disposition_history WHERE disposition_id = ? ORDER BY id", (disposition_id,)).fetchall()
+        history = connection.execute(
+            "SELECT * FROM person_anomaly_disposition_history WHERE disposition_id = ? ORDER BY id",
+            (disposition_id,),
+        ).fetchall()
         from canada_funeral_intel.people.triage import TriageFilters, triage_people
 
-        current = [item for item in triage_people(connection, TriageFilters(person_id=int(row["person_id"]), include_historical=True)) [0]["anomalies"] if item["code"] == row["anomaly_code"] and fingerprint_anomaly(int(row["person_id"]), item) == row["anomaly_fingerprint"]]
-        return {"disposition": dict(row), "current_anomaly": current[0] if current else None, "history": [dict(item) for item in history]}
+        current = [
+            item
+            for item in triage_people(
+                connection,
+                TriageFilters(person_id=int(row["person_id"]), include_historical=True),
+            )[0]["anomalies"]
+            if item["code"] == row["anomaly_code"]
+            and fingerprint_anomaly(int(row["person_id"]), item)
+            == row["anomaly_fingerprint"]
+        ]
+        return {
+            "disposition": dict(row),
+            "current_anomaly": current[0] if current else None,
+            "history": [dict(item) for item in history],
+        }
     except sqlite3.Error as exc:
         raise PersonResolutionError(f"disposition lookup failed: {exc}") from exc
 
 
-def disposition_history(connection: sqlite3.Connection, disposition_id: int) -> list[dict[str, object]]:
+def disposition_history(
+    connection: sqlite3.Connection, disposition_id: int
+) -> list[dict[str, object]]:
     if disposition_id < 1:
         raise PersonResolutionError("disposition_id must be positive")
     try:
-        return [dict(row) for row in connection.execute("SELECT * FROM person_anomaly_disposition_history WHERE disposition_id = ? ORDER BY id", (disposition_id,)).fetchall()]
+        return [
+            dict(row)
+            for row in connection.execute(
+                "SELECT * FROM person_anomaly_disposition_history WHERE disposition_id = ? ORDER BY id",
+                (disposition_id,),
+            ).fetchall()
+        ]
     except sqlite3.Error as exc:
-        raise PersonResolutionError(f"disposition history lookup failed: {exc}") from exc
+        raise PersonResolutionError(
+            f"disposition history lookup failed: {exc}"
+        ) from exc
 
 
-def dispositions_for_fingerprints(connection: sqlite3.Connection, keys: list[tuple[int, str, str]]) -> dict[tuple[int, str, str], dict[str, object]]:
+def dispositions_for_fingerprints(
+    connection: sqlite3.Connection, keys: list[tuple[int, str, str]]
+) -> dict[tuple[int, str, str], dict[str, object]]:
     if not keys:
         return {}
-    clauses = " OR ".join("(person_id = ? AND anomaly_code = ? AND anomaly_fingerprint = ?)" for _ in keys)
+    clauses = " OR ".join(
+        "(person_id = ? AND anomaly_code = ? AND anomaly_fingerprint = ?)" for _ in keys
+    )
     parameters = tuple(value for key in keys for value in key)
-    rows = connection.execute(f"SELECT id AS disposition_id, person_id, anomaly_code, anomaly_fingerprint, status, reviewer_actor, updated_at FROM person_anomaly_dispositions WHERE {clauses}", parameters).fetchall()
-    return {(int(row["person_id"]), str(row["anomaly_code"]), str(row["anomaly_fingerprint"])): dict(row) for row in rows}
+    rows = connection.execute(
+        f"SELECT id AS disposition_id, person_id, anomaly_code, anomaly_fingerprint, status, reviewer_actor, updated_at FROM person_anomaly_dispositions WHERE {clauses}",
+        parameters,
+    ).fetchall()
+    return {
+        (
+            int(row["person_id"]),
+            str(row["anomaly_code"]),
+            str(row["anomaly_fingerprint"]),
+        ): dict(row)
+        for row in rows
+    }

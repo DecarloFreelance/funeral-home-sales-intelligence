@@ -174,8 +174,12 @@ def discover_website_candidates(
     selected_keys: list[tuple[int, str]] = []
     for selected_entity_id in entity_ids:
         keys = [key for key in grouped if key[0] == selected_entity_id]
-        keys.sort(key=lambda key: _candidate_sort_key(key, grouped[key], shared_domains))
-        selected_keys.extend(keys[:candidate_limit] if candidate_limit is not None else keys)
+        keys.sort(
+            key=lambda key: _candidate_sort_key(key, grouped[key], shared_domains)
+        )
+        selected_keys.extend(
+            keys[:candidate_limit] if candidate_limit is not None else keys
+        )
 
     inserted = 0
     unchanged = 0
@@ -241,7 +245,15 @@ def discover_website_candidates(
         branch_page_candidates=branch,
         alternate_domain_candidates=alternate,
         suppressed_generic_email_signals=suppressed_generic,
-        source_method_counts=tuple(sorted(Counter(signal.discovery_method for key in selected_keys for signal in grouped[key]).items())),
+        source_method_counts=tuple(
+            sorted(
+                Counter(
+                    signal.discovery_method
+                    for key in selected_keys
+                    for signal in grouped[key]
+                ).items()
+            )
+        ),
     )
 
 
@@ -278,15 +290,16 @@ def _load_source_website_signals(
           )
           AND nv.normalized_value IS NOT NULL
         ORDER BY esr.entity_id, sr.id, nv.id
-        """, (entity_id, entity_id, source_dataset_id, source_dataset_id)).fetchall()
+        """,
+        (entity_id, entity_id, source_dataset_id, source_dataset_id),
+    ).fetchall()
 
     signals: list[_SourceWebsiteSignal] = []
     for row in rows:
         normalized_url = _resolve_normalized_url(
             row["normalized_value"]
-            if row["field_name"] in {
-                "url", "explicit_website_url", "manual_website_url"
-            }
+            if row["field_name"]
+            in {"url", "explicit_website_url", "manual_website_url"}
             else None,
             row["normalized_value"]
             if row["field_name"] in {"domain", "explicit_website_domain"}
@@ -368,8 +381,9 @@ def _load_email_domain_signals(
           AND nv.field_name = 'email'
           AND nv.normalized_value IS NOT NULL
         ORDER BY esr.entity_id, sr.id, nv.id
-        """
-        , (entity_id, entity_id, source_dataset_id, source_dataset_id)).fetchall()
+        """,
+        (entity_id, entity_id, source_dataset_id, source_dataset_id),
+    ).fetchall()
 
     signals: list[_SourceWebsiteSignal] = []
     suppressed = 0
@@ -523,51 +537,68 @@ def _candidate_evidence(
             }
             else WebsiteEvidenceType.DOMAIN
         )
-        contribution = 0.45 if evidence_type is WebsiteEvidenceType.NORMALIZED_URL else 0.30
-        evidence.append(WebsiteEvidence(
-            evidence_type=evidence_type,
-            evidence_class=signal.evidence_class,
-            source_record_id=signal.source_record_id,
-            normalized_value_id=signal.normalized_value_id,
-            evidence_value=signal.normalized_url if evidence_type is WebsiteEvidenceType.NORMALIZED_URL else signal.domain,
-            raw_value=signal.raw_value,
-            contribution=contribution,
-            derivation_method=signal.discovery_method,
-        ))
-        if (
-            signal.provenance_url is not None
-            and signal.evidence_class
-            in {
-                WebsiteEvidenceClass.EXPLICIT_SOURCE_URL,
-                WebsiteEvidenceClass.EXPLICIT_SOURCE_WEBSITE,
-            }
-        ):
-            evidence.append(WebsiteEvidence(
-                evidence_type=WebsiteEvidenceType.SOURCE_URL,
+        contribution = (
+            0.45 if evidence_type is WebsiteEvidenceType.NORMALIZED_URL else 0.30
+        )
+        evidence.append(
+            WebsiteEvidence(
+                evidence_type=evidence_type,
                 evidence_class=signal.evidence_class,
                 source_record_id=signal.source_record_id,
                 normalized_value_id=signal.normalized_value_id,
-                evidence_value=signal.provenance_url,
-                raw_value=signal.provenance_url,
-                contribution=0.10,
+                evidence_value=signal.normalized_url
+                if evidence_type is WebsiteEvidenceType.NORMALIZED_URL
+                else signal.domain,
+                raw_value=signal.raw_value,
+                contribution=contribution,
                 derivation_method=signal.discovery_method,
-            ))
+            )
+        )
+        if signal.provenance_url is not None and signal.evidence_class in {
+            WebsiteEvidenceClass.EXPLICIT_SOURCE_URL,
+            WebsiteEvidenceClass.EXPLICIT_SOURCE_WEBSITE,
+        }:
+            evidence.append(
+                WebsiteEvidence(
+                    evidence_type=WebsiteEvidenceType.SOURCE_URL,
+                    evidence_class=signal.evidence_class,
+                    source_record_id=signal.source_record_id,
+                    normalized_value_id=signal.normalized_value_id,
+                    evidence_value=signal.provenance_url,
+                    raw_value=signal.provenance_url,
+                    contribution=0.10,
+                    derivation_method=signal.discovery_method,
+                )
+            )
     if kind is WebsiteKind.BRANCH:
-        evidence.append(WebsiteEvidence(
-            evidence_type=WebsiteEvidenceType.LOCATION,
-            evidence_class=WebsiteEvidenceClass.EXPLICIT_SOURCE_URL,
-            evidence_value="branch-specific URL path",
-            contribution=0.10,
-        ))
+        evidence.append(
+            WebsiteEvidence(
+                evidence_type=WebsiteEvidenceType.LOCATION,
+                evidence_class=WebsiteEvidenceClass.EXPLICIT_SOURCE_URL,
+                evidence_value="branch-specific URL path",
+                contribution=0.10,
+            )
+        )
     return tuple(evidence)
 
 
 def _is_generic_email_domain(domain: str) -> bool:
-    return domain in _GENERIC_EMAIL_DOMAINS or domain.endswith((".yahoo.com", ".yahoo.ca"))
+    return domain in _GENERIC_EMAIL_DOMAINS or domain.endswith(
+        (".yahoo.com", ".yahoo.ca")
+    )
 
 
-def _strongest_signal(signals: tuple[_SourceWebsiteSignal, ...]) -> _SourceWebsiteSignal:
-    return min(signals, key=lambda signal: (-_EVIDENCE_WEIGHTS[signal.evidence_class], signal.normalized_value_id, signal.source_record_id))
+def _strongest_signal(
+    signals: tuple[_SourceWebsiteSignal, ...],
+) -> _SourceWebsiteSignal:
+    return min(
+        signals,
+        key=lambda signal: (
+            -_EVIDENCE_WEIGHTS[signal.evidence_class],
+            signal.normalized_value_id,
+            signal.source_record_id,
+        ),
+    )
 
 
 def _candidate_sort_key(

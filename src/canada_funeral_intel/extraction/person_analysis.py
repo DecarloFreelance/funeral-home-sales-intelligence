@@ -67,9 +67,7 @@ _ROLE_PATTERN = re.compile(
     r"managing partner|embalmer|director|counsell?or|counselor|professional))\b",
     re.IGNORECASE,
 )
-_NAME_PATTERN = re.compile(
-    r"\b([A-Z][A-Za-z'’.-]+(?:\s+[A-Z][A-Za-z'’.-]+){1,3})\b"
-)
+_NAME_PATTERN = re.compile(r"\b([A-Z][A-Za-z'’.-]+(?:\s+[A-Z][A-Za-z'’.-]+){1,3})\b")
 _SEPARATOR_PATTERN = re.compile(r"\s*(?:[|–—:-]|\bat\b)\s*", re.IGNORECASE)
 _NEGATIVE_PATTERN = re.compile(
     r"\b(?:obituar(?:y|ies)|death notice|tribute|memorial|guest book|"
@@ -127,7 +125,9 @@ class _BlockParser(HTMLParser):
             element = self._stack.pop()
             text = " ".join(" ".join(element.text).split())
             if text:
-                self.blocks.append(_Element(element.tag, element.classes, [text], element.depth))
+                self.blocks.append(
+                    _Element(element.tag, element.classes, [text], element.depth)
+                )
 
     def handle_data(self, data: str) -> None:
         if self._skip_depth or not data.strip():
@@ -162,7 +162,9 @@ def _name_and_role(text: str) -> tuple[str, str, ExtractionMethod] | None:
     return None
 
 
-def analyze_person_page(body: bytes, *, content_type: str | None) -> PersonAnalysisResult:
+def analyze_person_page(
+    body: bytes, *, content_type: str | None
+) -> PersonAnalysisResult:
     if content_type is None or "html" not in content_type.casefold():
         return PersonAnalysisResult((), 0, 0)
 

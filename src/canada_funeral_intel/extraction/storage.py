@@ -200,9 +200,7 @@ def list_page_person_observations(
             "phone": None if row["phone"] is None else str(row["phone"]),
             "normalized_phone": str(row["normalized_phone"]),
             "branch_context": (
-                None
-                if row["branch_context"] is None
-                else str(row["branch_context"])
+                None if row["branch_context"] is None else str(row["branch_context"])
             ),
             "confidence": float(row["confidence"]),
             "extraction_method": str(row["extraction_method"]),

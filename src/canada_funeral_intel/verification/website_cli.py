@@ -138,7 +138,9 @@ def run_website_populate_candidates(
             connection,
             entity_id=entity_id,
             source_dataset_id=source_dataset_id,
-            limits=BatchLimits(entity_limit=entity_limit, candidate_limit=candidate_limit),
+            limits=BatchLimits(
+                entity_limit=entity_limit, candidate_limit=candidate_limit
+            ),
             dry_run=dry_run,
         )
     except WebsiteBatchError as exc:
@@ -164,7 +166,13 @@ def run_website_batch_verify(
             connection,
             allow_network=allow_network,
             entity_id=entity_id,
-            limits=BatchLimits(entity_limit, candidate_limit, timeout_seconds, max_redirects, max_retries),
+            limits=BatchLimits(
+                entity_limit,
+                candidate_limit,
+                timeout_seconds,
+                max_redirects,
+                max_retries,
+            ),
             resume_run_id=resume_run_id,
             user_agent=user_agent,
             dry_run=dry_run,
@@ -195,26 +203,37 @@ def run_website_list(
             "SELECT domain, COUNT(DISTINCT entity_id) FROM websites GROUP BY domain"
         ).fetchall()
     }
-    review_states = {
-        int(row["website_id"]): str(row["status"])
-        for row in connection.execute(
-            f"SELECT website_id, status FROM website_review_queue WHERE website_id IN ({','.join('?' for _ in rows)})",
-            tuple(row.website_id for row in rows),
-        ).fetchall()
-    } if rows else {}
-    names = {
-        int(row["id"]): str(row["canonical_name"])
-        for row in connection.execute(
-            f"SELECT id, canonical_name FROM entities WHERE id IN ({','.join('?' for _ in rows)})",
-            tuple(row.entity_id for row in rows),
-        ).fetchall()
-    } if rows else {}
+    review_states = (
+        {
+            int(row["website_id"]): str(row["status"])
+            for row in connection.execute(
+                f"SELECT website_id, status FROM website_review_queue WHERE website_id IN ({','.join('?' for _ in rows)})",
+                tuple(row.website_id for row in rows),
+            ).fetchall()
+        }
+        if rows
+        else {}
+    )
+    names = (
+        {
+            int(row["id"]): str(row["canonical_name"])
+            for row in connection.execute(
+                f"SELECT id, canonical_name FROM entities WHERE id IN ({','.join('?' for _ in rows)})",
+                tuple(row.entity_id for row in rows),
+            ).fetchall()
+        }
+        if rows
+        else {}
+    )
     ranked = sorted(
         rows,
         key=lambda row: (
             -int(summaries.get(row.website_id, {}).get("strongest_evidence_weight", 0)),
             -int(summaries.get(row.website_id, {}).get("supporting_evidence_count", 0)),
-            int(row.domain in {domain for domain, count in domain_counts.items() if count > 1}),
+            int(
+                row.domain
+                in {domain for domain, count in domain_counts.items() if count > 1}
+            ),
             row.normalized_url,
             row.entity_id,
             row.website_id,
@@ -246,15 +265,18 @@ def run_website_list(
             "is_primary": row.is_primary,
             "entity_name": names.get(row.entity_id),
             "candidate_rank": ranks[row.website_id],
-            **summaries.get(row.website_id, {
-                "strongest_evidence": None,
-                "strongest_evidence_weight": 0,
-                "supporting_evidence_count": 0,
-                "evidence_classes": [],
-                "source_dataset_ids": [],
-                "source_record_ids": [],
-                "normalized_value_ids": [],
-            }),
+            **summaries.get(
+                row.website_id,
+                {
+                    "strongest_evidence": None,
+                    "strongest_evidence_weight": 0,
+                    "supporting_evidence_count": 0,
+                    "evidence_classes": [],
+                    "source_dataset_ids": [],
+                    "source_record_ids": [],
+                    "normalized_value_ids": [],
+                },
+            ),
             "shared_domain": domain_counts.get(row.domain, 0) > 1,
             "review_required": review_states.get(row.website_id) == "pending",
             "review_status": review_states.get(row.website_id),
@@ -362,9 +384,7 @@ def run_website_verify(
             timeout_seconds=timeout_seconds,
             max_redirects=max_redirects,
             expected_business_name=expected_business_name,
-            allow_identity_mismatch=(
-                str(row["website_kind"]) != "shared"
-            ),
+            allow_identity_mismatch=(str(row["website_kind"]) != "shared"),
         )
         check_id = insert_website_check(connection, check)
         stored = list_website_checks(connection, website_id=website_id)

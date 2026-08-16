@@ -21,22 +21,66 @@ MIGRATIONS = Path(__file__).resolve().parents[2] / "database" / "migrations"
 REFERENCE = datetime(2026, 1, 1, tzinfo=UTC)
 
 
-def _facts(connection: sqlite3.Connection, entity_id: int, website_id: int, page_id: int, body: bytes) -> None:
-    page = BusinessFactPage(page_id, website_id, entity_id, "https://example.ca/about", "about")
-    store_business_facts(connection, page=page, result=extract_business_facts(body, content_type="text/html", status_code=200, page=page))
+def _facts(
+    connection: sqlite3.Connection,
+    entity_id: int,
+    website_id: int,
+    page_id: int,
+    body: bytes,
+) -> None:
+    page = BusinessFactPage(
+        page_id, website_id, entity_id, "https://example.ca/about", "about"
+    )
+    store_business_facts(
+        connection,
+        page=page,
+        result=extract_business_facts(
+            body, content_type="text/html", status_code=200, page=page
+        ),
+    )
 
 
-def test_quality_scores_business_facts_with_provenance_and_conflict(tmp_path: Path) -> None:
+def test_quality_scores_business_facts_with_provenance_and_conflict(
+    tmp_path: Path,
+) -> None:
     with database_session(tmp_path / "quality.sqlite3") as connection:
         apply_pending_migrations(connection, MIGRATIONS)
         entity_id, website_id, page_id = _seed(connection)
-        _facts(connection, entity_id, website_id, page_id, b"<main>Family-owned since 1984. We offer chapel.</main>")
-        _facts(connection, entity_id, website_id, page_id, b"<main>Family-owned since 1985. We offer chapel.</main>")
-        rows = quality_summary(connection, subject_type="business_fact", reference_time=REFERENCE, entity_id=entity_id, include_historical=True)
-        years = [row for row in rows if row["evidence"].get("fact_id") and "conflicting_values" in row["warnings"]]
+        _facts(
+            connection,
+            entity_id,
+            website_id,
+            page_id,
+            b"<main>Family-owned since 1984. We offer chapel.</main>",
+        )
+        _facts(
+            connection,
+            entity_id,
+            website_id,
+            page_id,
+            b"<main>Family-owned since 1985. We offer chapel.</main>",
+        )
+        rows = quality_summary(
+            connection,
+            subject_type="business_fact",
+            reference_time=REFERENCE,
+            entity_id=entity_id,
+            include_historical=True,
+        )
+        years = [
+            row
+            for row in rows
+            if row["evidence"].get("fact_id")
+            and "conflicting_values" in row["warnings"]
+        ]
         assert years
         assert all(row["policy_version"] == "quality-confidence-v1" for row in rows)
-        assert all(0 <= row["components"][name] <= 100 for row in rows for name in row["components"] if row["components"][name] is not None)
+        assert all(
+            0 <= row["components"][name] <= 100
+            for row in rows
+            for name in row["components"]
+            if row["components"][name] is not None
+        )
         assert len({row["input_fingerprint"] for row in rows}) == len(rows)
 
 
@@ -69,7 +113,13 @@ def test_quality_invalid_subject_and_exports_are_deterministic(tmp_path: Path) -
     with database_session(tmp_path / "quality.sqlite3") as connection:
         apply_pending_migrations(connection, MIGRATIONS)
         entity_id, website_id, page_id = _seed(connection)
-        _facts(connection, entity_id, website_id, page_id, b"<main>Family-owned since 1984.</main>")
+        _facts(
+            connection,
+            entity_id,
+            website_id,
+            page_id,
+            b"<main>Family-owned since 1984.</main>",
+        )
         with pytest.raises(ValueError, match="not found"):
             score_one(connection, "entity", 999, reference_time=REFERENCE)
         first = tmp_path / "one"
@@ -84,14 +134,34 @@ def test_quality_subject_queries_are_bounded_and_structured(tmp_path: Path) -> N
     with database_session(tmp_path / "quality.sqlite3") as connection:
         apply_pending_migrations(connection, MIGRATIONS)
         entity_id, website_id, page_id = _seed(connection)
-        _facts(connection, entity_id, website_id, page_id, b"<main>Family-owned since 1984.</main>")
+        _facts(
+            connection,
+            entity_id,
+            website_id,
+            page_id,
+            b"<main>Family-owned since 1984.</main>",
+        )
         for subject_type in ("entity", "website", "website_page", "business_fact"):
-            rows = quality_summary(connection, subject_type=subject_type, reference_time=REFERENCE)
+            rows = quality_summary(
+                connection, subject_type=subject_type, reference_time=REFERENCE
+            )
             assert rows
-            assert all({"policy_version", "components", "overall_score", "readiness", "input_fingerprint"} <= row.keys() for row in rows)
+            assert all(
+                {
+                    "policy_version",
+                    "components",
+                    "overall_score",
+                    "readiness",
+                    "input_fingerprint",
+                }
+                <= row.keys()
+                for row in rows
+            )
 
 
-def test_rejected_person_observations_are_not_positive_quality_evidence(tmp_path: Path) -> None:
+def test_rejected_person_observations_are_not_positive_quality_evidence(
+    tmp_path: Path,
+) -> None:
     with database_session(tmp_path / "quality.sqlite3") as connection:
         apply_pending_migrations(connection, MIGRATIONS)
         entity_id, website_id, page_id = _seed(connection)
@@ -106,10 +176,18 @@ def test_rejected_person_observations_are_not_positive_quality_evidence(tmp_path
             (page_id, website_id, entity_id, "a" * 64),
         )
         observation_id = int(observation.lastrowid)
-        connection.execute("INSERT INTO person_observation_review_queue (observation_id, status) VALUES (?, 'rejected')", (observation_id,))
-        person = connection.execute("INSERT INTO people (canonical_name, normalized_name) VALUES ('Alex Doe', 'alex doe')")
+        connection.execute(
+            "INSERT INTO person_observation_review_queue (observation_id, status) VALUES (?, 'rejected')",
+            (observation_id,),
+        )
+        person = connection.execute(
+            "INSERT INTO people (canonical_name, normalized_name) VALUES ('Alex Doe', 'alex doe')"
+        )
         person_id = int(person.lastrowid)
-        connection.execute("INSERT INTO person_evidence (person_id, observation_id, review_decision) VALUES (?, ?, 'rejected')", (person_id, observation_id))
+        connection.execute(
+            "INSERT INTO person_evidence (person_id, observation_id, review_decision) VALUES (?, ?, 'rejected')",
+            (person_id, observation_id),
+        )
         connection.commit()
         result = score_one(connection, "person", person_id, reference_time=REFERENCE)
         assert result["evidence"]["evidence_count"] == 0

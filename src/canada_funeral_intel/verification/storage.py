@@ -171,7 +171,11 @@ def upsert_website_candidate(
                     """,
                     (
                         website_id,
-                        (item.evidence_class.value if item.evidence_class else item.evidence_type.value),
+                        (
+                            item.evidence_class.value
+                            if item.evidence_class
+                            else item.evidence_type.value
+                        ),
                         item.source_record_id,
                         item.normalized_value_id,
                         item.evidence_value,
@@ -202,7 +206,11 @@ def upsert_website_candidate(
                         item.evidence_value,
                         item.contribution,
                         item.normalized_value_id,
-                        (item.evidence_class.value if item.evidence_class else item.evidence_type.value),
+                        (
+                            item.evidence_class.value
+                            if item.evidence_class
+                            else item.evidence_type.value
+                        ),
                         item.derivation_method,
                         item.derivation_version,
                         item.raw_value or item.evidence_value,
@@ -330,16 +338,36 @@ def website_candidate_evidence_summaries(
             )
             for row in items
         }
-        classes = sorted({str(row["evidence_class"] or row["evidence_type"]) for row in items})
+        classes = sorted(
+            {str(row["evidence_class"] or row["evidence_type"]) for row in items}
+        )
         strongest = min(classes, key=lambda item: (-weights.get(item, 0), item))
         summaries[website_id] = {
             "strongest_evidence": strongest,
             "strongest_evidence_weight": weights.get(strongest, 0),
             "supporting_evidence_count": len(logical),
             "evidence_classes": classes,
-            "source_dataset_ids": sorted({int(row["source_dataset_id"]) for row in items if row["source_dataset_id"] is not None}),
-            "source_record_ids": sorted({int(row["source_record_id"]) for row in items if row["source_record_id"] is not None}),
-            "normalized_value_ids": sorted({int(row["normalized_value_id"]) for row in items if row["normalized_value_id"] is not None}),
+            "source_dataset_ids": sorted(
+                {
+                    int(row["source_dataset_id"])
+                    for row in items
+                    if row["source_dataset_id"] is not None
+                }
+            ),
+            "source_record_ids": sorted(
+                {
+                    int(row["source_record_id"])
+                    for row in items
+                    if row["source_record_id"] is not None
+                }
+            ),
+            "normalized_value_ids": sorted(
+                {
+                    int(row["normalized_value_id"])
+                    for row in items
+                    if row["normalized_value_id"] is not None
+                }
+            ),
         }
     return summaries
 

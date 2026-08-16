@@ -26,7 +26,9 @@ def _traceability(observation: dict[str, object] | None) -> tuple[str, list[str]
     return ("traceable" if not reasons else "incomplete"), reasons
 
 
-def _observation_details(connection: sqlite3.Connection, observation_ids: set[int]) -> dict[int, dict[str, object]]:
+def _observation_details(
+    connection: sqlite3.Connection, observation_ids: set[int]
+) -> dict[int, dict[str, object]]:
     if not observation_ids:
         return {}
     marks = ",".join("?" for _ in observation_ids)
@@ -61,7 +63,12 @@ def _observation_details(connection: sqlite3.Connection, observation_ids: set[in
     return {int(row["observation_id"]): dict(row) for row in rows}
 
 
-def _observation_payload(row: dict[str, object], *, association_id: int | None = None, historical: bool = False) -> dict[str, object]:
+def _observation_payload(
+    row: dict[str, object],
+    *,
+    association_id: int | None = None,
+    historical: bool = False,
+) -> dict[str, object]:
     status, reasons = _traceability(row)
     return {
         "association_id": association_id,
@@ -117,7 +124,9 @@ def _observation_payload(row: dict[str, object], *, association_id: int | None =
     }
 
 
-def _review_rows(connection: sqlite3.Connection, observation_ids: set[int]) -> list[dict[str, object]]:
+def _review_rows(
+    connection: sqlite3.Connection, observation_ids: set[int]
+) -> list[dict[str, object]]:
     if not observation_ids:
         return []
     marks = ",".join("?" for _ in observation_ids)
@@ -128,7 +137,9 @@ def _review_rows(connection: sqlite3.Connection, observation_ids: set[int]) -> l
     return [dict(row) for row in rows]
 
 
-def _merge_rows(connection: sqlite3.Connection, person_id: int) -> list[dict[str, object]]:
+def _merge_rows(
+    connection: sqlite3.Connection, person_id: int
+) -> list[dict[str, object]]:
     rows = connection.execute(
         """
         SELECT id AS merge_id, survivor_person_id, merged_person_id AS absorbed_person_id,
@@ -163,44 +174,97 @@ def _anomalies(
     if person["status"] == PersonStatus.ACTIVE.value and not evidence:
         add("active_person_zero_evidence", person_id=person["person_id"])
     if evidence and not accepted:
-        add("rejected_only_evidence", person_id=person["person_id"], observation_ids=sorted({int(row["observation_id"]) for row in evidence}))
+        add(
+            "rejected_only_evidence",
+            person_id=person["person_id"],
+            observation_ids=sorted({int(row["observation_id"]) for row in evidence}),
+        )
 
     for row in affiliations:
         if row["active"] != 1 or row["traceability"] == "traceable":
             continue
-        add("affiliation_incomplete", affiliation_id=row["affiliation_id"], reasons=row["traceability_reasons"])
+        add(
+            "affiliation_incomplete",
+            affiliation_id=row["affiliation_id"],
+            reasons=row["traceability_reasons"],
+        )
     for row in contacts:
         if row["active"] != 1 or row["traceability"] == "traceable":
             continue
-        add("contact_incomplete", contact_id=row["contact_id"], reasons=row["traceability_reasons"])
+        add(
+            "contact_incomplete",
+            contact_id=row["contact_id"],
+            reasons=row["traceability_reasons"],
+        )
 
-    for contact_type, code in (("email", "conflicting_active_emails"), ("phone", "conflicting_active_phones")):
-        values = sorted({str(row["normalized_value"]) for row in contacts if row["active"] == 1 and row["contact_type"] == contact_type})
+    for contact_type, code in (
+        ("email", "conflicting_active_emails"),
+        ("phone", "conflicting_active_phones"),
+    ):
+        values = sorted(
+            {
+                str(row["normalized_value"])
+                for row in contacts
+                if row["active"] == 1 and row["contact_type"] == contact_type
+            }
+        )
         if len(values) > 1:
             add(code, values=values)
 
-    branch_ids = sorted({int(row["entity_id"]) for row in affiliations if row["active"] == 1 and row.get("entity_type") == "branch"})
+    branch_ids = sorted(
+        {
+            int(row["entity_id"])
+            for row in affiliations
+            if row["active"] == 1 and row.get("entity_type") == "branch"
+        }
+    )
     if len(branch_ids) > 1:
         add("cross_branch_unsupported", entity_ids=branch_ids)
 
     for merge in merges:
-        absorbed = connection.execute("SELECT status FROM people WHERE id = ?", (merge["absorbed_person_id"],)).fetchone()
+        absorbed = connection.execute(
+            "SELECT status FROM people WHERE id = ?", (merge["absorbed_person_id"],)
+        ).fetchone()
         if absorbed is None:
             add("merge_history_missing_absorbed_person", merge_id=merge["merge_id"])
-        elif merge["state"] == "active" and absorbed["status"] != PersonStatus.MERGED.value:
+        elif (
+            merge["state"] == "active"
+            and absorbed["status"] != PersonStatus.MERGED.value
+        ):
             add("merge_state_inconsistent", merge_id=merge["merge_id"])
-        elif merge["state"] == "rolled_back" and absorbed["status"] != PersonStatus.ACTIVE.value:
+        elif (
+            merge["state"] == "rolled_back"
+            and absorbed["status"] != PersonStatus.ACTIVE.value
+        ):
             add("rolled_back_merge_not_restored", merge_id=merge["merge_id"])
 
-    anomalies.sort(key=lambda row: (str(row["code"]), str(row.get("merge_id", row.get("observation_ids", row.get("affiliation_id", row.get("contact_id", "")))))))
+    anomalies.sort(
+        key=lambda row: (
+            str(row["code"]),
+            str(
+                row.get(
+                    "merge_id",
+                    row.get(
+                        "observation_ids",
+                        row.get("affiliation_id", row.get("contact_id", "")),
+                    ),
+                )
+            ),
+        )
+    )
     return anomalies
 
 
-def audit_person(connection: sqlite3.Connection, person_id: int, *, include_remediation: bool = True) -> dict[str, object]:
+def audit_person(
+    connection: sqlite3.Connection, person_id: int, *, include_remediation: bool = True
+) -> dict[str, object]:
     if person_id < 1:
         raise PersonResolutionError("person_id must be positive")
     try:
-        person_row = connection.execute("SELECT id AS person_id, canonical_name, normalized_name, status, created_at, updated_at FROM people WHERE id = ?", (person_id,)).fetchone()
+        person_row = connection.execute(
+            "SELECT id AS person_id, canonical_name, normalized_name, status, created_at, updated_at FROM people WHERE id = ?",
+            (person_id,),
+        ).fetchone()
         if person_row is None:
             raise PersonResolutionError(f"Person not found: {person_id}")
         person = dict(person_row)
@@ -223,8 +287,12 @@ def audit_person(connection: sqlite3.Connection, person_id: int, *, include_reme
             (person_id,),
         ).fetchall()
         merges = _merge_rows(connection, person_id)
-        observation_ids = {int(row["source_observation_id"]) for row in affiliation_rows}
-        observation_ids.update(int(row["source_observation_id"]) for row in contact_rows)
+        observation_ids = {
+            int(row["source_observation_id"]) for row in affiliation_rows
+        }
+        observation_ids.update(
+            int(row["source_observation_id"]) for row in contact_rows
+        )
         observation_ids.update(int(row["observation_id"]) for row in evidence_rows)
         historical_affiliation_rows = connection.execute(
             """
@@ -263,43 +331,125 @@ def audit_person(connection: sqlite3.Connection, person_id: int, *, include_reme
             """,
             (person_id,),
         ).fetchall()
-        observation_ids.update(int(row["source_observation_id"]) for row in historical_affiliation_rows)
-        observation_ids.update(int(row["source_observation_id"]) for row in historical_contact_rows)
-        observation_ids.update(int(row["observation_id"]) for row in historical_evidence_rows)
+        observation_ids.update(
+            int(row["source_observation_id"]) for row in historical_affiliation_rows
+        )
+        observation_ids.update(
+            int(row["source_observation_id"]) for row in historical_contact_rows
+        )
+        observation_ids.update(
+            int(row["observation_id"]) for row in historical_evidence_rows
+        )
         details = _observation_details(connection, observation_ids)
         reviews = _review_rows(connection, observation_ids)
         remediation_tasks = []
         remediation_task_history = []
         if include_remediation:
-            remediation_tasks = [dict(row) for row in connection.execute("SELECT * FROM person_anomaly_remediation_tasks WHERE person_id = ? ORDER BY status, due_at IS NULL, due_at, id", (person_id,)).fetchall()]
-            remediation_task_history = [dict(row) for row in connection.execute("SELECT * FROM person_anomaly_remediation_task_history WHERE person_id = ? ORDER BY task_id, id", (person_id,)).fetchall()]
+            remediation_tasks = [
+                dict(row)
+                for row in connection.execute(
+                    "SELECT * FROM person_anomaly_remediation_tasks WHERE person_id = ? ORDER BY status, due_at IS NULL, due_at, id",
+                    (person_id,),
+                ).fetchall()
+            ]
+            remediation_task_history = [
+                dict(row)
+                for row in connection.execute(
+                    "SELECT * FROM person_anomaly_remediation_task_history WHERE person_id = ? ORDER BY task_id, id",
+                    (person_id,),
+                ).fetchall()
+            ]
 
         affiliations = []
         for row in affiliation_rows:
             value = dict(row)
             observation = details.get(int(row["source_observation_id"]))
             status, reasons = _traceability(observation)
-            value.update({"traceability": status, "traceability_reasons": reasons, "entity_type": row["entity_type"]})
+            value.update(
+                {
+                    "traceability": status,
+                    "traceability_reasons": reasons,
+                    "entity_type": row["entity_type"],
+                }
+            )
             affiliations.append(value)
         contacts = []
         for row in contact_rows:
             value = dict(row)
-            status, reasons = _traceability(details.get(int(row["source_observation_id"])))
+            status, reasons = _traceability(
+                details.get(int(row["source_observation_id"]))
+            )
             value.update({"traceability": status, "traceability_reasons": reasons})
             contacts.append(value)
         historical_affiliations = []
         for row in historical_affiliation_rows:
-            status, reasons = _traceability(details.get(int(row["source_observation_id"])))
-            historical_affiliations.append({"person_id": person_id, "historical": True, "traceability": status, "traceability_reasons": reasons, **dict(row)})
+            status, reasons = _traceability(
+                details.get(int(row["source_observation_id"]))
+            )
+            historical_affiliations.append(
+                {
+                    "person_id": person_id,
+                    "historical": True,
+                    "traceability": status,
+                    "traceability_reasons": reasons,
+                    **dict(row),
+                }
+            )
         historical_contacts = []
         for row in historical_contact_rows:
-            status, reasons = _traceability(details.get(int(row["source_observation_id"])))
-            historical_contacts.append({"person_id": person_id, "historical": True, "traceability": status, "traceability_reasons": reasons, **dict(row)})
-        evidence = [_observation_payload(details[int(row["observation_id"])], association_id=int(row["evidence_id"])) for row in evidence_rows if int(row["observation_id"]) in details]
-        historical_evidence = [_observation_payload(details[int(row["observation_id"])], association_id=int(row["evidence_id"]), historical=True) for row in historical_evidence_rows if int(row["observation_id"]) in details]
-        anomalies = _anomalies(connection, person=person, affiliations=affiliations, contacts=contacts, evidence=evidence, reviews=reviews, merges=merges)
-        traceability_values = [str(row["traceability"]) for row in affiliations + contacts + evidence + historical_affiliations + historical_contacts + historical_evidence]
-        traceability = "traceable" if traceability_values and all(value == "traceable" for value in traceability_values) else ("incomplete" if traceability_values else "orphaned")
+            status, reasons = _traceability(
+                details.get(int(row["source_observation_id"]))
+            )
+            historical_contacts.append(
+                {
+                    "person_id": person_id,
+                    "historical": True,
+                    "traceability": status,
+                    "traceability_reasons": reasons,
+                    **dict(row),
+                }
+            )
+        evidence = [
+            _observation_payload(
+                details[int(row["observation_id"])],
+                association_id=int(row["evidence_id"]),
+            )
+            for row in evidence_rows
+            if int(row["observation_id"]) in details
+        ]
+        historical_evidence = [
+            _observation_payload(
+                details[int(row["observation_id"])],
+                association_id=int(row["evidence_id"]),
+                historical=True,
+            )
+            for row in historical_evidence_rows
+            if int(row["observation_id"]) in details
+        ]
+        anomalies = _anomalies(
+            connection,
+            person=person,
+            affiliations=affiliations,
+            contacts=contacts,
+            evidence=evidence,
+            reviews=reviews,
+            merges=merges,
+        )
+        traceability_values = [
+            str(row["traceability"])
+            for row in affiliations
+            + contacts
+            + evidence
+            + historical_affiliations
+            + historical_contacts
+            + historical_evidence
+        ]
+        traceability = (
+            "traceable"
+            if traceability_values
+            and all(value == "traceable" for value in traceability_values)
+            else ("incomplete" if traceability_values else "orphaned")
+        )
         return {
             "person": person,
             "affiliations": affiliations,
@@ -312,14 +462,20 @@ def audit_person(connection: sqlite3.Connection, person_id: int, *, include_reme
             "merge_history": merges,
             "remediation_tasks": remediation_tasks,
             "remediation_task_history": remediation_task_history,
-            "traceability": {"status": traceability, "observation_count": len(observation_ids), "anomaly_count": len(anomalies)},
+            "traceability": {
+                "status": traceability,
+                "observation_count": len(observation_ids),
+                "anomaly_count": len(anomalies),
+            },
             "anomalies": anomalies,
         }
     except sqlite3.Error as exc:
         raise PersonResolutionError(f"person audit failed: {exc}") from exc
 
 
-def audit_people_list(connection: sqlite3.Connection, *, include_historical: bool = False) -> list[dict[str, object]]:
+def audit_people_list(
+    connection: sqlite3.Connection, *, include_historical: bool = False
+) -> list[dict[str, object]]:
     status_clause = "" if include_historical else "WHERE p.status = 'active'"
     try:
         rows = connection.execute(
@@ -388,47 +544,269 @@ def audit_people_list(connection: sqlite3.Connection, *, include_historical: boo
             ORDER BY p.normalized_name, p.id
             """
         ).fetchall()
-        return [{"person_id": int(row["person_id"]), "status": str(row["status"]), "canonical_name": str(row["canonical_name"]), "affiliation_count": int(row["affiliation_count"]), "contact_count": int(row["contact_count"]), "observation_count": int(row["observation_count"]), "review_count": int(row["review_count"]), "merge_count": int(row["merge_count"]), "traceability_status": str(row["traceability_status"]), "anomaly_count": int(row["anomaly_count"])} for row in rows]
+        return [
+            {
+                "person_id": int(row["person_id"]),
+                "status": str(row["status"]),
+                "canonical_name": str(row["canonical_name"]),
+                "affiliation_count": int(row["affiliation_count"]),
+                "contact_count": int(row["contact_count"]),
+                "observation_count": int(row["observation_count"]),
+                "review_count": int(row["review_count"]),
+                "merge_count": int(row["merge_count"]),
+                "traceability_status": str(row["traceability_status"]),
+                "anomaly_count": int(row["anomaly_count"]),
+            }
+            for row in rows
+        ]
     except sqlite3.Error as exc:
         raise PersonResolutionError(f"people audit listing failed: {exc}") from exc
 
 
 _EXPORTS: dict[str, tuple[str, ...]] = {
-    "people": ("person_id", "canonical_name", "normalized_name", "status", "created_at", "updated_at"),
-    "person_affiliations": ("person_id", "affiliation_id", "entity_id", "observed_role", "normalized_role", "branch_context", "confidence", "source_observation_id", "active", "historical", "traceability"),
-    "person_contacts": ("person_id", "contact_id", "contact_type", "observed_value", "normalized_value", "confidence", "source_observation_id", "active", "historical", "traceability"),
-    "person_observations": ("person_id", "association_id", "historical", "observation_id", "website_page_id", "website_id", "entity_id", "observed_name", "normalized_name", "role_title", "normalized_role", "email", "normalized_email", "phone", "normalized_phone", "branch_context", "confidence", "extraction_method", "extractor_version", "evidence_snippet", "source_url", "content_hash", "review_status", "page_url", "page_kind", "identity_score", "identity_observable", "status_code", "content_type", "depth", "website_kind", "website_status", "is_primary", "entity_type", "entity_name"),
-    "person_reviews": ("person_id", "review_queue_id", "observation_id", "status", "reviewer_note", "created_at", "reviewed_at"),
-    "person_merge_history": ("person_id", "merge_id", "survivor_person_id", "absorbed_person_id", "merge_reason", "actor", "created_at", "state", "rolled_back_at", "rollback_actor", "rollback_reason"),
-    "person_anomalies": ("person_id", "code", "affiliation_id", "contact_id", "merge_id", "observation_ids", "reasons", "values", "entity_ids"),
-    "person_triage": ("person_id", "person_status", "display_name", "triage_priority", "severity", "anomaly_count", "anomaly_codes", "anomaly_fingerprints", "disposition_statuses", "disposition_ids", "disposition_actors", "disposition_updated_at", "remediation_task_count", "open_remediation_task_count", "overdue_remediation_task_count", "remediation_task_ids", "traceability_status", "entity_ids", "branch_ids", "website_ids", "page_ids", "observation_count", "active_affiliation_count", "active_contact_count", "merge_count", "rollback_count"),
-    "person_anomaly_dispositions": ("disposition_id", "person_id", "anomaly_code", "anomaly_fingerprint", "status", "reviewer_actor", "reviewer_note", "created_at", "updated_at", "acknowledged_at", "dismissed_at", "reopened_at", "stale_at"),
-    "person_anomaly_disposition_history": ("id", "disposition_id", "person_id", "anomaly_code", "anomaly_fingerprint", "previous_status", "new_status", "actor", "note", "changed_at"),
-    "person_anomaly_remediation_tasks": ("id", "person_id", "anomaly_code", "anomaly_fingerprint", "task_type", "status", "owner", "due_at", "created_by", "created_note", "created_at", "updated_at", "completed_at", "cancelled_at", "stale_at"),
-    "person_anomaly_remediation_task_history": ("id", "task_id", "person_id", "anomaly_code", "anomaly_fingerprint", "previous_status", "new_status", "actor", "note", "previous_owner", "new_owner", "previous_due_at", "new_due_at", "changed_at"),
+    "people": (
+        "person_id",
+        "canonical_name",
+        "normalized_name",
+        "status",
+        "created_at",
+        "updated_at",
+    ),
+    "person_affiliations": (
+        "person_id",
+        "affiliation_id",
+        "entity_id",
+        "observed_role",
+        "normalized_role",
+        "branch_context",
+        "confidence",
+        "source_observation_id",
+        "active",
+        "historical",
+        "traceability",
+    ),
+    "person_contacts": (
+        "person_id",
+        "contact_id",
+        "contact_type",
+        "observed_value",
+        "normalized_value",
+        "confidence",
+        "source_observation_id",
+        "active",
+        "historical",
+        "traceability",
+    ),
+    "person_observations": (
+        "person_id",
+        "association_id",
+        "historical",
+        "observation_id",
+        "website_page_id",
+        "website_id",
+        "entity_id",
+        "observed_name",
+        "normalized_name",
+        "role_title",
+        "normalized_role",
+        "email",
+        "normalized_email",
+        "phone",
+        "normalized_phone",
+        "branch_context",
+        "confidence",
+        "extraction_method",
+        "extractor_version",
+        "evidence_snippet",
+        "source_url",
+        "content_hash",
+        "review_status",
+        "page_url",
+        "page_kind",
+        "identity_score",
+        "identity_observable",
+        "status_code",
+        "content_type",
+        "depth",
+        "website_kind",
+        "website_status",
+        "is_primary",
+        "entity_type",
+        "entity_name",
+    ),
+    "person_reviews": (
+        "person_id",
+        "review_queue_id",
+        "observation_id",
+        "status",
+        "reviewer_note",
+        "created_at",
+        "reviewed_at",
+    ),
+    "person_merge_history": (
+        "person_id",
+        "merge_id",
+        "survivor_person_id",
+        "absorbed_person_id",
+        "merge_reason",
+        "actor",
+        "created_at",
+        "state",
+        "rolled_back_at",
+        "rollback_actor",
+        "rollback_reason",
+    ),
+    "person_anomalies": (
+        "person_id",
+        "code",
+        "affiliation_id",
+        "contact_id",
+        "merge_id",
+        "observation_ids",
+        "reasons",
+        "values",
+        "entity_ids",
+    ),
+    "person_triage": (
+        "person_id",
+        "person_status",
+        "display_name",
+        "triage_priority",
+        "severity",
+        "anomaly_count",
+        "anomaly_codes",
+        "anomaly_fingerprints",
+        "disposition_statuses",
+        "disposition_ids",
+        "disposition_actors",
+        "disposition_updated_at",
+        "remediation_task_count",
+        "open_remediation_task_count",
+        "overdue_remediation_task_count",
+        "remediation_task_ids",
+        "traceability_status",
+        "entity_ids",
+        "branch_ids",
+        "website_ids",
+        "page_ids",
+        "observation_count",
+        "active_affiliation_count",
+        "active_contact_count",
+        "merge_count",
+        "rollback_count",
+    ),
+    "person_anomaly_dispositions": (
+        "disposition_id",
+        "person_id",
+        "anomaly_code",
+        "anomaly_fingerprint",
+        "status",
+        "reviewer_actor",
+        "reviewer_note",
+        "created_at",
+        "updated_at",
+        "acknowledged_at",
+        "dismissed_at",
+        "reopened_at",
+        "stale_at",
+    ),
+    "person_anomaly_disposition_history": (
+        "id",
+        "disposition_id",
+        "person_id",
+        "anomaly_code",
+        "anomaly_fingerprint",
+        "previous_status",
+        "new_status",
+        "actor",
+        "note",
+        "changed_at",
+    ),
+    "person_anomaly_remediation_tasks": (
+        "id",
+        "person_id",
+        "anomaly_code",
+        "anomaly_fingerprint",
+        "task_type",
+        "status",
+        "owner",
+        "due_at",
+        "created_by",
+        "created_note",
+        "created_at",
+        "updated_at",
+        "completed_at",
+        "cancelled_at",
+        "stale_at",
+    ),
+    "person_anomaly_remediation_task_history": (
+        "id",
+        "task_id",
+        "person_id",
+        "anomaly_code",
+        "anomaly_fingerprint",
+        "previous_status",
+        "new_status",
+        "actor",
+        "note",
+        "previous_owner",
+        "new_owner",
+        "previous_due_at",
+        "new_due_at",
+        "changed_at",
+    ),
 }
 
 
-def export_people_csv(connection: sqlite3.Connection, output: Path, *, include_historical: bool = False) -> list[Path]:
+def export_people_csv(
+    connection: sqlite3.Connection, output: Path, *, include_historical: bool = False
+) -> list[Path]:
     if output.exists() and not output.is_dir():
         raise PersonResolutionError("CSV export output must be a directory")
     output.mkdir(parents=True, exist_ok=True)
-    audits = [audit_person(connection, int(row["person_id"])) for row in connection.execute("SELECT id AS person_id FROM people " + ("" if include_historical else "WHERE status = 'active'") + " ORDER BY normalized_name, id").fetchall()]
+    audits = [
+        audit_person(connection, int(row["person_id"]))
+        for row in connection.execute(
+            "SELECT id AS person_id FROM people "
+            + ("" if include_historical else "WHERE status = 'active'")
+            + " ORDER BY normalized_name, id"
+        ).fetchall()
+    ]
     rows: dict[str, list[dict[str, object]]] = {name: [] for name in _EXPORTS}
     from canada_funeral_intel.people.triage import TriageFilters, triage_people
 
-    triage_rows = triage_people(connection, TriageFilters(include_historical=include_historical))
+    triage_rows = triage_people(
+        connection, TriageFilters(include_historical=include_historical)
+    )
     person_ids = [int(audit["person"]["person_id"]) for audit in audits]
     if person_ids:
         marks = ",".join("?" for _ in person_ids)
-        disposition_rows = connection.execute(f"SELECT * FROM person_anomaly_dispositions WHERE person_id IN ({marks}) ORDER BY person_id, anomaly_code, id", tuple(person_ids)).fetchall()
-        history_rows = connection.execute(f"SELECT * FROM person_anomaly_disposition_history WHERE person_id IN ({marks}) ORDER BY person_id, disposition_id, id", tuple(person_ids)).fetchall()
-        task_rows = connection.execute(f"SELECT * FROM person_anomaly_remediation_tasks WHERE person_id IN ({marks}) ORDER BY person_id, anomaly_code, id", tuple(person_ids)).fetchall()
-        task_history_rows = connection.execute(f"SELECT * FROM person_anomaly_remediation_task_history WHERE person_id IN ({marks}) ORDER BY person_id, task_id, id", tuple(person_ids)).fetchall()
-        rows["person_anomaly_dispositions"].extend(dict(row) for row in disposition_rows)
-        rows["person_anomaly_disposition_history"].extend(dict(row) for row in history_rows)
+        disposition_rows = connection.execute(
+            f"SELECT * FROM person_anomaly_dispositions WHERE person_id IN ({marks}) ORDER BY person_id, anomaly_code, id",
+            tuple(person_ids),
+        ).fetchall()
+        history_rows = connection.execute(
+            f"SELECT * FROM person_anomaly_disposition_history WHERE person_id IN ({marks}) ORDER BY person_id, disposition_id, id",
+            tuple(person_ids),
+        ).fetchall()
+        task_rows = connection.execute(
+            f"SELECT * FROM person_anomaly_remediation_tasks WHERE person_id IN ({marks}) ORDER BY person_id, anomaly_code, id",
+            tuple(person_ids),
+        ).fetchall()
+        task_history_rows = connection.execute(
+            f"SELECT * FROM person_anomaly_remediation_task_history WHERE person_id IN ({marks}) ORDER BY person_id, task_id, id",
+            tuple(person_ids),
+        ).fetchall()
+        rows["person_anomaly_dispositions"].extend(
+            dict(row) for row in disposition_rows
+        )
+        rows["person_anomaly_disposition_history"].extend(
+            dict(row) for row in history_rows
+        )
         rows["person_anomaly_remediation_tasks"].extend(dict(row) for row in task_rows)
-        rows["person_anomaly_remediation_task_history"].extend(dict(row) for row in task_history_rows)
+        rows["person_anomaly_remediation_task_history"].extend(
+            dict(row) for row in task_history_rows
+        )
     for audit in audits:
         person_id = int(audit["person"]["person_id"])
         rows["people"].append(audit["person"])
@@ -441,9 +819,41 @@ def export_people_csv(connection: sqlite3.Connection, output: Path, *, include_h
         for item in audit["historical_contact_points"]:
             rows["person_contacts"].append({"person_id": person_id, **item})
         for item in audit["evidence"]:
-            rows["person_observations"].append({"person_id": person_id, **item, "review_status": next((r["status"] for r in audit["reviews"] if r["observation_id"] == item["observation_id"]), None), **item["page"], **item["website"], **item["entity"]})
+            rows["person_observations"].append(
+                {
+                    "person_id": person_id,
+                    **item,
+                    "review_status": next(
+                        (
+                            r["status"]
+                            for r in audit["reviews"]
+                            if r["observation_id"] == item["observation_id"]
+                        ),
+                        None,
+                    ),
+                    **item["page"],
+                    **item["website"],
+                    **item["entity"],
+                }
+            )
         for item in audit["historical_evidence"]:
-            rows["person_observations"].append({"person_id": person_id, **item, "review_status": next((r["status"] for r in audit["reviews"] if r["observation_id"] == item["observation_id"]), None), **item["page"], **item["website"], **item["entity"]})
+            rows["person_observations"].append(
+                {
+                    "person_id": person_id,
+                    **item,
+                    "review_status": next(
+                        (
+                            r["status"]
+                            for r in audit["reviews"]
+                            if r["observation_id"] == item["observation_id"]
+                        ),
+                        None,
+                    ),
+                    **item["page"],
+                    **item["website"],
+                    **item["entity"],
+                }
+            )
         for item in audit["reviews"]:
             rows["person_reviews"].append({"person_id": person_id, **item})
         for item in audit["merge_history"]:
@@ -451,31 +861,73 @@ def export_people_csv(connection: sqlite3.Connection, output: Path, *, include_h
         for item in audit["anomalies"]:
             rows["person_anomalies"].append({"person_id": person_id, **item})
     for item in triage_rows:
-        dispositions = [row["disposition"] for row in item["anomalies"] if row.get("disposition") is not None]
-        rows["person_triage"].append({
-            **item,
-            "anomaly_codes": "|".join(str(code) for code in item["anomaly_codes"]),
-            "anomaly_fingerprints": "|".join(sorted(str(row["fingerprint"]) for row in item["anomalies"])),
-            "disposition_statuses": "|".join(sorted(str(row["status"]) for row in dispositions)),
-            "disposition_ids": "|".join(sorted(str(row["disposition_id"]) for row in dispositions)),
-            "disposition_actors": "|".join(sorted(str(row["reviewer_actor"]) for row in dispositions)),
-            "disposition_updated_at": "|".join(sorted(str(row["updated_at"]) for row in dispositions)),
-            "remediation_task_count": sum(int(row["remediation"]["remediation_task_count"]) for row in item["anomalies"] if row.get("remediation")),
-            "open_remediation_task_count": sum(int(row["remediation"]["open_remediation_task_count"]) for row in item["anomalies"] if row.get("remediation")),
-            "overdue_remediation_task_count": sum(int(row["remediation"]["overdue_remediation_task_count"]) for row in item["anomalies"] if row.get("remediation")),
-            "remediation_task_ids": "|".join(sorted(str(task_id) for row in item["anomalies"] if row.get("remediation") for task_id in row["remediation"]["remediation_task_ids"])),
-            "entity_ids": "|".join(str(value) for value in item["entity_ids"]),
-            "branch_ids": "|".join(str(value) for value in item["branch_ids"]),
-            "website_ids": "|".join(str(value) for value in item["website_ids"]),
-            "page_ids": "|".join(str(value) for value in item["page_ids"]),
-        })
+        dispositions = [
+            row["disposition"]
+            for row in item["anomalies"]
+            if row.get("disposition") is not None
+        ]
+        rows["person_triage"].append(
+            {
+                **item,
+                "anomaly_codes": "|".join(str(code) for code in item["anomaly_codes"]),
+                "anomaly_fingerprints": "|".join(
+                    sorted(str(row["fingerprint"]) for row in item["anomalies"])
+                ),
+                "disposition_statuses": "|".join(
+                    sorted(str(row["status"]) for row in dispositions)
+                ),
+                "disposition_ids": "|".join(
+                    sorted(str(row["disposition_id"]) for row in dispositions)
+                ),
+                "disposition_actors": "|".join(
+                    sorted(str(row["reviewer_actor"]) for row in dispositions)
+                ),
+                "disposition_updated_at": "|".join(
+                    sorted(str(row["updated_at"]) for row in dispositions)
+                ),
+                "remediation_task_count": sum(
+                    int(row["remediation"]["remediation_task_count"])
+                    for row in item["anomalies"]
+                    if row.get("remediation")
+                ),
+                "open_remediation_task_count": sum(
+                    int(row["remediation"]["open_remediation_task_count"])
+                    for row in item["anomalies"]
+                    if row.get("remediation")
+                ),
+                "overdue_remediation_task_count": sum(
+                    int(row["remediation"]["overdue_remediation_task_count"])
+                    for row in item["anomalies"]
+                    if row.get("remediation")
+                ),
+                "remediation_task_ids": "|".join(
+                    sorted(
+                        str(task_id)
+                        for row in item["anomalies"]
+                        if row.get("remediation")
+                        for task_id in row["remediation"]["remediation_task_ids"]
+                    )
+                ),
+                "entity_ids": "|".join(str(value) for value in item["entity_ids"]),
+                "branch_ids": "|".join(str(value) for value in item["branch_ids"]),
+                "website_ids": "|".join(str(value) for value in item["website_ids"]),
+                "page_ids": "|".join(str(value) for value in item["page_ids"]),
+            }
+        )
     paths: list[Path] = []
     for name, columns in _EXPORTS.items():
         path = output / f"{name}.csv"
         with path.open("w", encoding="utf-8", newline="") as handle:
-            writer = csv.DictWriter(handle, fieldnames=columns, extrasaction="ignore", lineterminator="\n")
+            writer = csv.DictWriter(
+                handle, fieldnames=columns, extrasaction="ignore", lineterminator="\n"
+            )
             writer.writeheader()
-            for row in sorted(rows[name], key=lambda item: tuple(str(item.get(column) or "") for column in columns)):
+            for row in sorted(
+                rows[name],
+                key=lambda item: tuple(
+                    str(item.get(column) or "") for column in columns
+                ),
+            ):
                 writer.writerow({column: row.get(column) for column in columns})
         paths.append(path)
     return paths

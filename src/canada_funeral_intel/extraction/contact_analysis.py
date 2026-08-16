@@ -14,7 +14,9 @@ _PHONE_PATTERN = re.compile(
 )
 
 
-def extract_contact_values(text: str) -> tuple[str | None, str | None, str | None, str | None]:
+def extract_contact_values(
+    text: str,
+) -> tuple[str | None, str | None, str | None, str | None]:
     email_match = _EMAIL_PATTERN.search(text)
     phone_match = _PHONE_PATTERN.search(text)
 
