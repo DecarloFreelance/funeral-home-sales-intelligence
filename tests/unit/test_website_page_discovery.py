@@ -1,6 +1,7 @@
 from canada_funeral_intel.verification.page_discovery import (
     classify_page,
     extract_links,
+    is_business_fact_relevant_page,
     is_excluded_page,
 )
 
@@ -11,6 +12,21 @@ def test_phase7_prioritizes_staff_and_team_pages() -> None:
     assert classify_page("https://example.ca/staff") == ("staff", 92)
 
     assert classify_page("https://example.ca/funeral-directors") == ("directors", 100)
+
+
+def test_phase10_prioritizes_supported_business_fact_page_patterns() -> None:
+    assert classify_page("https://example.ca/services") == ("other", 70)
+    assert classify_page("https://example.ca/cremation") == ("other", 74)
+    assert classify_page("https://example.ca/pre-planning") == ("other", 72)
+    assert classify_page("https://example.ca/facilities") == ("other", 72)
+    assert classify_page("https://example.ca/chapel") == ("other", 72)
+
+    assert is_business_fact_relevant_page("/services")
+    assert is_business_fact_relevant_page("/cremation")
+    assert is_business_fact_relevant_page("/pre-planning")
+    assert is_business_fact_relevant_page("/facilities")
+    assert is_business_fact_relevant_page("/chapel")
+    assert not is_business_fact_relevant_page("/news")
 
 
 def test_phase7_excludes_obituary_and_login_sections() -> None:

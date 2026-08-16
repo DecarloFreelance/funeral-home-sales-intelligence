@@ -7,7 +7,9 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from .business_intelligence.cli import (
+    BusinessFactCommandError,
     run_business_facts_export,
+    run_business_facts_extract,
     run_business_facts_list,
     run_business_facts_summary,
 )
@@ -75,6 +77,7 @@ from .people.cli import (
     run_people_list,
     run_people_merge,
     run_people_resolve,
+    run_people_review_backlog,
     run_people_review_decide,
     run_people_review_list,
     run_people_review_populate,
@@ -655,35 +658,77 @@ def build_parser() -> argparse.ArgumentParser:
         dest="website_people_review_command"
     )
     website_people_review_subparsers.add_parser("populate", help="Queue observations.")
-    website_people_review_list = website_people_review_subparsers.add_parser("list", help="List observation review entries.")
-    website_people_review_list.add_argument("--status", choices=("pending", "accepted", "rejected", "deferred", "all"), default="pending")
-    website_people_review_decide = website_people_review_subparsers.add_parser("decide", help="Decide an observation review entry.")
+    website_people_review_backlog = website_people_review_subparsers.add_parser(
+        "backlog", help="Show read-only person observation workflow backlog."
+    )
+    website_people_review_backlog.add_argument(
+        "--details", action="store_true", help="Include observation IDs and provenance."
+    )
+    website_people_review_list = website_people_review_subparsers.add_parser(
+        "list", help="List observation review entries."
+    )
+    website_people_review_list.add_argument(
+        "--status",
+        choices=("pending", "accepted", "rejected", "deferred", "all"),
+        default="pending",
+    )
+    website_people_review_decide = website_people_review_subparsers.add_parser(
+        "decide", help="Decide an observation review entry."
+    )
     website_people_review_decide.add_argument("--queue-id", required=True, type=int)
-    website_people_review_decide.add_argument("--status", required=True, choices=("accepted", "rejected", "deferred"))
+    website_people_review_decide.add_argument(
+        "--status", required=True, choices=("accepted", "rejected", "deferred")
+    )
     website_people_review_decide.add_argument("--note")
 
-    facts_parser = subparsers.add_parser("business-facts", help="Read evidence-backed business fact observations.")
+    facts_parser = subparsers.add_parser(
+        "business-facts", help="Read evidence-backed business fact observations."
+    )
     facts_subparsers = facts_parser.add_subparsers(dest="business_facts_command")
+
     def add_fact_filters(parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--entity-id", type=int)
         parser.add_argument("--website-id", type=int)
         parser.add_argument("--page-id", type=int)
         parser.add_argument("--fact-key")
-    facts_list_parser = facts_subparsers.add_parser("list", help="List business fact observations.")
+
+    facts_list_parser = facts_subparsers.add_parser(
+        "list", help="List business fact observations."
+    )
     add_fact_filters(facts_list_parser)
-    facts_summary_parser = facts_subparsers.add_parser("summary", help="Summarize business fact observations.")
+    facts_summary_parser = facts_subparsers.add_parser(
+        "summary", help="Summarize business fact observations."
+    )
     add_fact_filters(facts_summary_parser)
-    facts_export_parser = facts_subparsers.add_parser("export", help="Export business fact observations.")
+    facts_export_parser = facts_subparsers.add_parser(
+        "export", help="Export business fact observations."
+    )
     facts_export_parser.add_argument("--output", required=True, type=Path)
     add_fact_filters(facts_export_parser)
+    facts_extract_parser = facts_subparsers.add_parser(
+        "extract",
+        help="Re-fetch selected persisted pages and extract business facts.",
+    )
+    facts_extract_parser.add_argument("--website-id", type=int)
+    facts_extract_parser.add_argument("--page-id", type=int)
+    facts_extract_parser.add_argument("--user-agent")
+    facts_extract_parser.add_argument("--timeout", type=int)
+    facts_extract_parser.add_argument("--max-redirects", type=int)
 
-    quality_parser = subparsers.add_parser("quality", help="Read-only quality and confidence reporting.")
+    quality_parser = subparsers.add_parser(
+        "quality", help="Read-only quality and confidence reporting."
+    )
     quality_subparsers = quality_parser.add_subparsers(dest="quality_command")
-    quality_score_parser = quality_subparsers.add_parser("score", help="Score one evidence subject.")
-    quality_score_parser.add_argument("--subject-type", required=True, choices=SUBJECT_TYPES)
+    quality_score_parser = quality_subparsers.add_parser(
+        "score", help="Score one evidence subject."
+    )
+    quality_score_parser.add_argument(
+        "--subject-type", required=True, choices=SUBJECT_TYPES
+    )
     quality_score_parser.add_argument("--subject-id", required=True, type=int)
     quality_score_parser.add_argument("--reference-time")
     quality_score_parser.add_argument("--include-historical", action="store_true")
+
     def add_quality_filters(parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--subject-type", choices=SUBJECT_TYPES, default="entity")
         parser.add_argument("--reference-time")
@@ -694,139 +739,267 @@ def build_parser() -> argparse.ArgumentParser:
         parser.add_argument("--conflict-only", action="store_true")
         parser.add_argument("--incomplete-only", action="store_true")
         parser.add_argument("--include-historical", action="store_true")
-    quality_summary_parser = quality_subparsers.add_parser("summary", help="List deterministic quality scores.")
+
+    quality_summary_parser = quality_subparsers.add_parser(
+        "summary", help="List deterministic quality scores."
+    )
     add_quality_filters(quality_summary_parser)
-    quality_export_parser = quality_subparsers.add_parser("export", help="Export deterministic quality reports.")
+    quality_export_parser = quality_subparsers.add_parser(
+        "export", help="Export deterministic quality reports."
+    )
     quality_export_parser.add_argument("--output", required=True, type=Path)
     quality_export_parser.add_argument("--reference-time")
     quality_export_parser.add_argument("--include-historical", action="store_true")
 
-    report_parser = subparsers.add_parser("report", help="Read-only aggregate reporting and exports.")
+    report_parser = subparsers.add_parser(
+        "report", help="Read-only aggregate reporting and exports."
+    )
     report_subparsers = report_parser.add_subparsers(dest="report_command")
     for report_name in ("coverage", "quality", "business", "people", "summary"):
-        item = report_subparsers.add_parser(report_name, help=f"Generate the {report_name} report.")
+        item = report_subparsers.add_parser(
+            report_name, help=f"Generate the {report_name} report."
+        )
         item.add_argument("--reference-time")
         item.add_argument("--include-historical", action="store_true")
-    report_export = report_subparsers.add_parser("export", help="Export deterministic report files and manifest.")
+    report_export = report_subparsers.add_parser(
+        "export", help="Export deterministic report files and manifest."
+    )
     report_export.add_argument("--output", required=True, type=Path)
     report_export.add_argument("--reference-time")
     report_export.add_argument("--include-historical", action="store_true")
 
-    refresh_parser = subparsers.add_parser("refresh", help="Manage offline refresh comparisons.")
+    refresh_parser = subparsers.add_parser(
+        "refresh", help="Manage offline refresh comparisons."
+    )
     refresh_subparsers = refresh_parser.add_subparsers(dest="refresh_command")
-    refresh_begin = refresh_subparsers.add_parser("begin", help="Begin an offline refresh run.")
-    refresh_begin.add_argument("--run-type", required=True, choices=("website_page", "person_observation", "business_fact"))
+    refresh_begin = refresh_subparsers.add_parser(
+        "begin", help="Begin an offline refresh run."
+    )
+    refresh_begin.add_argument(
+        "--run-type",
+        required=True,
+        choices=("website_page", "person_observation", "business_fact"),
+    )
     refresh_begin.add_argument("--scope-type", required=True)
     refresh_begin.add_argument("--scope-value")
     refresh_begin.add_argument("--reference-time", required=True)
     refresh_begin.add_argument("--extractor-version")
     refresh_begin.add_argument("--config-fingerprint")
-    refresh_record = refresh_subparsers.add_parser("record", help="Record one offline observation.")
+    refresh_record = refresh_subparsers.add_parser(
+        "record", help="Record one offline observation."
+    )
     refresh_record.add_argument("--run-id", required=True, type=int)
-    refresh_record.add_argument("--subject-type", required=True, choices=("website_page", "person_observation", "business_fact"))
+    refresh_record.add_argument(
+        "--subject-type",
+        required=True,
+        choices=("website_page", "person_observation", "business_fact"),
+    )
     refresh_record.add_argument("--subject-key", required=True)
     refresh_record.add_argument("--fingerprint", required=True)
     refresh_record.add_argument("--reference-id", type=int)
     refresh_record.add_argument("--metadata-json", default="{}")
-    refresh_complete = refresh_subparsers.add_parser("complete", help="Complete and compare a refresh run.")
+    refresh_complete = refresh_subparsers.add_parser(
+        "complete", help="Complete and compare a refresh run."
+    )
     refresh_complete.add_argument("--run-id", required=True, type=int)
-    refresh_fail = refresh_subparsers.add_parser("fail", help="Fail or cancel a refresh run.")
+    refresh_fail = refresh_subparsers.add_parser(
+        "fail", help="Fail or cancel a refresh run."
+    )
     refresh_fail.add_argument("--run-id", required=True, type=int)
     refresh_fail.add_argument("--error", required=True)
     refresh_fail.add_argument("--cancelled", action="store_true")
-    refresh_runs_parser = refresh_subparsers.add_parser("runs", help="List refresh runs.")
-    refresh_runs_parser.add_argument("--run-type", choices=("website_page", "person_observation", "business_fact"))
-    refresh_runs_parser.add_argument("--status", choices=("running", "completed", "failed", "cancelled"))
+    refresh_runs_parser = refresh_subparsers.add_parser(
+        "runs", help="List refresh runs."
+    )
+    refresh_runs_parser.add_argument(
+        "--run-type", choices=("website_page", "person_observation", "business_fact")
+    )
+    refresh_runs_parser.add_argument(
+        "--status", choices=("running", "completed", "failed", "cancelled")
+    )
     refresh_show = refresh_subparsers.add_parser("show", help="Show one refresh run.")
     refresh_show.add_argument("--run-id", required=True, type=int)
-    refresh_changes_parser = refresh_subparsers.add_parser("changes", help="List immutable change events.")
+    refresh_changes_parser = refresh_subparsers.add_parser(
+        "changes", help="List immutable change events."
+    )
     refresh_changes_parser.add_argument("--run-id", type=int)
-    refresh_changes_parser.add_argument("--subject-type", choices=("website_page", "person_observation", "business_fact"))
+    refresh_changes_parser.add_argument(
+        "--subject-type",
+        choices=("website_page", "person_observation", "business_fact"),
+    )
     refresh_changes_parser.add_argument("--subject-key")
-    refresh_changes_parser.add_argument("--change-type", choices=("added", "changed", "missing", "reappeared"))
+    refresh_changes_parser.add_argument(
+        "--change-type", choices=("added", "changed", "missing", "reappeared")
+    )
 
-    pipeline_parser = subparsers.add_parser("pipeline", help="Run the offline import and entity preparation pipeline.")
+    pipeline_parser = subparsers.add_parser(
+        "pipeline", help="Run the offline import and entity preparation pipeline."
+    )
     pipeline_subparsers = pipeline_parser.add_subparsers(dest="pipeline_command")
-    pipeline_run = pipeline_subparsers.add_parser("run", help="Run a local offline pipeline.")
+    pipeline_run = pipeline_subparsers.add_parser(
+        "run", help="Run a local offline pipeline."
+    )
     pipeline_run.add_argument("--source", required=True)
     pipeline_run.add_argument("--path", required=True, type=Path)
-    pipeline_run.add_argument("--format", required=True, choices=("csv", "json"), dest="input_format")
+    pipeline_run.add_argument(
+        "--format", required=True, choices=("csv", "json"), dest="input_format"
+    )
     pipeline_run.add_argument("--external-id-field")
-    pipeline_run.add_argument("--through-stage", choices=("import", "normalize", "deterministic_match", "fuzzy_match", "review_queue", "materialize"), default="materialize")
+    pipeline_run.add_argument(
+        "--through-stage",
+        choices=(
+            "import",
+            "normalize",
+            "deterministic_match",
+            "fuzzy_match",
+            "review_queue",
+            "materialize",
+        ),
+        default="materialize",
+    )
     pipeline_run.add_argument("--skip-fuzzy", action="store_true")
     pipeline_run.add_argument("--dry-run", action="store_true")
-    pipeline_resume = pipeline_subparsers.add_parser("resume", help="Resume a failed or cancelled pipeline run.")
+    pipeline_resume = pipeline_subparsers.add_parser(
+        "resume", help="Resume a failed or cancelled pipeline run."
+    )
     pipeline_resume.add_argument("--run-id", required=True, type=int)
-    pipeline_show = pipeline_subparsers.add_parser("show", help="Show one pipeline run.")
+    pipeline_show = pipeline_subparsers.add_parser(
+        "show", help="Show one pipeline run."
+    )
     pipeline_show.add_argument("--run-id", required=True, type=int)
     pipeline_list = pipeline_subparsers.add_parser("list", help="List pipeline runs.")
-    pipeline_list.add_argument("--status", choices=("pending", "running", "completed", "failed", "cancelled"))
+    pipeline_list.add_argument(
+        "--status", choices=("pending", "running", "completed", "failed", "cancelled")
+    )
     pipeline_list.add_argument("--limit", type=int)
-    pipeline_stages = pipeline_subparsers.add_parser("stages", help="List stages for one pipeline run.")
+    pipeline_stages = pipeline_subparsers.add_parser(
+        "stages", help="List stages for one pipeline run."
+    )
     pipeline_stages.add_argument("--run-id", required=True, type=int)
 
-    verticals_parser = subparsers.add_parser("verticals", help="Inspect and classify business verticals.")
+    verticals_parser = subparsers.add_parser(
+        "verticals", help="Inspect and classify business verticals."
+    )
     verticals_subparsers = verticals_parser.add_subparsers(dest="verticals_command")
     verticals_subparsers.add_parser("list", help="List vertical profiles.")
-    verticals_show = verticals_subparsers.add_parser("show", help="Show one vertical profile.")
+    verticals_show = verticals_subparsers.add_parser(
+        "show", help="Show one vertical profile."
+    )
     verticals_show.add_argument("--vertical", required=True)
-    verticals_entities = verticals_subparsers.add_parser("entities", help="List explicit vertical memberships.")
+    verticals_entities = verticals_subparsers.add_parser(
+        "entities", help="List explicit vertical memberships."
+    )
     verticals_entities.add_argument("--vertical", required=True)
     verticals_subparsers.add_parser("seed", help="Seed configured vertical profiles.")
-    verticals_assign = verticals_subparsers.add_parser("assign", help="Assign an explicit entity vertical membership.")
+    verticals_assign = verticals_subparsers.add_parser(
+        "assign", help="Assign an explicit entity vertical membership."
+    )
     verticals_assign.add_argument("--entity-id", required=True, type=int)
     verticals_assign.add_argument("--vertical", required=True)
     verticals_assign.add_argument("--actor", required=True)
     verticals_assign.add_argument("--confidence", type=float, default=1.0)
     verticals_assign.add_argument("--source-record-id", type=int)
 
-    people_parser = subparsers.add_parser("people", help="Review and resolve canonical people.")
+    people_parser = subparsers.add_parser(
+        "people", help="Review and resolve canonical people."
+    )
     people_subparsers = people_parser.add_subparsers(dest="people_command")
-    people_review_parser = people_subparsers.add_parser("people-review", help="Review page-level person observations.")
-    people_review_subparsers = people_review_parser.add_subparsers(dest="people_review_command")
-    people_review_subparsers.add_parser("populate", help="Queue page-level person observations.")
-    people_review_list_parser = people_review_subparsers.add_parser("list", help="List person observation review entries.")
-    people_review_list_parser.add_argument("--status", choices=("pending", "accepted", "rejected", "deferred", "all"), default="pending")
-    people_review_decide_parser = people_review_subparsers.add_parser("decide", help="Decide a person observation review entry.")
+    people_review_parser = people_subparsers.add_parser(
+        "people-review", help="Review page-level person observations."
+    )
+    people_review_subparsers = people_review_parser.add_subparsers(
+        dest="people_review_command"
+    )
+    people_review_subparsers.add_parser(
+        "populate", help="Queue page-level person observations."
+    )
+    people_review_backlog_parser = people_review_subparsers.add_parser(
+        "backlog", help="Show read-only person observation workflow backlog."
+    )
+    people_review_backlog_parser.add_argument(
+        "--details", action="store_true", help="Include observation IDs and provenance."
+    )
+    people_review_list_parser = people_review_subparsers.add_parser(
+        "list", help="List person observation review entries."
+    )
+    people_review_list_parser.add_argument(
+        "--status",
+        choices=("pending", "accepted", "rejected", "deferred", "all"),
+        default="pending",
+    )
+    people_review_decide_parser = people_review_subparsers.add_parser(
+        "decide", help="Decide a person observation review entry."
+    )
     people_review_decide_parser.add_argument("--queue-id", required=True, type=int)
-    people_review_decide_parser.add_argument("--status", required=True, choices=("accepted", "rejected", "deferred"))
+    people_review_decide_parser.add_argument(
+        "--status", required=True, choices=("accepted", "rejected", "deferred")
+    )
     people_review_decide_parser.add_argument("--note")
-    people_list_parser = people_subparsers.add_parser("list", help="List canonical people.")
+    people_list_parser = people_subparsers.add_parser(
+        "list", help="List canonical people."
+    )
     people_list_parser.add_argument("--entity-id", type=int)
-    people_show_parser = people_subparsers.add_parser("show", help="Show one canonical person.")
+    people_show_parser = people_subparsers.add_parser(
+        "show", help="Show one canonical person."
+    )
     people_show_parser.add_argument("--person-id", required=True, type=int)
-    people_resolve_parser = people_subparsers.add_parser("resolve", help="Resolve an accepted observation explicitly.")
+    people_resolve_parser = people_subparsers.add_parser(
+        "resolve", help="Resolve an accepted observation explicitly."
+    )
     people_resolve_parser.add_argument("--observation-id", required=True, type=int)
-    people_merge_parser = people_subparsers.add_parser("merge", help="Merge two canonical people explicitly.")
+    people_merge_parser = people_subparsers.add_parser(
+        "merge", help="Merge two canonical people explicitly."
+    )
     people_merge_parser.add_argument("--survivor-person-id", required=True, type=int)
     people_merge_parser.add_argument("--absorbed-person-id", required=True, type=int)
     people_merge_parser.add_argument("--reason", required=True)
-    people_rollback_parser = people_subparsers.add_parser("rollback", help="Roll back a canonical person merge.")
+    people_rollback_parser = people_subparsers.add_parser(
+        "rollback", help="Roll back a canonical person merge."
+    )
     people_rollback_parser.add_argument("--merge-id", required=True, type=int)
     people_rollback_parser.add_argument("--reason", required=True)
-    people_audit_parser = people_subparsers.add_parser("audit", help="Audit one canonical person and its provenance.")
+    people_audit_parser = people_subparsers.add_parser(
+        "audit", help="Audit one canonical person and its provenance."
+    )
     people_audit_parser.add_argument("--person-id", required=True, type=int)
-    people_audit_list_parser = people_subparsers.add_parser("audit-list", help="List canonical person audit summaries.")
+    people_audit_list_parser = people_subparsers.add_parser(
+        "audit-list", help="List canonical person audit summaries."
+    )
     people_audit_list_parser.add_argument("--include-historical", action="store_true")
-    people_export_parser = people_subparsers.add_parser("export", help="Export canonical person audit data.")
+    people_export_parser = people_subparsers.add_parser(
+        "export", help="Export canonical person audit data."
+    )
     people_export_parser.add_argument("--format", required=True, choices=("csv",))
     people_export_parser.add_argument("--output", required=True, type=Path)
     people_export_parser.add_argument("--include-historical", action="store_true")
+
     def add_triage_options(parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--person-id", type=int)
         parser.add_argument("--anomaly")
-        parser.add_argument("--severity", choices=tuple(item.value for item in TriageSeverity))
-        parser.add_argument("--traceability", choices=("traceable", "incomplete", "orphaned"))
+        parser.add_argument(
+            "--severity", choices=tuple(item.value for item in TriageSeverity)
+        )
+        parser.add_argument(
+            "--traceability", choices=("traceable", "incomplete", "orphaned")
+        )
         parser.add_argument("--entity-id", type=int)
         parser.add_argument("--branch-id", type=int)
         parser.add_argument("--website-id", type=int)
         parser.add_argument("--page-id", type=int)
-        parser.add_argument("--review-status", choices=("pending", "accepted", "rejected", "deferred"))
-        parser.add_argument("--disposition-status", choices=tuple(item.value for item in DispositionStatus))
+        parser.add_argument(
+            "--review-status", choices=("pending", "accepted", "rejected", "deferred")
+        )
+        parser.add_argument(
+            "--disposition-status",
+            choices=tuple(item.value for item in DispositionStatus),
+        )
         parser.add_argument("--unreviewed-only", action="store_true")
         parser.add_argument("--has-remediation", action="store_true")
         parser.add_argument("--no-remediation", action="store_true")
-        parser.add_argument("--remediation-status", choices=tuple(item.value for item in RemediationStatus))
+        parser.add_argument(
+            "--remediation-status",
+            choices=tuple(item.value for item in RemediationStatus),
+        )
         parser.add_argument("--remediation-owner")
         parser.add_argument("--overdue-remediation", action="store_true")
         parser.add_argument("--has-email", action="store_true")
@@ -834,40 +1007,70 @@ def build_parser() -> argparse.ArgumentParser:
         parser.add_argument("--include-historical", action="store_true")
         parser.add_argument("--limit", type=int)
 
-    people_triage_parser = people_subparsers.add_parser("triage", help="Show read-only anomaly triage.")
+    people_triage_parser = people_subparsers.add_parser(
+        "triage", help="Show read-only anomaly triage."
+    )
     add_triage_options(people_triage_parser)
-    people_triage_queue_parser = people_subparsers.add_parser("triage-queue", help="List ranked read-only anomaly triage.")
+    people_triage_queue_parser = people_subparsers.add_parser(
+        "triage-queue", help="List ranked read-only anomaly triage."
+    )
     add_triage_options(people_triage_queue_parser)
-    anomaly_review_parser = people_subparsers.add_parser("anomaly-review", help="Review durable person anomaly dispositions.")
-    anomaly_review_subparsers = anomaly_review_parser.add_subparsers(dest="anomaly_review_command")
-    anomaly_list_parser = anomaly_review_subparsers.add_parser("list", help="List anomaly dispositions.")
+    anomaly_review_parser = people_subparsers.add_parser(
+        "anomaly-review", help="Review durable person anomaly dispositions."
+    )
+    anomaly_review_subparsers = anomaly_review_parser.add_subparsers(
+        dest="anomaly_review_command"
+    )
+    anomaly_list_parser = anomaly_review_subparsers.add_parser(
+        "list", help="List anomaly dispositions."
+    )
     anomaly_list_parser.add_argument("--person-id", type=int)
     anomaly_list_parser.add_argument("--anomaly")
-    anomaly_list_parser.add_argument("--status", choices=tuple(item.value for item in DispositionStatus))
+    anomaly_list_parser.add_argument(
+        "--status", choices=tuple(item.value for item in DispositionStatus)
+    )
     anomaly_list_parser.add_argument("--include-stale", action="store_true")
     anomaly_list_parser.add_argument("--actor")
     anomaly_list_parser.add_argument("--limit", type=int)
-    anomaly_show_parser = anomaly_review_subparsers.add_parser("show", help="Show one anomaly disposition.")
+    anomaly_show_parser = anomaly_review_subparsers.add_parser(
+        "show", help="Show one anomaly disposition."
+    )
     anomaly_show_parser.add_argument("--disposition-id", required=True, type=int)
-    anomaly_history_parser = anomaly_review_subparsers.add_parser("history", help="Show disposition history.")
+    anomaly_history_parser = anomaly_review_subparsers.add_parser(
+        "history", help="Show disposition history."
+    )
     anomaly_history_parser.add_argument("--disposition-id", required=True, type=int)
-    anomaly_decide_parser = anomaly_review_subparsers.add_parser("decide", help="Apply a disposition decision to an exact anomaly.")
+    anomaly_decide_parser = anomaly_review_subparsers.add_parser(
+        "decide", help="Apply a disposition decision to an exact anomaly."
+    )
     anomaly_decide_parser.add_argument("--person-id", required=True, type=int)
     anomaly_decide_parser.add_argument("--anomaly", required=True)
     anomaly_decide_parser.add_argument("--fingerprint", required=True)
-    anomaly_decide_parser.add_argument("--status", required=True, choices=("acknowledged", "dismissed", "reopened"))
+    anomaly_decide_parser.add_argument(
+        "--status", required=True, choices=("acknowledged", "dismissed", "reopened")
+    )
     anomaly_decide_parser.add_argument("--actor", required=True)
     anomaly_decide_parser.add_argument("--note")
-    anomaly_sync_parser = people_subparsers.add_parser("anomaly-sync", help="Mark changed dispositions stale.")
+    anomaly_sync_parser = people_subparsers.add_parser(
+        "anomaly-sync", help="Mark changed dispositions stale."
+    )
     anomaly_sync_parser.add_argument("--person-id", type=int)
     anomaly_sync_parser.add_argument("--actor", default="anomaly-sync")
-    remediation_parser = people_subparsers.add_parser("remediation", help="Manage manual person anomaly remediation tasks.")
-    remediation_subparsers = remediation_parser.add_subparsers(dest="remediation_command")
-    remediation_list = remediation_subparsers.add_parser("list", help="List remediation tasks.")
+    remediation_parser = people_subparsers.add_parser(
+        "remediation", help="Manage manual person anomaly remediation tasks."
+    )
+    remediation_subparsers = remediation_parser.add_subparsers(
+        dest="remediation_command"
+    )
+    remediation_list = remediation_subparsers.add_parser(
+        "list", help="List remediation tasks."
+    )
     remediation_list.add_argument("--person-id", type=int)
     remediation_list.add_argument("--anomaly")
     remediation_list.add_argument("--fingerprint")
-    remediation_list.add_argument("--status", choices=tuple(item.value for item in RemediationStatus))
+    remediation_list.add_argument(
+        "--status", choices=tuple(item.value for item in RemediationStatus)
+    )
     remediation_list.add_argument("--owner")
     remediation_list.add_argument("--task-type", choices=TASK_TYPES)
     remediation_list.add_argument("--due-before")
@@ -875,11 +1078,17 @@ def build_parser() -> argparse.ArgumentParser:
     remediation_list.add_argument("--include-stale", action="store_true")
     remediation_list.add_argument("--overdue-only", action="store_true")
     remediation_list.add_argument("--limit", type=int)
-    remediation_show = remediation_subparsers.add_parser("show", help="Show one remediation task.")
+    remediation_show = remediation_subparsers.add_parser(
+        "show", help="Show one remediation task."
+    )
     remediation_show.add_argument("--task-id", required=True, type=int)
-    remediation_history = remediation_subparsers.add_parser("history", help="Show remediation task history.")
+    remediation_history = remediation_subparsers.add_parser(
+        "history", help="Show remediation task history."
+    )
     remediation_history.add_argument("--task-id", required=True, type=int)
-    remediation_create = remediation_subparsers.add_parser("create", help="Create a manual remediation task.")
+    remediation_create = remediation_subparsers.add_parser(
+        "create", help="Create a manual remediation task."
+    )
     remediation_create.add_argument("--person-id", required=True, type=int)
     remediation_create.add_argument("--anomaly", required=True)
     remediation_create.add_argument("--fingerprint", required=True)
@@ -888,26 +1097,42 @@ def build_parser() -> argparse.ArgumentParser:
     remediation_create.add_argument("--owner")
     remediation_create.add_argument("--due-at")
     remediation_create.add_argument("--note")
-    remediation_update = remediation_subparsers.add_parser("update", help="Update a remediation task.")
+    remediation_update = remediation_subparsers.add_parser(
+        "update", help="Update a remediation task."
+    )
     remediation_update.add_argument("--task-id", required=True, type=int)
-    remediation_update.add_argument("--status", choices=tuple(item.value for item in RemediationStatus if item is not RemediationStatus.STALE))
+    remediation_update.add_argument(
+        "--status",
+        choices=tuple(
+            item.value
+            for item in RemediationStatus
+            if item is not RemediationStatus.STALE
+        ),
+    )
     remediation_update.add_argument("--actor", required=True)
     remediation_update.add_argument("--owner")
     remediation_update.add_argument("--clear-owner", action="store_true")
     remediation_update.add_argument("--due-at")
     remediation_update.add_argument("--clear-due-at", action="store_true")
     remediation_update.add_argument("--note")
-    remediation_sync_parser = people_subparsers.add_parser("remediation-sync", help="Mark changed remediation tasks stale.")
+    remediation_sync_parser = people_subparsers.add_parser(
+        "remediation-sync", help="Mark changed remediation tasks stale."
+    )
     remediation_sync_parser.add_argument("--person-id", type=int)
     remediation_sync_parser.add_argument("--actor", default="remediation-sync")
-    work_queue_parser = people_subparsers.add_parser("work-queue", help="Show the read-only reviewer operations queue.")
+    work_queue_parser = people_subparsers.add_parser(
+        "work-queue", help="Show the read-only reviewer operations queue."
+    )
     work_queue_subparsers = work_queue_parser.add_subparsers(dest="work_queue_command")
+
     def add_work_queue_filters(parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--person-id", type=int)
         parser.add_argument("--entity-id", type=int)
         parser.add_argument("--anomaly")
         parser.add_argument("--severity", choices=("critical", "high", "medium", "low"))
-        parser.add_argument("--traceability", choices=("traceable", "incomplete", "orphaned"))
+        parser.add_argument(
+            "--traceability", choices=("traceable", "incomplete", "orphaned")
+        )
         parser.add_argument("--disposition-status")
         parser.add_argument("--queue-state")
         parser.add_argument("--owner")
@@ -922,15 +1147,24 @@ def build_parser() -> argparse.ArgumentParser:
         parser.add_argument("--due-before")
         parser.add_argument("--due-after")
         parser.add_argument("--limit", type=int)
-    work_queue_list_parser = work_queue_subparsers.add_parser("list", help="List current reviewer work.")
+
+    work_queue_list_parser = work_queue_subparsers.add_parser(
+        "list", help="List current reviewer work."
+    )
     add_work_queue_filters(work_queue_list_parser)
-    work_queue_show_parser = work_queue_subparsers.add_parser("show", help="Show one exact current anomaly work item.")
+    work_queue_show_parser = work_queue_subparsers.add_parser(
+        "show", help="Show one exact current anomaly work item."
+    )
     work_queue_show_parser.add_argument("--person-id", required=True, type=int)
     work_queue_show_parser.add_argument("--fingerprint", required=True)
     work_queue_show_parser.add_argument("--include-historical", action="store_true")
-    work_queue_owners_parser = work_queue_subparsers.add_parser("owners", help="Summarize persisted remediation ownership.")
+    work_queue_owners_parser = work_queue_subparsers.add_parser(
+        "owners", help="Summarize persisted remediation ownership."
+    )
     work_queue_owners_parser.add_argument("--include-historical", action="store_true")
-    work_queue_export_parser = work_queue_subparsers.add_parser("export", help="Export the read-only reviewer work queue.")
+    work_queue_export_parser = work_queue_subparsers.add_parser(
+        "export", help="Export the read-only reviewer work queue."
+    )
     work_queue_export_parser.add_argument("--output", required=True, type=Path)
     work_queue_export_parser.add_argument("--include-historical", action="store_true")
 
@@ -1095,19 +1329,46 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.business_facts_command is None:
             parser.parse_args(["business-facts", "--help"])
             return 2
-        filters = {"entity_id": args.entity_id, "website_id": args.website_id, "page_id": args.page_id, "fact_key": args.fact_key}
-        with database_session(settings.database_path) as connection:
-            if args.business_facts_command == "list":
-                payload = run_business_facts_list(connection, **filters)
-            elif args.business_facts_command == "summary":
-                payload = run_business_facts_summary(connection, **filters)
-            elif args.business_facts_command == "export":
-                payload = run_business_facts_export(connection, output=args.output, **filters)
-            else:
-                parser.parse_args(["business-facts", "--help"])
-                return 2
-        print(json.dumps(payload, indent=2, sort_keys=True))
-        return 0
+        try:
+            with database_session(settings.database_path) as connection:
+                if args.business_facts_command == "extract":
+                    payload = run_business_facts_extract(
+                        connection,
+                        website_id=args.website_id,
+                        page_id=args.page_id,
+                        user_agent=args.user_agent or settings.http_user_agent,
+                        timeout_seconds=(
+                            args.timeout
+                            if args.timeout is not None
+                            else settings.http_timeout_seconds
+                        ),
+                        max_redirects=(
+                            args.max_redirects if args.max_redirects is not None else 5
+                        ),
+                    )
+                else:
+                    filters = {
+                        "entity_id": args.entity_id,
+                        "website_id": args.website_id,
+                        "page_id": args.page_id,
+                        "fact_key": args.fact_key,
+                    }
+                    if args.business_facts_command == "list":
+                        payload = run_business_facts_list(connection, **filters)
+                    elif args.business_facts_command == "summary":
+                        payload = run_business_facts_summary(connection, **filters)
+                    elif args.business_facts_command == "export":
+                        payload = run_business_facts_export(
+                            connection, output=args.output, **filters
+                        )
+                    else:
+                        parser.parse_args(["business-facts", "--help"])
+                        return 2
+            print(json.dumps(payload, indent=2, sort_keys=True))
+            return 0
+        except (DatabaseError, BusinessFactCommandError) as exc:
+            print(f"business facts error: {exc}", file=sys.stderr)
+            return 18
 
     if args.command == "quality":
         if args.quality_command is None:
@@ -1117,11 +1378,33 @@ def main(argv: Sequence[str] | None = None) -> int:
             reference_time = parse_reference_time(args.reference_time)
             with quality_database_session(settings.database_path) as connection:
                 if args.quality_command == "score":
-                    payload = run_quality_score(connection, subject_type=args.subject_type, subject_id=args.subject_id, reference_time=reference_time, include_historical=args.include_historical)
+                    payload = run_quality_score(
+                        connection,
+                        subject_type=args.subject_type,
+                        subject_id=args.subject_id,
+                        reference_time=reference_time,
+                        include_historical=args.include_historical,
+                    )
                 elif args.quality_command == "summary":
-                    payload = run_quality_summary(connection, subject_type=args.subject_type, reference_time=reference_time, include_historical=args.include_historical, readiness=args.readiness, minimum_score=args.minimum_score, maximum_score=args.maximum_score, entity_id=args.entity_id, conflict_only=args.conflict_only, incomplete_only=args.incomplete_only)
+                    payload = run_quality_summary(
+                        connection,
+                        subject_type=args.subject_type,
+                        reference_time=reference_time,
+                        include_historical=args.include_historical,
+                        readiness=args.readiness,
+                        minimum_score=args.minimum_score,
+                        maximum_score=args.maximum_score,
+                        entity_id=args.entity_id,
+                        conflict_only=args.conflict_only,
+                        incomplete_only=args.incomplete_only,
+                    )
                 elif args.quality_command == "export":
-                    payload = run_quality_export(connection, output=args.output, reference_time=reference_time, include_historical=args.include_historical)
+                    payload = run_quality_export(
+                        connection,
+                        output=args.output,
+                        reference_time=reference_time,
+                        include_historical=args.include_historical,
+                    )
                 else:
                     parser.parse_args(["quality", "--help"])
                     return 2
@@ -1138,7 +1421,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         try:
             reference_time = parse_report_reference_time(args.reference_time)
             with quality_database_session(settings.database_path) as connection:
-                payload = run_report_export(connection, output=args.output, include_historical=args.include_historical, reference_time=reference_time) if args.report_command == "export" else run_report(connection, args.report_command, include_historical=args.include_historical, reference_time=reference_time)
+                payload = (
+                    run_report_export(
+                        connection,
+                        output=args.output,
+                        include_historical=args.include_historical,
+                        reference_time=reference_time,
+                    )
+                    if args.report_command == "export"
+                    else run_report(
+                        connection,
+                        args.report_command,
+                        include_historical=args.include_historical,
+                        reference_time=reference_time,
+                    )
+                )
             print(json.dumps(payload, indent=2, sort_keys=True))
             return 0
         except (DatabaseError, ValueError) as exc:
@@ -1152,15 +1449,51 @@ def main(argv: Sequence[str] | None = None) -> int:
         try:
             with database_session(settings.database_path) as connection:
                 if args.refresh_command == "begin":
-                    payload = run_refresh_begin(connection, run_type=args.run_type, scope_type=args.scope_type, scope_value=args.scope_value, reference_time=parse_report_reference_time(args.reference_time), extractor_version=args.extractor_version, config_fingerprint=args.config_fingerprint)
+                    payload = run_refresh_begin(
+                        connection,
+                        run_type=args.run_type,
+                        scope_type=args.scope_type,
+                        scope_value=args.scope_value,
+                        reference_time=parse_report_reference_time(args.reference_time),
+                        extractor_version=args.extractor_version,
+                        config_fingerprint=args.config_fingerprint,
+                    )
                 elif args.refresh_command == "record":
-                    payload = run_refresh_record(connection, run_id=args.run_id, subject_type=args.subject_type, subject_key=args.subject_key, semantic_fingerprint=args.fingerprint, reference_id=args.reference_id, metadata_json=args.metadata_json)
-                elif args.refresh_command == "complete": payload = run_refresh_complete(connection, args.run_id)
-                elif args.refresh_command == "fail": payload = run_refresh_fail(connection, run_id=args.run_id, error_summary=args.error, status="cancelled" if args.cancelled else "failed")
-                elif args.refresh_command == "runs": payload = run_refresh_runs(connection, run_type=args.run_type, status=args.status)
-                elif args.refresh_command == "show": payload = run_refresh_show(connection, args.run_id)
-                elif args.refresh_command == "changes": payload = run_refresh_changes(connection, run_id=args.run_id, subject_type=args.subject_type, subject_key=args.subject_key, change_type=args.change_type)
-                else: parser.parse_args(["refresh", "--help"]); return 2
+                    payload = run_refresh_record(
+                        connection,
+                        run_id=args.run_id,
+                        subject_type=args.subject_type,
+                        subject_key=args.subject_key,
+                        semantic_fingerprint=args.fingerprint,
+                        reference_id=args.reference_id,
+                        metadata_json=args.metadata_json,
+                    )
+                elif args.refresh_command == "complete":
+                    payload = run_refresh_complete(connection, args.run_id)
+                elif args.refresh_command == "fail":
+                    payload = run_refresh_fail(
+                        connection,
+                        run_id=args.run_id,
+                        error_summary=args.error,
+                        status="cancelled" if args.cancelled else "failed",
+                    )
+                elif args.refresh_command == "runs":
+                    payload = run_refresh_runs(
+                        connection, run_type=args.run_type, status=args.status
+                    )
+                elif args.refresh_command == "show":
+                    payload = run_refresh_show(connection, args.run_id)
+                elif args.refresh_command == "changes":
+                    payload = run_refresh_changes(
+                        connection,
+                        run_id=args.run_id,
+                        subject_type=args.subject_type,
+                        subject_key=args.subject_key,
+                        change_type=args.change_type,
+                    )
+                else:
+                    parser.parse_args(["refresh", "--help"])
+                    return 2
             print(json.dumps(payload, indent=2, sort_keys=True))
             return 0
         except (DatabaseError, ValueError) as exc:
@@ -1174,13 +1507,24 @@ def main(argv: Sequence[str] | None = None) -> int:
         try:
             with database_session(settings.database_path) as connection:
                 if args.pipeline_command == "run":
-                    payload = run_pipeline(connection, source_name=args.source, input_path=args.path, input_format=ImportFormat(args.input_format), external_id_field=args.external_id_field, through_stage=args.through_stage, skip_fuzzy=args.skip_fuzzy, dry_run=args.dry_run)
+                    payload = run_pipeline(
+                        connection,
+                        source_name=args.source,
+                        input_path=args.path,
+                        input_format=ImportFormat(args.input_format),
+                        external_id_field=args.external_id_field,
+                        through_stage=args.through_stage,
+                        skip_fuzzy=args.skip_fuzzy,
+                        dry_run=args.dry_run,
+                    )
                 elif args.pipeline_command == "resume":
                     payload = run_pipeline_resume(connection, args.run_id)
                 elif args.pipeline_command == "show":
                     payload = run_pipeline_show(connection, args.run_id)
                 elif args.pipeline_command == "list":
-                    payload = run_pipeline_list(connection, status=args.status, limit=args.limit)
+                    payload = run_pipeline_list(
+                        connection, status=args.status, limit=args.limit
+                    )
                 elif args.pipeline_command == "stages":
                     payload = run_pipeline_stages(connection, args.run_id)
                 else:
@@ -1203,10 +1547,22 @@ def main(argv: Sequence[str] | None = None) -> int:
                 payload = profile_payload(args.vertical)
             else:
                 with database_session(settings.database_path) as connection:
-                    if args.verticals_command == "seed": payload = run_verticals_seed(connection)
-                    elif args.verticals_command == "entities": payload = run_verticals_entities(connection, args.vertical)
-                    elif args.verticals_command == "assign": payload = run_verticals_assign(connection, entity_id=args.entity_id, vertical_key=args.vertical, actor=args.actor, confidence=args.confidence, source_record_id=args.source_record_id)
-                    else: parser.parse_args(["verticals", "--help"]); return 2
+                    if args.verticals_command == "seed":
+                        payload = run_verticals_seed(connection)
+                    elif args.verticals_command == "entities":
+                        payload = run_verticals_entities(connection, args.vertical)
+                    elif args.verticals_command == "assign":
+                        payload = run_verticals_assign(
+                            connection,
+                            entity_id=args.entity_id,
+                            vertical_key=args.vertical,
+                            actor=args.actor,
+                            confidence=args.confidence,
+                            source_record_id=args.source_record_id,
+                        )
+                    else:
+                        parser.parse_args(["verticals", "--help"])
+                        return 2
             print(json.dumps(payload, indent=2, sort_keys=True))
             return 0
         except (DatabaseError, ValueError) as exc:
@@ -1382,11 +1738,24 @@ def main(argv: Sequence[str] | None = None) -> int:
                 if args.people_command == "people-review":
                     if args.people_review_command == "populate":
                         payload = run_people_review_populate(connection)
+                    elif args.people_review_command == "backlog":
+                        payload = run_people_review_backlog(
+                            connection, include_details=args.details
+                        )
                     elif args.people_review_command == "list":
-                        status = None if args.status == "all" else PersonReviewStatus(args.status)
+                        status = (
+                            None
+                            if args.status == "all"
+                            else PersonReviewStatus(args.status)
+                        )
                         payload = run_people_review_list(connection, status)
                     elif args.people_review_command == "decide":
-                        payload = run_people_review_decide(connection, queue_id=args.queue_id, status=PersonReviewStatus(args.status), note=args.note)
+                        payload = run_people_review_decide(
+                            connection,
+                            queue_id=args.queue_id,
+                            status=PersonReviewStatus(args.status),
+                            note=args.note,
+                        )
                     else:
                         parser.parse_args(["people", "people-review", "--help"])
                         return 2
@@ -1397,29 +1766,46 @@ def main(argv: Sequence[str] | None = None) -> int:
                 elif args.people_command == "resolve":
                     payload = run_people_resolve(connection, args.observation_id)
                 elif args.people_command == "merge":
-                    payload = run_people_merge(connection, survivor_person_id=args.survivor_person_id, absorbed_person_id=args.absorbed_person_id, reason=args.reason)
+                    payload = run_people_merge(
+                        connection,
+                        survivor_person_id=args.survivor_person_id,
+                        absorbed_person_id=args.absorbed_person_id,
+                        reason=args.reason,
+                    )
                 elif args.people_command == "rollback":
-                    payload = run_people_rollback(connection, merge_id=args.merge_id, reason=args.reason)
+                    payload = run_people_rollback(
+                        connection, merge_id=args.merge_id, reason=args.reason
+                    )
                 elif args.people_command == "audit":
                     payload = run_people_audit(connection, args.person_id)
                 elif args.people_command == "audit-list":
-                    payload = run_people_audit_list(connection, include_historical=args.include_historical)
+                    payload = run_people_audit_list(
+                        connection, include_historical=args.include_historical
+                    )
                 elif args.people_command == "export":
-                    payload = run_people_export(connection, output=args.output, include_historical=args.include_historical)
+                    payload = run_people_export(
+                        connection,
+                        output=args.output,
+                        include_historical=args.include_historical,
+                    )
                 elif args.people_command in {"triage", "triage-queue"}:
                     payload = run_people_triage(
                         connection,
                         TriageFilters(
                             person_id=args.person_id,
                             anomaly=args.anomaly,
-                            severity=None if args.severity is None else TriageSeverity(args.severity),
+                            severity=None
+                            if args.severity is None
+                            else TriageSeverity(args.severity),
                             traceability=args.traceability,
                             entity_id=args.entity_id,
                             branch_id=args.branch_id,
                             website_id=args.website_id,
                             page_id=args.page_id,
                             review_status=args.review_status,
-                            disposition_status=None if args.disposition_status is None else DispositionStatus(args.disposition_status),
+                            disposition_status=None
+                            if args.disposition_status is None
+                            else DispositionStatus(args.disposition_status),
                             unreviewed_only=args.unreviewed_only,
                             has_remediation=args.has_remediation,
                             no_remediation=args.no_remediation,
@@ -1434,43 +1820,140 @@ def main(argv: Sequence[str] | None = None) -> int:
                     )
                 elif args.people_command == "anomaly-review":
                     if args.anomaly_review_command == "list":
-                        payload = run_anomaly_review_list(connection, person_id=args.person_id, anomaly_code=args.anomaly, status=None if args.status is None else DispositionStatus(args.status), include_stale=args.include_stale, actor=args.actor, limit=args.limit)
+                        payload = run_anomaly_review_list(
+                            connection,
+                            person_id=args.person_id,
+                            anomaly_code=args.anomaly,
+                            status=None
+                            if args.status is None
+                            else DispositionStatus(args.status),
+                            include_stale=args.include_stale,
+                            actor=args.actor,
+                            limit=args.limit,
+                        )
                     elif args.anomaly_review_command == "show":
-                        payload = run_anomaly_review_show(connection, args.disposition_id)
+                        payload = run_anomaly_review_show(
+                            connection, args.disposition_id
+                        )
                     elif args.anomaly_review_command == "history":
-                        payload = run_anomaly_review_history(connection, args.disposition_id)
+                        payload = run_anomaly_review_history(
+                            connection, args.disposition_id
+                        )
                     elif args.anomaly_review_command == "decide":
-                        payload = run_anomaly_review_decide(connection, person_id=args.person_id, anomaly_code=args.anomaly, fingerprint=args.fingerprint, status=DispositionStatus(args.status), actor=args.actor, note=args.note)
+                        payload = run_anomaly_review_decide(
+                            connection,
+                            person_id=args.person_id,
+                            anomaly_code=args.anomaly,
+                            fingerprint=args.fingerprint,
+                            status=DispositionStatus(args.status),
+                            actor=args.actor,
+                            note=args.note,
+                        )
                     else:
                         parser.parse_args(["people", "anomaly-review", "--help"])
                         return 2
                 elif args.people_command == "anomaly-sync":
-                    payload = run_anomaly_sync(connection, person_id=args.person_id, actor=args.actor)
+                    payload = run_anomaly_sync(
+                        connection, person_id=args.person_id, actor=args.actor
+                    )
                 elif args.people_command == "remediation":
                     if args.remediation_command == "list":
-                        payload = run_remediation_list(connection, person_id=args.person_id, anomaly_code=args.anomaly, fingerprint=args.fingerprint, status=None if args.status is None else RemediationStatus(args.status), owner=args.owner, task_type=args.task_type, due_before=args.due_before, due_after=args.due_after, include_stale=args.include_stale, overdue_only=args.overdue_only, limit=args.limit)
+                        payload = run_remediation_list(
+                            connection,
+                            person_id=args.person_id,
+                            anomaly_code=args.anomaly,
+                            fingerprint=args.fingerprint,
+                            status=None
+                            if args.status is None
+                            else RemediationStatus(args.status),
+                            owner=args.owner,
+                            task_type=args.task_type,
+                            due_before=args.due_before,
+                            due_after=args.due_after,
+                            include_stale=args.include_stale,
+                            overdue_only=args.overdue_only,
+                            limit=args.limit,
+                        )
                     elif args.remediation_command == "show":
                         payload = run_remediation_show(connection, args.task_id)
                     elif args.remediation_command == "history":
                         payload = run_remediation_history(connection, args.task_id)
                     elif args.remediation_command == "create":
-                        payload = run_remediation_create(connection, person_id=args.person_id, anomaly_code=args.anomaly, fingerprint=args.fingerprint, task_type=args.task_type, actor=args.actor, owner=args.owner, due_at=args.due_at, note=args.note)
+                        payload = run_remediation_create(
+                            connection,
+                            person_id=args.person_id,
+                            anomaly_code=args.anomaly,
+                            fingerprint=args.fingerprint,
+                            task_type=args.task_type,
+                            actor=args.actor,
+                            owner=args.owner,
+                            due_at=args.due_at,
+                            note=args.note,
+                        )
                     elif args.remediation_command == "update":
-                        payload = run_remediation_update(connection, task_id=args.task_id, status=None if args.status is None else RemediationStatus(args.status), actor=args.actor, owner=args.owner, clear_owner=args.clear_owner, due_at=args.due_at, clear_due_at=args.clear_due_at, note=args.note)
+                        payload = run_remediation_update(
+                            connection,
+                            task_id=args.task_id,
+                            status=None
+                            if args.status is None
+                            else RemediationStatus(args.status),
+                            actor=args.actor,
+                            owner=args.owner,
+                            clear_owner=args.clear_owner,
+                            due_at=args.due_at,
+                            clear_due_at=args.clear_due_at,
+                            note=args.note,
+                        )
                     else:
                         parser.parse_args(["people", "remediation", "--help"])
                         return 2
                 elif args.people_command == "remediation-sync":
-                    payload = run_remediation_sync(connection, person_id=args.person_id, actor=args.actor)
+                    payload = run_remediation_sync(
+                        connection, person_id=args.person_id, actor=args.actor
+                    )
                 elif args.people_command == "work-queue":
                     if args.work_queue_command == "list":
-                        payload = run_work_queue_list(connection, WorkQueueFilters(person_id=args.person_id, entity_id=args.entity_id, anomaly=args.anomaly, severity=args.severity, traceability=args.traceability, disposition_status=args.disposition_status, queue_state=args.queue_state, owner=args.owner, unassigned_only=args.unassigned_only, has_remediation=args.has_remediation, no_remediation=args.no_remediation, overdue_only=args.overdue_only, blocked_only=args.blocked_only, stale_only=args.stale_only, include_stale=args.include_stale, include_historical=args.include_historical, due_before=args.due_before, due_after=args.due_after, limit=args.limit))
+                        payload = run_work_queue_list(
+                            connection,
+                            WorkQueueFilters(
+                                person_id=args.person_id,
+                                entity_id=args.entity_id,
+                                anomaly=args.anomaly,
+                                severity=args.severity,
+                                traceability=args.traceability,
+                                disposition_status=args.disposition_status,
+                                queue_state=args.queue_state,
+                                owner=args.owner,
+                                unassigned_only=args.unassigned_only,
+                                has_remediation=args.has_remediation,
+                                no_remediation=args.no_remediation,
+                                overdue_only=args.overdue_only,
+                                blocked_only=args.blocked_only,
+                                stale_only=args.stale_only,
+                                include_stale=args.include_stale,
+                                include_historical=args.include_historical,
+                                due_before=args.due_before,
+                                due_after=args.due_after,
+                                limit=args.limit,
+                            ),
+                        )
                     elif args.work_queue_command == "show":
-                        payload = run_work_queue_show(connection, person_id=args.person_id, fingerprint=args.fingerprint, include_historical=args.include_historical)
+                        payload = run_work_queue_show(
+                            connection,
+                            person_id=args.person_id,
+                            fingerprint=args.fingerprint,
+                            include_historical=args.include_historical,
+                        )
                     elif args.work_queue_command == "owners":
-                        payload = run_work_queue_owners(connection, include_historical=args.include_historical)
+                        payload = run_work_queue_owners(
+                            connection, include_historical=args.include_historical
+                        )
                     elif args.work_queue_command == "export":
-                        payload = run_work_queue_export(connection, output=args.output, include_historical=args.include_historical)
+                        payload = run_work_queue_export(
+                            connection,
+                            output=args.output,
+                            include_historical=args.include_historical,
+                        )
                     else:
                         parser.parse_args(["people", "work-queue", "--help"])
                         return 2
@@ -1514,9 +1997,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                         None,
                     )
                     if source is None:
-                        raise WebsiteCommandError(
-                            f"Source not found: {args.source}"
-                        )
+                        raise WebsiteCommandError(f"Source not found: {args.source}")
                     source_row = connection.execute(
                         "SELECT id FROM source_datasets WHERE name = ?",
                         (source.name,),
@@ -1645,11 +2126,24 @@ def main(argv: Sequence[str] | None = None) -> int:
                 elif args.website_command == "people-review":
                     if args.website_people_review_command == "populate":
                         payload = run_people_review_populate(connection)
+                    elif args.website_people_review_command == "backlog":
+                        payload = run_people_review_backlog(
+                            connection, include_details=args.details
+                        )
                     elif args.website_people_review_command == "list":
-                        status = None if args.status == "all" else PersonReviewStatus(args.status)
+                        status = (
+                            None
+                            if args.status == "all"
+                            else PersonReviewStatus(args.status)
+                        )
                         payload = run_people_review_list(connection, status)
                     elif args.website_people_review_command == "decide":
-                        payload = run_people_review_decide(connection, queue_id=args.queue_id, status=PersonReviewStatus(args.status), note=args.note)
+                        payload = run_people_review_decide(
+                            connection,
+                            queue_id=args.queue_id,
+                            status=PersonReviewStatus(args.status),
+                            note=args.note,
+                        )
                     else:
                         parser.parse_args(["website", "people-review", "--help"])
                         return 2

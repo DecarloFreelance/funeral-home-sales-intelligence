@@ -33,7 +33,7 @@ def prepared_database(path: Path) -> int:
             "SELECT id FROM source_datasets WHERE name = ?",
             ("Manual Canadian Funeral Home Source",),
         ).fetchone()
-    assert status.current_version == 22
+    assert status.current_version == 23
     assert row is not None
     return int(row["id"])
 

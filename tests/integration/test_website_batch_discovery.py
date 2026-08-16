@@ -25,29 +25,60 @@ MIGRATIONS = ROOT / "database" / "migrations"
 
 def _fixture(path: Path) -> None:
     with database_session(path) as connection:
-        assert apply_pending_migrations(connection, MIGRATIONS).status.current_version == 22
-        connection.execute("INSERT INTO source_datasets (id,name,source_type,jurisdiction,is_active) VALUES (1,'Fixture','manual','AB',1)")
+        assert (
+            apply_pending_migrations(connection, MIGRATIONS).status.current_version
+            == 23
+        )
+        connection.execute(
+            "INSERT INTO source_datasets (id,name,source_type,jurisdiction,is_active) VALUES (1,'Fixture','manual','AB',1)"
+        )
         for entity_id, name in ((1, "Alpha Funeral"), (2, "Beta Funeral")):
-            connection.execute("INSERT INTO entities (id,entity_type,canonical_name,status) VALUES (?, 'branch', ?, 'active')", (entity_id, name))
-            connection.execute("INSERT INTO source_records (id,source_dataset_id,raw_payload,payload_format,source_url,retrieved_at,checksum) VALUES (?,1,'{}','json','fixture://source','2026-01-01T00:00:00Z',?)", (entity_id, f"checksum-{entity_id}"))
-            connection.execute("INSERT INTO entity_source_records (entity_id,source_record_id,membership_role) VALUES (?,?,'branch')", (entity_id, entity_id))
-        for record_id, field, value in ((1, "url", "https://shared.example/alpha"), (2, "email", "info@shared.example")):
-            connection.execute("INSERT INTO normalized_values (source_record_id,field_name,original_value,normalized_value,normalizer_name,normalizer_version,normalized_at) VALUES (?,?,?,?,?,'1','2026-01-01T00:00:00Z')", (record_id, field, value, value, field))
+            connection.execute(
+                "INSERT INTO entities (id,entity_type,canonical_name,status) VALUES (?, 'branch', ?, 'active')",
+                (entity_id, name),
+            )
+            connection.execute(
+                "INSERT INTO source_records (id,source_dataset_id,raw_payload,payload_format,source_url,retrieved_at,checksum) VALUES (?,1,'{}','json','fixture://source','2026-01-01T00:00:00Z',?)",
+                (entity_id, f"checksum-{entity_id}"),
+            )
+            connection.execute(
+                "INSERT INTO entity_source_records (entity_id,source_record_id,membership_role) VALUES (?,?,'branch')",
+                (entity_id, entity_id),
+            )
+        for record_id, field, value in (
+            (1, "url", "https://shared.example/alpha"),
+            (2, "email", "info@shared.example"),
+        ):
+            connection.execute(
+                "INSERT INTO normalized_values (source_record_id,field_name,original_value,normalized_value,normalizer_name,normalizer_version,normalized_at) VALUES (?,?,?,?,?,'1','2026-01-01T00:00:00Z')",
+                (record_id, field, value, value, field),
+            )
         connection.commit()
 
 
-def test_offline_population_is_idempotent_and_shared_domain_safe(tmp_path: Path) -> None:
+def test_offline_population_is_idempotent_and_shared_domain_safe(
+    tmp_path: Path,
+) -> None:
     path = tmp_path / "website.sqlite3"
     _fixture(path)
     with database_session(path) as connection:
-        first = populate_candidates(connection, limits=BatchLimits(entity_limit=10, candidate_limit=2))
-        second = populate_candidates(connection, limits=BatchLimits(entity_limit=10, candidate_limit=2))
-        rows = connection.execute("SELECT entity_id, domain, website_kind, status, is_primary FROM websites ORDER BY entity_id").fetchall()
+        first = populate_candidates(
+            connection, limits=BatchLimits(entity_limit=10, candidate_limit=2)
+        )
+        second = populate_candidates(
+            connection, limits=BatchLimits(entity_limit=10, candidate_limit=2)
+        )
+        rows = connection.execute(
+            "SELECT entity_id, domain, website_kind, status, is_primary FROM websites ORDER BY entity_id"
+        ).fetchall()
     assert first["network_used"] is False
     assert first["candidates_inserted"] == 2
     assert second["candidates_inserted"] == 0
     assert second["candidates_unchanged"] == 2
-    assert [(row["entity_id"], row["domain"]) for row in rows] == [(1, "shared.example"), (2, "shared.example")]
+    assert [(row["entity_id"], row["domain"]) for row in rows] == [
+        (1, "shared.example"),
+        (2, "shared.example"),
+    ]
     assert rows[0]["website_kind"] == "branch"
     assert rows[0]["status"] == "candidate"
     assert rows[1]["website_kind"] == "shared"
@@ -74,10 +105,14 @@ def test_batch_verify_requires_authorization(tmp_path: Path) -> None:
         populate_candidates(connection)
         with pytest.raises(WebsiteBatchError, match="allow-network"):
             batch_verify(connection, allow_network=False)
-        assert connection.execute("SELECT COUNT(*) FROM website_checks").fetchone()[0] == 0
+        assert (
+            connection.execute("SELECT COUNT(*) FROM website_checks").fetchone()[0] == 0
+        )
 
 
-def test_network_batch_dry_run_is_non_network_and_non_persistent(tmp_path: Path) -> None:
+def test_network_batch_dry_run_is_non_network_and_non_persistent(
+    tmp_path: Path,
+) -> None:
     path = tmp_path / "network-dry.sqlite3"
     _fixture(path)
     with database_session(path) as connection:
@@ -87,10 +122,17 @@ def test_network_batch_dry_run_is_non_network_and_non_persistent(tmp_path: Path)
         assert result["network_used"] is False
         assert result["projected_candidates"] == 2
         assert connection.total_changes == before
-        assert connection.execute("SELECT COUNT(*) FROM website_discovery_runs WHERE mode='network_verify'").fetchone()[0] == 0
+        assert (
+            connection.execute(
+                "SELECT COUNT(*) FROM website_discovery_runs WHERE mode='network_verify'"
+            ).fetchone()[0]
+            == 0
+        )
 
 
-def test_batch_verify_is_bounded_and_resumable_with_fixture_verifier(tmp_path: Path) -> None:
+def test_batch_verify_is_bounded_and_resumable_with_fixture_verifier(
+    tmp_path: Path,
+) -> None:
     path = tmp_path / "verify.sqlite3"
     _fixture(path)
     calls: list[int] = []
@@ -98,23 +140,41 @@ def test_batch_verify_is_bounded_and_resumable_with_fixture_verifier(tmp_path: P
     def verifier(**kwargs: object) -> WebsiteCheck:
         website_id = int(kwargs["website_id"])
         calls.append(website_id)
-        return WebsiteCheck(website_id=website_id, requested_url=str(kwargs["url"]), dns_status=DNSStatus.OK, tls_status=TLSStatus.OK, https_status_code=200, outcome=WebsiteCheckOutcome.REACHABLE)
+        return WebsiteCheck(
+            website_id=website_id,
+            requested_url=str(kwargs["url"]),
+            dns_status=DNSStatus.OK,
+            tls_status=TLSStatus.OK,
+            https_status_code=200,
+            outcome=WebsiteCheckOutcome.REACHABLE,
+        )
 
     with database_session(path) as connection:
         populate_candidates(connection)
-        result = batch_verify(connection, allow_network=True, limits=BatchLimits(entity_limit=1, candidate_limit=1), verifier=verifier)
+        result = batch_verify(
+            connection,
+            allow_network=True,
+            limits=BatchLimits(entity_limit=1, candidate_limit=1),
+            verifier=verifier,
+        )
         with pytest.raises(WebsiteBatchError, match="completed"):
-            batch_verify(connection, allow_network=True, resume_run_id=int(result["run_id"]), verifier=verifier)
+            batch_verify(
+                connection,
+                allow_network=True,
+                resume_run_id=int(result["run_id"]),
+                verifier=verifier,
+            )
         assert result["network_used"] is True
         assert result["succeeded"] == 1
         assert len(calls) == 1
-        assert connection.execute("SELECT COUNT(*) FROM website_checks").fetchone()[0] == 1
+        assert (
+            connection.execute("SELECT COUNT(*) FROM website_checks").fetchone()[0] == 1
+        )
         run = connection.execute(
             "SELECT entities_examined, candidates_considered FROM website_discovery_runs WHERE id = ?",
             (result["run_id"],),
         ).fetchone()
         assert tuple(run) == (1, 1)
-
 
 
 def test_batch_verify_passes_correct_identity_policy_by_website_kind(
@@ -128,9 +188,7 @@ def test_batch_verify_passes_correct_identity_policy_by_website_kind(
     def verifier(**kwargs: object) -> WebsiteCheck:
         website_id = int(kwargs["website_id"])
 
-        captured[website_id] = bool(
-            kwargs["allow_identity_mismatch"]
-        )
+        captured[website_id] = bool(kwargs["allow_identity_mismatch"])
 
         return WebsiteCheck(
             website_id=website_id,
@@ -163,15 +221,9 @@ def test_batch_verify_passes_correct_identity_policy_by_website_kind(
 
         assert len(rows) == 2
 
-        branch = next(
-            row for row in rows
-            if row["website_kind"] == "branch"
-        )
+        branch = next(row for row in rows if row["website_kind"] == "branch")
 
-        shared = next(
-            row for row in rows
-            if row["website_kind"] == "shared"
-        )
+        shared = next(row for row in rows if row["website_kind"] == "shared")
 
         result = batch_verify(
             connection,
@@ -189,6 +241,7 @@ def test_batch_verify_passes_correct_identity_policy_by_website_kind(
     assert captured[int(branch["id"])] is True
     assert captured[int(shared["id"])] is False
 
+
 def test_transient_verification_failure_retries_once(tmp_path: Path) -> None:
     path = tmp_path / "retry.sqlite3"
     _fixture(path)
@@ -197,13 +250,31 @@ def test_transient_verification_failure_retries_once(tmp_path: Path) -> None:
     def verifier(**kwargs: object) -> WebsiteCheck:
         calls["count"] += 1
         if calls["count"] == 1:
-            return WebsiteCheck(website_id=int(kwargs["website_id"]), requested_url=str(kwargs["url"]), error_message="HTTP request failed: timeout")
-        return WebsiteCheck(website_id=int(kwargs["website_id"]), requested_url=str(kwargs["url"]), dns_status=DNSStatus.OK, tls_status=TLSStatus.OK, https_status_code=200, outcome=WebsiteCheckOutcome.REACHABLE)
+            return WebsiteCheck(
+                website_id=int(kwargs["website_id"]),
+                requested_url=str(kwargs["url"]),
+                error_message="HTTP request failed: timeout",
+            )
+        return WebsiteCheck(
+            website_id=int(kwargs["website_id"]),
+            requested_url=str(kwargs["url"]),
+            dns_status=DNSStatus.OK,
+            tls_status=TLSStatus.OK,
+            https_status_code=200,
+            outcome=WebsiteCheckOutcome.REACHABLE,
+        )
 
     with database_session(path) as connection:
         populate_candidates(connection)
-        result = batch_verify(connection, allow_network=True, limits=BatchLimits(entity_limit=1, candidate_limit=1, max_retries=1), verifier=verifier)
-        item = connection.execute("SELECT status, attempts FROM website_discovery_run_items").fetchone()
+        result = batch_verify(
+            connection,
+            allow_network=True,
+            limits=BatchLimits(entity_limit=1, candidate_limit=1, max_retries=1),
+            verifier=verifier,
+        )
+        item = connection.execute(
+            "SELECT status, attempts FROM website_discovery_run_items"
+        ).fetchone()
     assert result["status"] == "completed"
     assert calls["count"] == 2
     assert item["status"] == "completed"

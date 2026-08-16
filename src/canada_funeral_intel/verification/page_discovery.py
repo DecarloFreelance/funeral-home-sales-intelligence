@@ -4,11 +4,12 @@ import heapq
 import sqlite3
 from dataclasses import dataclass
 from html.parser import HTMLParser
-from urllib.parse import urljoin, urlsplit
+from urllib.parse import urljoin, urlsplit, urlunsplit
 
 from canada_funeral_intel.normalization.scalars import normalize_domain, normalize_url
 from canada_funeral_intel.storage.database import transaction
 from canada_funeral_intel.verification.content_analysis import analyze_website_content
+from canada_funeral_intel.verification.page_fetch import record_page_fetch
 from canada_funeral_intel.verification.probe import probe_http
 
 
@@ -113,6 +114,45 @@ _PRIORITY_RULES: tuple[tuple[str, str, int], ...] = (
     ("locations", "locations", 76),
     ("location", "locations", 72),
     ("history", "history", 68),
+    # These remain the schema-supported `other` kind, but receive bounded
+    # queue priority because their content can emit Phase 10 facts.
+    ("ownership", "other", 74),
+    ("crematorium", "other", 74),
+    ("cremation", "other", 74),
+    ("pre-planning", "other", 72),
+    ("pre_planning", "other", 72),
+    ("preplanning", "other", 72),
+    ("facilities", "other", 72),
+    ("facility", "other", 72),
+    ("chapel", "other", 72),
+    ("reception", "other", 72),
+    ("services", "other", 70),
+    ("service", "other", 70),
+    ("livestream", "other", 68),
+    ("grief", "other", 68),
+    ("online-arrangements", "other", 68),
+    ("online_arrangements", "other", 68),
+)
+
+_BUSINESS_FACT_PAGE_TOKENS = frozenset(
+    {
+        "ownership",
+        "crematorium",
+        "cremation",
+        "pre-planning",
+        "pre_planning",
+        "preplanning",
+        "facilities",
+        "facility",
+        "chapel",
+        "reception",
+        "services",
+        "service",
+        "livestream",
+        "grief",
+        "online-arrangements",
+        "online_arrangements",
+    }
 )
 
 _EXCLUDED_TOKENS = (
@@ -168,6 +208,18 @@ def classify_page(
     return "other", 10
 
 
+def is_business_fact_relevant_page(
+    url: str,
+    link_text: str | None = None,
+) -> bool:
+    """Return whether URL/link metadata targets supported Phase 10 facts."""
+    parsed = urlsplit(url)
+    path = parsed.path.casefold()
+    text = "" if link_text is None else link_text.casefold()
+    haystack = f"{path} {text}"
+    return any(token in haystack for token in _BUSINESS_FACT_PAGE_TOKENS)
+
+
 def is_excluded_page(url: str) -> bool:
     value = url.casefold()
     return any(token in value for token in _EXCLUDED_TOKENS)
@@ -214,12 +266,40 @@ def _normalized_domain(url: str) -> str | None:
     return result.value
 
 
+def _alias_key(url: str) -> str | None:
+    normalized = normalize_url(url)
+    if normalized.value is None:
+        return None
+
+    parsed = urlsplit(normalized.value)
+    domain = _normalized_domain(normalized.value)
+    if domain is None:
+        return normalized.value
+
+    netloc = domain
+    if parsed.port is not None:
+        netloc = f"{netloc}:{parsed.port}"
+    return urlunsplit(
+        (
+            parsed.scheme,
+            netloc,
+            parsed.path or "/",
+            parsed.query,
+            "",
+        )
+    )
+
+
 def _same_site(
     url: str,
     *,
     expected_domain: str,
+    trusted_domains: set[str] | None = None,
 ) -> bool:
-    return _normalized_domain(url) == expected_domain
+    domain = _normalized_domain(url)
+    if domain is None:
+        return False
+    return domain in ({expected_domain} | (trusted_domains or set()))
 
 
 def _load_website(
@@ -377,6 +457,13 @@ def list_website_pages(
             content_type,
             identity_score,
             identity_observable,
+            last_fetched_at,
+            last_success_at,
+            last_failure_at,
+            last_status_code,
+            last_content_type,
+            last_error,
+            last_content_hash,
             created_at,
             updated_at
         FROM website_pages
@@ -426,11 +513,36 @@ def list_website_pages(
                 None if row["content_type"] is None else str(row["content_type"])
             ),
             "identity_score": (
-                None
-                if row["identity_score"] is None
-                else float(row["identity_score"])
+                None if row["identity_score"] is None else float(row["identity_score"])
             ),
             "identity_observable": bool(row["identity_observable"]),
+            "last_fetched_at": (
+                None if row["last_fetched_at"] is None else str(row["last_fetched_at"])
+            ),
+            "last_success_at": (
+                None if row["last_success_at"] is None else str(row["last_success_at"])
+            ),
+            "last_failure_at": (
+                None if row["last_failure_at"] is None else str(row["last_failure_at"])
+            ),
+            "last_status_code": (
+                None
+                if row["last_status_code"] is None
+                else int(row["last_status_code"])
+            ),
+            "last_content_type": (
+                None
+                if row["last_content_type"] is None
+                else str(row["last_content_type"])
+            ),
+            "last_error": (
+                None if row["last_error"] is None else str(row["last_error"])
+            ),
+            "last_content_hash": (
+                None
+                if row["last_content_hash"] is None
+                else str(row["last_content_hash"])
+            ),
             "created_at": str(row["created_at"]),
             "updated_at": str(row["updated_at"]),
         }
@@ -495,6 +607,22 @@ def discover_website_pages(
 
     queued: set[str] = {normalized_start.value}
     visited: set[str] = set()
+    aliases: dict[str, str] = {}
+    processed_identities: set[str] = set()
+    trusted_domains: set[str] = {expected_domain}
+
+    def register_alias(url: str, identity: str) -> None:
+        aliases[url] = identity
+        key = _alias_key(url)
+        if key is not None:
+            aliases[key] = identity
+
+    def lookup_alias(url: str) -> str | None:
+        identity = aliases.get(url)
+        if identity is not None:
+            return identity
+        key = _alias_key(url)
+        return None if key is None else aliases.get(key)
 
     pages_requested = 0
     pages_persisted = 0
@@ -515,6 +643,11 @@ def discover_website_pages(
         if current_url in visited:
             continue
 
+        known_identity = lookup_alias(current_url)
+        if known_identity is not None and known_identity in processed_identities:
+            visited.add(current_url)
+            continue
+
         visited.add(current_url)
         pages_requested += 1
 
@@ -532,6 +665,34 @@ def discover_website_pages(
             effective_normalized_value = current_url
         else:
             effective_normalized_value = effective_normalized.value
+
+        successful_response = (
+            result.status_code is not None and 200 <= result.status_code < 400
+        )
+        effective_domain = _normalized_domain(effective_normalized_value)
+        requested_domain = _normalized_domain(current_url)
+        if (
+            successful_response
+            and result.redirect_count > 0
+            and requested_domain in trusted_domains
+            and effective_domain is not None
+        ):
+            trusted_domains.add(effective_domain)
+
+        identity = effective_normalized_value
+        register_alias(current_url, identity)
+        register_alias(effective_normalized_value, identity)
+        if (
+            successful_response
+            and result.canonical_url is not None
+            and _normalized_domain(result.canonical_url) in trusted_domains
+        ):
+            canonical = normalize_url(result.canonical_url)
+            if canonical.value is not None:
+                register_alias(canonical.value, identity)
+
+        if successful_response:
+            processed_identities.add(identity)
 
         kind, priority = classify_page(
             effective_normalized_value,
@@ -569,7 +730,12 @@ def discover_website_pages(
             identity_observable=identity_observable,
         )
 
-        upsert_website_page(connection, page)
+        page_id = upsert_website_page(connection, page)
+        record_page_fetch(
+            connection,
+            website_page_id=page_id,
+            result=result,
+        )
         pages_persisted += 1
 
         if depth >= max_depth:
@@ -597,6 +763,7 @@ def discover_website_pages(
             if not _same_site(
                 target_url,
                 expected_domain=expected_domain,
+                trusted_domains=trusted_domains,
             ):
                 offsite_links += 1
                 continue

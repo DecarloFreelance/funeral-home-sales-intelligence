@@ -52,7 +52,7 @@ Normalization rules:
 
 Extraction is limited to visible HTML from eligible first-party pages. Positive evidence must be a nearby explicit phrase or structured label/value pair. The evidence snippet must contain the supporting text.
 
-Relevant page kinds are `about`, `history`, `locations`, `contact`, `root`, and pages whose content is explicitly about services, facilities, planning, grief resources, or company information. Team/staff pages are not used unless they contain a clearly labelled business fact.
+Relevant page kinds are `about`, `history`, `locations`, `contact`, `root`, and pages whose content is explicitly about services, facilities, planning, grief resources, or company information. Team/staff pages are not used unless they contain a clearly labelled business fact. Discovery also gives bounded priority and explicit Business-Fact eligibility to existing `other` pages whose persisted path or link metadata identifies supported patterns such as services, cremation, facilities, chapel, reception, ownership, planning, livestreaming, grief resources, or online arrangements. Generic `other` pages remain excluded; this does not broaden processing to every `other` page.
 
 Excluded content includes `script`, `style`, `noscript`, navigation/footer/social blocks, obituaries, memorials, testimonials, customer reviews, vendor/supplier pages, marketing/SEO claims about another business, privacy/terms pages, and third-party links. Negated forms such as “we do not offer” never produce a positive row. Ambiguous or weakly contextual text is not emitted.
 
@@ -99,6 +99,51 @@ Scope is explicit only when the page text, heading, URL/path, address/location c
 ## 11. Extraction input boundary
 
 The offline extraction service accepts page metadata (`website_page_id`, `website_id`, `entity_id`, URL, page kind), `body: bytes`, `content_type`, `status_code`, and optional final/source URL. It returns typed fact candidates and never performs network I/O. The bounded re-fetch pipeline may call it after `probe_http`; fixture tests call it directly. Raw bodies are not persisted by this phase.
+
+## 11a. Explicit production processing
+
+Business-fact processing is an explicit post-crawl operation exposed as
+`business-facts extract`. It selects persisted eligible `website_pages` using
+`--website-id` and/or `--page-id`, then performs bounded re-fetching through
+the repository's existing `probe_http()` mechanism. The current response body,
+content type, status code, and final/requested URL are passed to the existing
+extractor; raw response bodies are not persisted.
+
+The command processes pages independently and reports selected, attempted,
+succeeded, and failed pages together with extracted, inserted, and unchanged
+fact counts. A retrieval failure for one page does not prevent unrelated
+selected pages from being attempted. Database and extractor integrity errors
+remain command failures.
+
+Crawler completion alone does not imply business-fact extraction. The crawler
+persists page metadata and does not invoke the business-fact extractor. The
+main offline pipeline also does not run this stage. `business-facts list`,
+`business-facts summary`, and `business-facts export` remain read-only views of
+already persisted observations and perform no network retrieval.
+
+Repeated extraction delegates idempotence and historical snapshot behavior to
+`store_business_facts()`: identical content and facts remain unchanged, while
+changed content hashes create historical observations. No raw HTML archive is
+introduced.
+
+Business-Fact re-fetches also record page-level network truth in the nullable
+`website_pages.last_*` fetch-state fields. This state is independent of fact
+extraction and persistence: `last_fetched_at` is not extraction time,
+`last_success_at` survives later failures, `last_failure_at` survives later
+successes, and `last_content_hash` is the hash of the latest successfully
+retrieved body, even when extraction emits zero facts. Response bodies are not
+stored. The fetch-state fields currently provide observability only and do not
+create a cache or freshness-based request-skipping policy. Website-level
+`website_checks` and batch-verification retry state remain separate.
+
+People extraction uses persisted page metadata only to select eligible people
+page kinds and establish deterministic ordering. Historical discovery status,
+content type, and identity metadata do not permanently suppress an eligible
+people page: the current bounded `probe_http()` response is authoritative for
+whether extraction proceeds. Current non-success, non-HTML, soft-404, and
+parked responses remain rejected. Crawling and extraction remain separate
+explicit operations; neither people extraction nor Business-Fact extraction is
+automatically invoked when crawling completes.
 
 ## 12. Storage design
 

@@ -70,3 +70,53 @@ No production database is migrated or written by validation. A live pilot is a
 separate authorization boundary. Before one is approved, the operator must
 choose a development database, preserve the hard limits, and review the request
 and failure logs. Page crawling and extraction are not part of this command.
+
+## Page-discovery URL identity boundary
+
+During one bounded page-discovery run, the requested URL is the request and
+queue identity. The final URL after an actual redirect remains the durable
+`website_pages.url` and `website_pages.normalized_url` identity. Discovery may
+remember a validated same-site canonical URL as an in-memory alias for that
+run, but it does not request the canonical URL merely because it appears in
+page metadata and does not persist a canonical alias.
+
+A successful redirect from a trusted requested URL to another host may add
+that final host as a temporary trusted host alias for the current run. This is
+redirect-proven provenance, not a general cross-domain permission. Arbitrary
+external links, external canonical URLs, and ordinary subdomains remain
+blocked. `www` and non-`www` forms continue to compare as the same domain for
+same-site filtering.
+
+There is no durable canonical-alias model yet. Cross-run canonical
+deduplication, redirect-chain persistence, query-parameter normalization, and
+`/index.html` normalization remain deferred.
+
+## Page-fetch state boundary
+
+Page discovery records page-level network truth in the nullable `last_*`
+fields on `website_pages`. `last_fetched_at` is the time the completed probe
+was recorded; it is not extraction time. A successful retrieval records
+`last_success_at`, the response status/content type, and a deterministic
+SHA-256 `last_content_hash`. A later failure preserves the previous successful
+timestamp and content hash. A later success preserves `last_failure_at` as
+historical failure state while clearing the current error.
+
+Response bodies are never persisted. `website_pages.updated_at` retains its
+existing discovery-row meaning and is not redefined as the last fetch time.
+The page-fetch fields are updated by page discovery and explicit downstream
+people or Business-Fact re-fetches, but they currently do not suppress or
+skip network requests. No freshness policy or cache is implied.
+
+`website_checks` remains website-level verification state, and batch
+verification retry state remains in its existing run/item tables. Neither is
+used as a page-fetch timestamp or merged into page-level retrieval state.
+
+For file-backed databases, page-fetch state is committed through a dedicated
+SQLite connection so a caller's work cannot be committed or rolled back by
+the fetch-state writer. A caller connection with an active transaction is
+rejected before mutation. Transaction-free `:memory:` connections use their
+own transaction because SQLite cannot share an in-memory database through a
+new connection; this fallback does not provide a separate connection's
+durability. The repository's normal `connect_database()` file-path contract
+is the supported configuration; URI-specific connection modes are not
+reconstructed by the state writer.

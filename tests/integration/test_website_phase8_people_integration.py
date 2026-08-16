@@ -19,7 +19,9 @@ from canada_funeral_intel.verification.storage import (
 MIGRATION_DIR = Path(__file__).resolve().parents[2] / "database" / "migrations"
 
 
-def _seed(connection, *, name: str = "Prairie Rose Funeral Home") -> tuple[int, int, int]:
+def _seed(
+    connection, *, name: str = "Prairie Rose Funeral Home"
+) -> tuple[int, int, int]:
     entity = connection.execute(
         """
         INSERT INTO entities (entity_type, canonical_name)
@@ -61,7 +63,9 @@ def _seed(connection, *, name: str = "Prairie Rose Funeral Home") -> tuple[int, 
     return entity_id, website_id, page_id
 
 
-def test_phase8_extracts_and_preserves_historical_snapshots(monkeypatch, tmp_path: Path) -> None:
+def test_phase8_extracts_and_preserves_historical_snapshots(
+    monkeypatch, tmp_path: Path
+) -> None:
     bodies = [
         b"""
         <html><body><div class="team-card">
@@ -157,7 +161,7 @@ def test_phase8_extracts_and_preserves_historical_snapshots(monkeypatch, tmp_pat
         assert queue["status"] == "pending"
 
 
-def test_phase8_skips_ineligible_pages_and_keeps_branch_context_observational(
+def test_phase8_current_probe_overrides_stale_page_metadata(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
@@ -186,7 +190,10 @@ def test_phase8_skips_ineligible_pages_and_keeps_branch_context_observational(
         connection.execute(
             """
             UPDATE website_pages
-            SET identity_observable = 0, identity_score = NULL
+            SET status_code = 503,
+                content_type = 'application/pdf',
+                identity_observable = 0,
+                identity_score = NULL
             WHERE id = ?
             """,
             (page_id,),
@@ -200,9 +207,12 @@ def test_phase8_skips_ineligible_pages_and_keeps_branch_context_observational(
             timeout_seconds=5,
             max_redirects=2,
         )
-        assert result.pages_fetched == 0
-        assert result.skip_reasons["identity_not_observable"] == 1
-        assert list_page_person_observations(connection, website_id=website_id) == ()
+        assert result.pages_fetched == 1
+        assert result.observations_inserted == 1
+        assert result.skip_reasons == {}
+        rows = list_page_person_observations(connection, website_id=website_id)
+        assert len(rows) == 1
+        assert rows[0]["website_page_id"] == page_id
 
 
 def test_phase8_cli_listing_is_deterministic(tmp_path: Path) -> None:
@@ -211,9 +221,12 @@ def test_phase8_cli_listing_is_deterministic(tmp_path: Path) -> None:
     with database_session(tmp_path / "cli.sqlite3") as connection:
         apply_pending_migrations(connection, MIGRATION_DIR)
         _, website_id, _ = _seed(connection)
-        assert run_website_people(
-            connection, website_id=website_id, entity_id=None, page_id=None
-        ) == []
+        assert (
+            run_website_people(
+                connection, website_id=website_id, entity_id=None, page_id=None
+            )
+            == []
+        )
 
 
 def test_phase8_rejects_soft404_parked_non_success_and_non_html_responses(

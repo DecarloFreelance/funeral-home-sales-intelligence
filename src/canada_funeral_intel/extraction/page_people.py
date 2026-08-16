@@ -12,6 +12,7 @@ from canada_funeral_intel.extraction.person_analysis import (
 from canada_funeral_intel.extraction.storage import insert_page_person_observation
 from canada_funeral_intel.normalization.scalars import normalize_url
 from canada_funeral_intel.verification.content_analysis import analyze_website_content
+from canada_funeral_intel.verification.page_fetch import record_page_fetch
 from canada_funeral_intel.verification.probe import probe_http
 
 _PRIMARY_PAGE_KINDS = frozenset(
@@ -52,10 +53,6 @@ class _PageContext:
     entity_id: int
     url: str
     page_kind: str
-    status_code: int | None
-    content_type: str | None
-    identity_score: float | None
-    identity_observable: bool
 
 
 def _record_skip(reasons: dict[str, int], reason: ExtractionSkipReason) -> None:
@@ -65,12 +62,6 @@ def _record_skip(reasons: dict[str, int], reason: ExtractionSkipReason) -> None:
 def _eligible_page(page: _PageContext) -> ExtractionSkipReason | None:
     if page.page_kind not in _PRIMARY_PAGE_KINDS | _SECONDARY_PAGE_KINDS:
         return ExtractionSkipReason.NO_ROLE_CONTEXT
-    if page.status_code is None or not 200 <= page.status_code < 300:
-        return ExtractionSkipReason.NON_SUCCESS
-    if page.content_type is None or "html" not in page.content_type.casefold():
-        return ExtractionSkipReason.NON_HTML
-    if not page.identity_observable or page.identity_score is None:
-        return ExtractionSkipReason.IDENTITY_NOT_OBSERVABLE
     return None
 
 
@@ -98,11 +89,7 @@ def extract_website_people(
             wp.website_id,
             w.entity_id,
             wp.normalized_url,
-            wp.page_kind,
-            wp.status_code,
-            wp.content_type,
-            wp.identity_score,
-            wp.identity_observable
+            wp.page_kind
         FROM website_pages AS wp
         JOIN websites AS w ON w.id = wp.website_id
         WHERE wp.website_id = ?
@@ -133,16 +120,6 @@ def extract_website_people(
             entity_id=int(row["entity_id"]),
             url=str(row["normalized_url"]),
             page_kind=str(row["page_kind"]),
-            status_code=(
-                None if row["status_code"] is None else int(row["status_code"])
-            ),
-            content_type=(
-                None if row["content_type"] is None else str(row["content_type"])
-            ),
-            identity_score=(
-                None if row["identity_score"] is None else float(row["identity_score"])
-            ),
-            identity_observable=bool(row["identity_observable"]),
         )
         skip_reason = _eligible_page(page)
         if skip_reason is not None:
@@ -156,6 +133,11 @@ def extract_website_people(
             max_redirects=max_redirects,
         )
         pages_fetched += 1
+        record_page_fetch(
+            connection,
+            website_page_id=page.page_id,
+            result=result,
+        )
         if result.status_code is None or not 200 <= result.status_code < 300:
             _record_skip(reasons, ExtractionSkipReason.NON_SUCCESS)
             continue

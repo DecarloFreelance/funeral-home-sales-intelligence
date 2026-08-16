@@ -84,6 +84,25 @@ def test_probe_http_stops_at_redirect_limit(monkeypatch) -> None:
     assert "Redirect limit exceeded" in result.error_message
 
 
+def test_probe_http_ignores_malformed_canonical_url(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "canada_funeral_intel.verification.probe._single_http_request",
+        lambda *args, **kwargs: (
+            200,
+            {"content-type": "text/html"},
+            b'<link rel="canonical" href="javascript:void(0)">',
+        ),
+    )
+
+    result = probe_http(
+        "https://example.ca/",
+        user_agent="Test/1.0",
+        timeout_seconds=5,
+    )
+
+    assert result.canonical_url is None
+
+
 def test_probe_website_dns_failure_returns_unreachable_check(monkeypatch) -> None:
     def fail_dns(hostname: str) -> tuple[str, ...]:
         raise WebsiteProbeError(f"DNS resolution failed for {hostname}")
