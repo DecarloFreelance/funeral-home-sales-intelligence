@@ -93,6 +93,23 @@ deduplication, redirect-chain persistence, query-parameter normalization, and
 
 ## Page-fetch state boundary
 
+### Crawler engines
+
+`website crawl` uses the bounded standard HTTP crawler by default. Sites whose
+navigation or page content requires client-side rendering may be crawled with
+the optional Playwright engine:
+
+```text
+website crawl <website-id> --engine playwright
+```
+
+The browser engine is an alternate retrieval mechanism, not a new discovery
+or extraction stage. It preserves the existing page limits, depth limits,
+same-site policy, redirect policy, page identity, and durable metadata. It
+does not automatically run People or Business-Fact extraction and does not
+persist raw HTML bodies. Playwright and its browser binaries are optional
+runtime requirements; the default HTTP engine remains dependency-free.
+
 Page discovery records page-level network truth in the nullable `last_*`
 fields on `website_pages`. `last_fetched_at` is the time the completed probe
 was recorded; it is not extraction time. A successful retrieval records

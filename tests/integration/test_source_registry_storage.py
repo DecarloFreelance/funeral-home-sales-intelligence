@@ -25,7 +25,7 @@ REGISTRY = ROOT / "config" / "sources.json"
 def migrate(path: Path) -> None:
     with database_session(path) as connection:
         status = apply_pending_migrations(connection, MIGRATIONS).status
-        assert status.current_version == 23
+        assert status.current_version == 27
 
 
 def definition(name: str = "Example Source") -> SourceDefinition:

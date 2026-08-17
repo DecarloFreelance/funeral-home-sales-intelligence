@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 import sqlite3
+import sys
+import threading
+import time
 from collections import Counter
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from urllib.parse import urlsplit
 
 from canada_funeral_intel.storage.database import transaction
 
@@ -17,6 +22,8 @@ MAX_CANDIDATE_LIMIT = 2
 MAX_TIMEOUT = 10
 MAX_REDIRECTS = 5
 MAX_RETRIES = 1
+MAX_HOST_DELAY_SECONDS = 60.0
+MAX_CONCURRENCY = 10
 
 
 class WebsiteBatchError(RuntimeError):
@@ -30,6 +37,8 @@ class BatchLimits:
     timeout_seconds: int = 10
     max_redirects: int = 5
     max_retries: int = 1
+    host_delay_seconds: float = 0.0
+    max_concurrency: int = 1
 
     def validate(self) -> None:
         if not 1 <= self.entity_limit <= MAX_ENTITY_LIMIT:
@@ -50,6 +59,35 @@ class BatchLimits:
             )
         if not 0 <= self.max_retries <= MAX_RETRIES:
             raise WebsiteBatchError(f"max_retries must be between 0 and {MAX_RETRIES}")
+        if not 0.0 <= self.host_delay_seconds <= MAX_HOST_DELAY_SECONDS:
+            raise WebsiteBatchError(
+                "host_delay_seconds must be between 0 and "
+                f"{MAX_HOST_DELAY_SECONDS}"
+            )
+        if not 1 <= self.max_concurrency <= MAX_CONCURRENCY:
+            raise WebsiteBatchError(
+                f"max_concurrency must be between 1 and {MAX_CONCURRENCY}"
+            )
+
+
+class HostRateLimiter:
+    """Thread-safe minimum interval between requests to the same host."""
+
+    def __init__(self, delay_seconds: float) -> None:
+        self.delay_seconds = delay_seconds
+        self._next_allowed: dict[str, float] = {}
+        self._lock = threading.Lock()
+
+    def wait(self, url: str) -> None:
+        if self.delay_seconds <= 0:
+            return
+        host = (urlsplit(url).netloc or url).casefold()
+        with self._lock:
+            now = time.monotonic()
+            wait_for = max(0.0, self._next_allowed.get(host, now) - now)
+            self._next_allowed[host] = now + wait_for + self.delay_seconds
+        if wait_for:
+            time.sleep(wait_for)
 
 
 def _now() -> str:
@@ -212,6 +250,7 @@ def batch_verify(
     user_agent: str = "CanadaFuneralIntel/0.1",
     verifier: Callable[..., WebsiteCheck] = probe_website,
     dry_run: bool = False,
+    progress: bool = False,
 ) -> dict[str, object]:
     if dry_run:
         limits = limits or BatchLimits()
@@ -237,6 +276,7 @@ def batch_verify(
             user_agent=user_agent,
             limits=limits,
             verifier=verifier,
+            progress=progress,
         )
     with transaction(connection):
         ids = _candidate_ids(connection, entity_id=entity_id, limits=limits)
@@ -245,9 +285,10 @@ def batch_verify(
         cursor = connection.execute(
             """INSERT INTO website_discovery_runs
             (mode, entity_id, entity_limit, candidate_limit, timeout_seconds,
-             max_redirects, max_retries, network_used, status,
+             max_redirects, max_retries, host_delay_seconds, max_concurrency,
+             network_used, status,
              entities_examined, candidates_considered)
-            VALUES ('network_verify', ?, ?, ?, ?, ?, ?, 1, 'running', ?, ?)""",
+            VALUES ('network_verify', ?, ?, ?, ?, ?, ?, ?, ?, 1, 'running', ?, ?)""",
             (
                 entity_id,
                 limits.entity_limit,
@@ -255,6 +296,8 @@ def batch_verify(
                 limits.timeout_seconds,
                 limits.max_redirects,
                 limits.max_retries,
+                limits.host_delay_seconds,
+                limits.max_concurrency,
                 len({current_entity for _, current_entity in ids}),
                 len(ids),
             ),
@@ -266,7 +309,12 @@ def batch_verify(
                 (run_id, website_id, current_entity),
             )
     return _execute_verify_run(
-        connection, run_id, user_agent=user_agent, limits=limits, verifier=verifier
+        connection,
+        run_id,
+        user_agent=user_agent,
+        limits=limits,
+        verifier=verifier,
+        progress=progress,
     )
 
 
@@ -299,6 +347,7 @@ def _resume_verify(
     user_agent: str,
     limits: BatchLimits,
     verifier: Callable[..., WebsiteCheck],
+    progress: bool = False,
 ) -> dict[str, object]:
     row = connection.execute(
         "SELECT status FROM website_discovery_runs WHERE id=?", (run_id,)
@@ -308,7 +357,7 @@ def _resume_verify(
     if row["status"] == "completed":
         raise WebsiteBatchError("completed website discovery run cannot be resumed")
     stored = connection.execute(
-        "SELECT entity_limit, candidate_limit, timeout_seconds, max_redirects, max_retries FROM website_discovery_runs WHERE id=?",
+        "SELECT entity_limit, candidate_limit, timeout_seconds, max_redirects, max_retries, host_delay_seconds, max_concurrency FROM website_discovery_runs WHERE id=?",
         (run_id,),
     ).fetchone()
     limits = BatchLimits(
@@ -317,6 +366,8 @@ def _resume_verify(
         int(stored["timeout_seconds"]),
         int(stored["max_redirects"]),
         int(stored["max_retries"]),
+        float(stored["host_delay_seconds"]),
+        int(stored["max_concurrency"]),
     )
     with transaction(connection):
         if (
@@ -328,7 +379,12 @@ def _resume_verify(
         ):
             raise WebsiteBatchError("website discovery run is already running")
     return _execute_verify_run(
-        connection, run_id, user_agent=user_agent, limits=limits, verifier=verifier
+        connection,
+        run_id,
+        user_agent=user_agent,
+        limits=limits,
+        verifier=verifier,
+        progress=progress,
     )
 
 
@@ -339,16 +395,30 @@ def _execute_verify_run(
     user_agent: str,
     limits: BatchLimits,
     verifier: Callable[..., WebsiteCheck],
+    progress: bool = False,
 ) -> dict[str, object]:
+    if limits.max_concurrency > 1:
+        return _execute_verify_run_concurrent(
+            connection,
+            run_id,
+            user_agent=user_agent,
+            limits=limits,
+            verifier=verifier,
+            progress=progress,
+        )
     items = connection.execute(
         "SELECT * FROM website_discovery_run_items WHERE run_id=? ORDER BY entity_id, website_id",
         (run_id,),
     ).fetchall()
     succeeded = failed = skipped = 0
     errors: Counter[str] = Counter()
+    rate_limiter = HostRateLimiter(limits.host_delay_seconds)
+    completed_items = 0
     for item in items:
         if item["status"] == "completed":
             skipped += 1
+            completed_items += 1
+            _print_progress(progress, completed_items, len(items), skipped=skipped, failed=failed)
             continue
         website = connection.execute(
             "SELECT w.id,w.normalized_url,w.website_kind,e.canonical_name FROM websites w JOIN entities e ON e.id=w.entity_id WHERE w.id=?",
@@ -365,6 +435,7 @@ def _execute_verify_run(
                     (_now(), item["id"]),
                 )
             try:
+                rate_limiter.wait(str(website["normalized_url"]))
                 check = verifier(
                     website_id=int(website["id"]),
                     url=str(website["normalized_url"]),
@@ -449,6 +520,10 @@ def _execute_verify_run(
                     )
                 failed += 1
                 break
+        completed_items += 1
+        _print_progress(
+            progress, completed_items, len(items), skipped=skipped, failed=failed
+        )
     status = "failed" if failed else "completed"
     with transaction(connection):
         connection.execute(
@@ -477,3 +552,164 @@ def _execute_verify_run(
         "skipped": skipped,
         "error_classes": {key: errors[key] for key in sorted(errors)},
     }
+
+
+def _verify_without_persistence(
+    website: sqlite3.Row,
+    *,
+    user_agent: str,
+    limits: BatchLimits,
+    verifier: Callable[..., WebsiteCheck],
+    rate_limiter: HostRateLimiter,
+) -> tuple[WebsiteCheck | None, str | None, str | None]:
+    for retry_index in range(limits.max_retries + 1):
+        try:
+            rate_limiter.wait(str(website["normalized_url"]))
+            check = verifier(
+                website_id=int(website["id"]),
+                url=str(website["normalized_url"]),
+                user_agent=user_agent,
+                timeout_seconds=limits.timeout_seconds,
+                max_redirects=limits.max_redirects,
+                expected_business_name=website["canonical_name"],
+                allow_identity_mismatch=str(website["website_kind"]) != "shared",
+            )
+            status_code = check.https_status_code or check.http_status_code
+            error_class = (
+                _error_class(check.error_message)
+                if check.error_message
+                else (
+                    "http_server_error"
+                    if status_code is not None and status_code >= 500
+                    else "http_client_error"
+                    if status_code is not None and status_code >= 400
+                    else None
+                )
+            )
+            error_message = check.error_message or (
+                f"HTTP status {status_code}" if error_class else None
+            )
+            if (
+                error_class is not None
+                and _retryable(error_class)
+                and retry_index < limits.max_retries
+            ):
+                continue
+            return check, error_class, error_message
+        except (WebsiteProbeError, sqlite3.Error, ValueError) as exc:
+            error_class = _error_class(str(exc))
+            if _retryable(error_class) and retry_index < limits.max_retries:
+                continue
+            return None, error_class, str(exc)
+    return None, "verification_error", "verification attempts exhausted"
+
+
+def _execute_verify_run_concurrent(
+    connection: sqlite3.Connection,
+    run_id: int,
+    *,
+    user_agent: str,
+    limits: BatchLimits,
+    verifier: Callable[..., WebsiteCheck],
+    progress: bool = False,
+) -> dict[str, object]:
+    from .checks import insert_website_check
+
+    items = connection.execute(
+        "SELECT * FROM website_discovery_run_items WHERE run_id=? ORDER BY entity_id, website_id",
+        (run_id,),
+    ).fetchall()
+    skipped = sum(item["status"] == "completed" for item in items)
+    pending = [item for item in items if item["status"] != "completed"]
+    jobs: list[tuple[sqlite3.Row, sqlite3.Row]] = []
+    for item in pending:
+        website = connection.execute(
+            "SELECT w.id,w.normalized_url,w.website_kind,e.canonical_name FROM websites w JOIN entities e ON e.id=w.entity_id WHERE w.id=?",
+            (item["website_id"],),
+        ).fetchone()
+        if website is not None:
+            jobs.append((item, website))
+    limiter = HostRateLimiter(limits.host_delay_seconds)
+    succeeded = failed = 0
+    errors: Counter[str] = Counter()
+    completed_items = skipped
+    with ThreadPoolExecutor(max_workers=limits.max_concurrency) as executor:
+        futures = {
+            executor.submit(
+                _verify_without_persistence,
+                website,
+                user_agent=user_agent,
+                limits=limits,
+                verifier=verifier,
+                rate_limiter=limiter,
+            ): item
+            for item, website in jobs
+        }
+        for future in as_completed(futures):
+            item = futures[future]
+            check, error_class, error_message = future.result()
+            if check is not None:
+                check_id = insert_website_check(connection, check)
+            else:
+                check_id = None
+            if error_class is None:
+                with transaction(connection):
+                    connection.execute(
+                        "UPDATE website_discovery_run_items SET status='completed', check_id=?, attempts=attempts+1, updated_at=? WHERE id=?",
+                        (check_id, _now(), item["id"]),
+                    )
+                succeeded += 1
+            else:
+                errors[error_class] += 1
+                with transaction(connection):
+                    connection.execute(
+                        "UPDATE website_discovery_run_items SET status='failed', check_id=?, attempts=attempts+1, error_class=?, error_message=?, updated_at=? WHERE id=?",
+                        (check_id, error_class, str(error_message)[:1000], _now(), item["id"]),
+                    )
+                failed += 1
+            completed_items += 1
+            _print_progress(progress, completed_items, len(items), skipped=skipped, failed=failed)
+    status = "failed" if failed else "completed"
+    with transaction(connection):
+        connection.execute(
+            "UPDATE website_discovery_runs SET status=?, succeeded=?, failed_count=?, skipped_count=?, error_summary=?, completed_at=?, updated_at=? WHERE id=?",
+            (
+                status,
+                succeeded,
+                failed,
+                skipped,
+                "; ".join(f"{k}:{errors[k]}" for k in sorted(errors)) or None,
+                _now(),
+                _now(),
+                run_id,
+            ),
+        )
+    return {
+        "run_id": run_id,
+        "mode": "network_verify",
+        "status": status,
+        "dry_run": False,
+        "network_used": True,
+        "items_considered": len(items),
+        "succeeded": succeeded,
+        "failed": failed,
+        "skipped": skipped,
+        "error_classes": {key: errors[key] for key in sorted(errors)},
+    }
+
+
+def _print_progress(
+    enabled: bool,
+    completed: int,
+    total: int,
+    *,
+    skipped: int,
+    failed: int,
+) -> None:
+    if enabled:
+        print(
+            f"website batch: {completed}/{total} complete; "
+            f"failed={failed}; skipped={skipped}",
+            file=sys.stderr,
+            flush=True,
+        )

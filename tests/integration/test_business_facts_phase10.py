@@ -54,6 +54,60 @@ def test_business_fact_extraction_is_conservative_and_provenance_rich(
     assert not any(item.fact_key == "service_offering" for item in negative.candidates)
 
 
+def test_business_fact_service_area_extraction_removes_known_page_noise() -> None:
+    page = BusinessFactPage(1, 2, 3, "https://example.ca/about", "about")
+
+    stonewall = extract_business_facts(
+        b"<html><body>Serving the Communities of Stonewall, Teulon, Arborg, Warren, Woodlands, St</body></html>",
+        content_type="text/html",
+        status_code=200,
+        page=page,
+    )
+    assert {
+        item.raw_value
+        for item in stonewall.candidates
+        if item.fact_key == "service_area"
+    } == {"Stonewall", "Teulon", "Arborg", "Warren", "Woodlands"}
+
+    rae = extract_business_facts(
+        b"<html><body>Serving you throughout Manitoba Rae</body></html>",
+        content_type="text/html",
+        status_code=200,
+        page=page,
+    )
+    assert [item.raw_value for item in rae.candidates] == ["Manitoba"]
+
+    assert not extract_business_facts(
+        b"<html><body>Service Area - Tillwell Skip to content Call or Text</body></html>",
+        content_type="text/html",
+        status_code=200,
+        page=page,
+    ).candidates
+
+    rae_address = extract_business_facts(
+        b"<html><body>Serving you throughout Manitoba Rae | MB R0J 1Z0 | Tel: 1-204-759-2160</body></html>",
+        content_type="text/html",
+        status_code=200,
+        page=page,
+    )
+    assert [item.raw_value for item in rae_address.candidates] == ["Manitoba"]
+
+    tillwell = extract_business_facts(
+        b"<html><body>Serving Manitoba raf</body></html>",
+        content_type="text/html",
+        status_code=200,
+        page=page,
+    )
+    assert [item.raw_value for item in tillwell.candidates] == ["Manitoba"]
+
+    assert not extract_business_facts(
+        b"<html><body>Service Area - 1990 at the age of 78 years</body></html>",
+        content_type="text/html",
+        status_code=200,
+        page=page,
+    ).candidates
+
+
 def test_business_fact_storage_is_idempotent_historical_and_conflict_safe(
     tmp_path: Path,
 ) -> None:
@@ -82,7 +136,26 @@ def test_business_fact_storage_is_idempotent_historical_and_conflict_safe(
         assert len(rows) == 6
         assert {row["entity_id"] for row in rows} == {entity_id}
         assert {row["website_page_id"] for row in rows} == {page_id}
+        for row in rows:
+            if row["fact_key"] != "service_offering":
+                continue
+            connection.execute(
+                "INSERT INTO business_fact_agent_reviews (run_id, fact_id, disposition, confidence, rationale, evidence_reference, provider, model, prompt_version, artifact_sha256) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    "test-run",
+                    int(row["id"]),
+                    "reject",
+                    1.0,
+                    "test rejection",
+                    "https://example.ca/about",
+                    "test",
+                    "test-model",
+                    "test-v1",
+                    "a" * 64,
+                ),
+            )
         summaries = summarize_business_facts(connection, entity_id=entity_id)
+        assert not any(row["fact_key"] == "service_offering" for row in summaries)
         assert any(
             row["fact_key"] == "founded_year" and row["state"] == "conflict"
             for row in summaries

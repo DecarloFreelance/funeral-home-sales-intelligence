@@ -8,6 +8,8 @@ from pathlib import Path
 
 from .business_intelligence.cli import (
     BusinessFactCommandError,
+    run_business_facts_agent,
+    run_business_facts_agent_apply,
     run_business_facts_export,
     run_business_facts_extract,
     run_business_facts_list,
@@ -77,6 +79,8 @@ from .people.cli import (
     run_people_list,
     run_people_merge,
     run_people_resolve,
+    run_people_review_agent,
+    run_people_review_auto_triage,
     run_people_review_backlog,
     run_people_review_decide,
     run_people_review_list,
@@ -148,7 +152,15 @@ from .verification.website_cli import (
     run_website_pages,
     run_website_people,
     run_website_populate_candidates,
+    run_website_process_approved,
+    run_website_quality_agent,
+    run_website_quality_apply,
+    run_website_quality_blocked_report,
+    run_website_quality_next_actions,
     run_website_review_decide,
+    run_website_review_export,
+    run_website_review_import,
+    run_website_review_interactive,
     run_website_review_list,
     run_website_verify,
 )
@@ -163,6 +175,7 @@ from .verticals.cli import (
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _MIGRATION_DIR = _PROJECT_ROOT / "database" / "migrations"
 _SOURCE_REGISTRY_PATH = _PROJECT_ROOT / "config" / "sources.json"
+_AGENT_PROFILES_PATH = _PROJECT_ROOT / "config" / "agent_profiles.json"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -456,8 +469,48 @@ def build_parser() -> argparse.ArgumentParser:
     website_batch_parser.add_argument("--timeout", type=int, default=10)
     website_batch_parser.add_argument("--max-redirects", type=int, default=5)
     website_batch_parser.add_argument("--max-retries", type=int, default=1)
+    website_batch_parser.add_argument(
+        "--host-delay",
+        type=float,
+        default=0.0,
+        help="Minimum seconds between requests to the same host.",
+    )
+    website_batch_parser.add_argument("--max-concurrency", type=int, default=1)
+    website_batch_parser.add_argument("--progress", action="store_true")
     website_batch_parser.add_argument("--resume-run-id", type=int)
     website_batch_parser.add_argument("--user-agent", default="CanadaFuneralIntel/0.1")
+    website_process_parser = website_subparsers.add_parser(
+        "process-approved",
+        help="Verify, crawl, extract, and queue all approved websites.",
+    )
+    website_process_parser.add_argument("--limit", type=int)
+    website_process_parser.add_argument("--timeout", type=int, default=10)
+    website_process_parser.add_argument("--max-redirects", type=int, default=5)
+    website_process_parser.add_argument("--max-pages", type=int, default=25)
+    website_process_parser.add_argument("--max-depth", type=int, default=2)
+    website_process_parser.add_argument(
+        "--engine", choices=("http", "playwright"), default="http"
+    )
+    website_process_parser.add_argument("--no-playwright-fallback", action="store_true")
+    website_process_parser.add_argument(
+        "--user-agent", default="CanadaFuneralIntel/0.1"
+    )
+    website_quality_apply_parser = website_subparsers.add_parser(
+        "quality-apply",
+        help="Validate or persist a website-quality agent artifact as an audit run.",
+    )
+    website_quality_apply_parser.add_argument("--input", required=True, type=Path)
+    website_quality_apply_parser.add_argument("--apply", action="store_true")
+    website_quality_actions_parser = website_subparsers.add_parser(
+        "quality-next-actions",
+        help="Export read-only next actions from the latest website-quality audit.",
+    )
+    website_quality_actions_parser.add_argument("--output", type=Path)
+    website_quality_blocked_parser = website_subparsers.add_parser(
+        "quality-blocked-report",
+        help="Export blocked and content-limited websites needing alternate work.",
+    )
+    website_quality_blocked_parser.add_argument("--output", type=Path)
     website_list_parser = website_subparsers.add_parser(
         "list",
         help="List discovered website candidates.",
@@ -542,6 +595,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=2,
         help="Maximum same-site link depth (default: 2, maximum: 5).",
+    )
+    website_crawl_parser.add_argument(
+        "--engine",
+        choices=("http", "playwright"),
+        default="http",
+        help="Crawler engine (default: http).",
     )
 
     website_pages_parser = website_subparsers.add_parser(
@@ -651,6 +710,39 @@ def build_parser() -> argparse.ArgumentParser:
         "--note",
         help="Optional reviewer note.",
     )
+    website_review_export_parser = website_review_subparsers.add_parser(
+        "export", help="Export review rows to a CSV for offline review."
+    )
+    website_review_export_parser.add_argument("--output", type=Path, required=True)
+    website_review_export_parser.add_argument(
+        "--status",
+        choices=("pending", "deferred", "all"),
+        default="pending",
+    )
+    website_review_import_parser = website_review_subparsers.add_parser(
+        "import", help="Apply decisions from an offline review CSV."
+    )
+    website_review_import_parser.add_argument("path", type=Path)
+    website_review_interactive_parser = website_review_subparsers.add_parser(
+        "interactive",
+        help="Review website candidates one at a time in the terminal.",
+    )
+    website_review_interactive_parser.add_argument(
+        "--status",
+        choices=("pending", "deferred"),
+        default="pending",
+        help="Statuses to present (default: pending).",
+    )
+    website_review_interactive_parser.add_argument(
+        "--open",
+        action="store_true",
+        help="Open each website in the default browser before asking.",
+    )
+    website_review_interactive_parser.add_argument(
+        "--group-domains",
+        action="store_true",
+        help="Review identical URL/domain relationships as one group.",
+    )
     website_people_review_parser = website_subparsers.add_parser(
         "people-review", help="Review page-level person observations."
     )
@@ -705,6 +797,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     facts_export_parser.add_argument("--output", required=True, type=Path)
     add_fact_filters(facts_export_parser)
+    facts_agent_apply_parser = facts_subparsers.add_parser(
+        "agent-apply",
+        help="Persist a validated business-facts agent artifact as an audit run.",
+    )
+    facts_agent_apply_parser.add_argument("--input", required=True, type=Path)
+    facts_agent_apply_parser.add_argument(
+        "--apply",
+        action="store_true",
+        help="Persist the audit run; without this flag only validate and summarize.",
+    )
     facts_extract_parser = facts_subparsers.add_parser(
         "extract",
         help="Re-fetch selected persisted pages and extract business facts.",
@@ -935,6 +1037,32 @@ def build_parser() -> argparse.ArgumentParser:
         "--status", required=True, choices=("accepted", "rejected", "deferred")
     )
     people_review_decide_parser.add_argument("--note")
+    people_review_triage_parser = people_review_subparsers.add_parser(
+        "auto-triage",
+        help="Recommend safe reject/defer decisions; never auto-accepts people.",
+    )
+    people_review_triage_parser.add_argument(
+        "--apply-safe",
+        action="store_true",
+        help="Apply only the generated reject/defer recommendations.",
+    )
+    people_review_agent_parser = people_review_subparsers.add_parser(
+        "agent-review",
+        help="Generate API recommendations for deferred people; never mutates DB.",
+    )
+    people_review_agent_parser.add_argument("--model")
+    people_review_agent_parser.add_argument("--output", type=Path)
+    people_review_agent_parser.add_argument(
+        "--provider", choices=("openai", "openrouter", "nvidia")
+    )
+    people_review_agent_parser.add_argument(
+        "--keys-file", type=Path, default=Path("~/openrouter_keys.txt")
+    )
+    people_review_agent_parser.add_argument(
+        "--agent",
+        choices=("people-review", "business-facts", "website-quality"),
+        default="people-review",
+    )
     people_list_parser = people_subparsers.add_parser(
         "list", help="List canonical people."
     )
@@ -1345,6 +1473,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                         max_redirects=(
                             args.max_redirects if args.max_redirects is not None else 5
                         ),
+                    )
+                elif args.business_facts_command == "agent-apply":
+                    payload = run_business_facts_agent_apply(
+                        connection,
+                        input_path=args.input,
+                        apply=args.apply,
                     )
                 else:
                     filters = {
@@ -1863,6 +1997,40 @@ def main(argv: Sequence[str] | None = None) -> int:
                             status=PersonReviewStatus(args.status),
                             note=args.note,
                         )
+                    elif args.people_review_command == "auto-triage":
+                        payload = run_people_review_auto_triage(
+                            connection, apply_safe=args.apply_safe
+                        )
+                    elif args.people_review_command == "agent-review":
+                        profiles = json.loads(
+                            _AGENT_PROFILES_PATH.read_text(encoding="utf-8")
+                        )
+                        profile = profiles[args.agent]
+                        if args.agent == "business-facts":
+                            payload = run_business_facts_agent(
+                                connection,
+                                model=args.model or profile["model"],
+                                output=args.output,
+                                provider=args.provider or profile["provider"],
+                                keys_file=args.keys_file,
+                            )
+                        elif args.agent == "website-quality":
+                            payload = run_website_quality_agent(
+                                connection,
+                                model=args.model or profile["model"],
+                                output=args.output,
+                                provider=args.provider or profile["provider"],
+                                keys_file=args.keys_file,
+                            )
+                        else:
+                            payload = run_people_review_agent(
+                                connection,
+                                model=args.model or profile["model"],
+                                output=args.output,
+                                provider=args.provider or profile["provider"],
+                                keys_file=args.keys_file,
+                                agent=args.agent,
+                            )
                     else:
                         parser.parse_args(["people", "people-review", "--help"])
                         return 2
@@ -2069,7 +2237,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     return 2
             print_people_payload(payload)
             return 0
-        except (DatabaseError, PeopleCommandError) as exc:
+        except (DatabaseError, PeopleCommandError, BusinessFactCommandError) as exc:
             print(f"people error: {exc}", file=sys.stderr)
             return 12
 
@@ -2138,9 +2306,44 @@ def main(argv: Sequence[str] | None = None) -> int:
                         timeout_seconds=args.timeout,
                         max_redirects=args.max_redirects,
                         max_retries=args.max_retries,
+                        host_delay_seconds=args.host_delay,
+                        max_concurrency=args.max_concurrency,
+                        progress=args.progress,
                         resume_run_id=args.resume_run_id,
                         user_agent=args.user_agent,
                         dry_run=args.dry_run,
+                    )
+
+                elif args.website_command == "process-approved":
+                    payload = run_website_process_approved(
+                        connection,
+                        limit=args.limit,
+                        user_agent=args.user_agent,
+                        timeout_seconds=args.timeout,
+                        max_redirects=args.max_redirects,
+                        max_pages=args.max_pages,
+                        max_depth=args.max_depth,
+                        engine=args.engine,
+                        fallback_playwright=not args.no_playwright_fallback,
+                    )
+
+                elif args.website_command == "quality-apply":
+                    payload = run_website_quality_apply(
+                        connection,
+                        input_path=args.input,
+                        apply=args.apply,
+                    )
+
+                elif args.website_command == "quality-next-actions":
+                    payload = run_website_quality_next_actions(
+                        connection,
+                        output=args.output,
+                    )
+
+                elif args.website_command == "quality-blocked-report":
+                    payload = run_website_quality_blocked_report(
+                        connection,
+                        output=args.output,
                     )
 
                 elif args.website_command == "discover":
@@ -2176,6 +2379,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                         max_redirects=args.max_redirects,
                         max_pages=args.max_pages,
                         max_depth=args.max_depth,
+                        engine=args.engine,
                     )
 
                 elif args.website_command == "pages":
@@ -2224,6 +2428,36 @@ def main(argv: Sequence[str] | None = None) -> int:
                             queue_id=args.queue_id,
                             status=WebsiteReviewStatus(args.decision),
                             reviewer_note=args.note,
+                        )
+
+                    elif args.website_review_command == "export":
+                        review_status = (
+                            None
+                            if args.status == "all"
+                            else WebsiteReviewStatus(args.status)
+                        )
+                        if review_status is None:
+                            raise WebsiteCommandError(
+                                "review export requires pending or deferred status"
+                            )
+                        payload = run_website_review_export(
+                            connection,
+                            output_path=args.output,
+                            status=review_status,
+                        )
+
+                    elif args.website_review_command == "import":
+                        payload = run_website_review_import(
+                            connection,
+                            input_path=args.path,
+                        )
+
+                    elif args.website_review_command == "interactive":
+                        payload = run_website_review_interactive(
+                            connection,
+                            status=WebsiteReviewStatus(args.status),
+                            open_browser=args.open,
+                            group_domains=args.group_domains,
                         )
 
                     else:

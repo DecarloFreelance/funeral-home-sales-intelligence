@@ -17,7 +17,7 @@ def _seed(path: Path) -> None:
     with database_session(path) as connection:
         assert (
             apply_pending_migrations(connection, MIGRATIONS).status.current_version
-            == 23
+            == 27
         )
         connection.execute(
             "INSERT INTO source_datasets (id,name,source_type,jurisdiction) VALUES (1,'Fixture','manual','CA')"
@@ -92,7 +92,7 @@ def test_migration_reapply_is_noop(tmp_path: Path) -> None:
     with database_session(path) as connection:
         first = apply_pending_migrations(connection, MIGRATIONS)
         second = apply_pending_migrations(connection, MIGRATIONS)
-        assert first.status.current_version == 23
+        assert first.status.current_version == 27
         assert [item.version for item in second.applied] == []
         columns = {
             row[1] for row in connection.execute("PRAGMA table_info(website_evidence)")

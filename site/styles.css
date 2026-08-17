@@ -42,6 +42,7 @@ input:focus, select:focus { border-color: var(--coral); box-shadow: 0 0 0 3px rg
 .card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
 .card h3 { margin: 0; font: 1.45rem/1.12 Georgia, serif; text-transform: capitalize; }
 .place { color: var(--muted); margin: 9px 0 20px; }
+.fact { color: #4d625c; font-size: .84rem; margin: 7px 0; }
 .tags { display: flex; flex-wrap: wrap; gap: 7px; }
 .tag { border-radius: 999px; background: #edf1eb; color: #52645e; padding: 4px 9px; font-size: .7rem; font-weight: 750; }
 .tag.review { background: #f8e9d9; color: #8d593d; }

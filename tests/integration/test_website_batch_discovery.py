@@ -27,7 +27,7 @@ def _fixture(path: Path) -> None:
     with database_session(path) as connection:
         assert (
             apply_pending_migrations(connection, MIGRATIONS).status.current_version
-            == 23
+            == 27
         )
         connection.execute(
             "INSERT INTO source_datasets (id,name,source_type,jurisdiction,is_active) VALUES (1,'Fixture','manual','AB',1)"

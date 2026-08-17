@@ -5,9 +5,16 @@ from pathlib import Path
 
 from canada_funeral_intel.reporting.public_directory import (
     PUBLIC_DIRECTORY_VERSION,
+    _clean_public_person_name,
     build_public_directory,
     write_public_directory,
 )
+
+
+def test_public_person_name_cleanup_removes_legacy_extraction_noise() -> None:
+    assert _clean_public_person_name("Patricia A. Sweryd Vice") == "Patricia A. Sweryd"
+    assert _clean_public_person_name("Jack Joyce Lumbard Jack") == "Jack & Joyce Lumbard"
+    assert _clean_public_person_name("Wade Kelly Lumbard Wade") == "Wade & Kelly Lumbard"
 from canada_funeral_intel.storage.database import database_session
 from canada_funeral_intel.storage.migrations import apply_pending_migrations
 
@@ -124,6 +131,8 @@ def test_public_directory_is_curated_and_deterministic(tmp_path: Path) -> None:
             "source_names": ["Fixture Public Source"],
             "website_status": "review",
             "website_url": "https://fixture.example/",
+            "business_facts": {},
+            "people": [],
         }
     ]
     assert "private_note" not in serialized

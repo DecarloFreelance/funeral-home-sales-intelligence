@@ -28,7 +28,7 @@ def _database(path: Path) -> tuple[Path, int]:
     with database_session(path) as connection:
         assert (
             apply_pending_migrations(connection, MIGRATIONS).status.current_version
-            == 23
+        == 27
         )
         seed_source_registry(connection, load_source_registry(REGISTRY))
         connection.commit()

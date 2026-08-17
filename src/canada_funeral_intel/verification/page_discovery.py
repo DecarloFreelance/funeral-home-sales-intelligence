@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import heapq
 import sqlite3
+from collections.abc import Callable
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from urllib.parse import urljoin, urlsplit, urlunsplit
@@ -10,7 +11,7 @@ from canada_funeral_intel.normalization.scalars import normalize_domain, normali
 from canada_funeral_intel.storage.database import transaction
 from canada_funeral_intel.verification.content_analysis import analyze_website_content
 from canada_funeral_intel.verification.page_fetch import record_page_fetch
-from canada_funeral_intel.verification.probe import probe_http
+from canada_funeral_intel.verification.probe import HTTPProbeResult, probe_http
 
 
 class PageDiscoveryError(RuntimeError):
@@ -559,6 +560,7 @@ def discover_website_pages(
     max_redirects: int,
     max_pages: int,
     max_depth: int,
+    probe: Callable[[str], HTTPProbeResult] | None = None,
 ) -> PageDiscoveryRun:
     if max_pages < 1:
         raise PageDiscoveryError("max_pages must be at least 1")
@@ -651,11 +653,15 @@ def discover_website_pages(
         visited.add(current_url)
         pages_requested += 1
 
-        result = probe_http(
-            current_url,
-            user_agent=user_agent,
-            timeout_seconds=timeout_seconds,
-            max_redirects=max_redirects,
+        result = (
+            probe(current_url)
+            if probe is not None
+            else probe_http(
+                current_url,
+                user_agent=user_agent,
+                timeout_seconds=timeout_seconds,
+                max_redirects=max_redirects,
+            )
         )
 
         effective_url = result.final_url or current_url

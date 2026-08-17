@@ -1,12 +1,32 @@
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-PUBLIC_DIRECTORY_VERSION = "public-directory-v1"
+PUBLIC_DIRECTORY_VERSION = "public-directory-v2"
+
+_PUBLIC_NAME_NOISE = re.compile(
+    r"\b(?:funeral|grief|office|vice|past|service|seminar|celebrant)\b.*$",
+    re.IGNORECASE,
+)
+_PUBLIC_PAIRED_NAME = re.compile(
+    r"^([A-Za-z][A-Za-z'’.-]+)\s+([A-Za-z][A-Za-z'’.-]+)\s+"
+    r"([A-Za-z][A-Za-z'’.-]+)\s+\1$",
+    re.IGNORECASE,
+)
+
+
+def _clean_public_person_name(value: str) -> str:
+    paired = _PUBLIC_PAIRED_NAME.fullmatch(value.strip())
+    if paired:
+        first, second, surname = paired.groups()
+        return f"{first} & {second} {surname}"
+    cleaned = _PUBLIC_NAME_NOISE.sub("", value).strip(" ,;:-")
+    return cleaned or value
 
 
 def _generated_at() -> str:
@@ -21,7 +41,7 @@ def _read_only_connection(database_path: Path) -> sqlite3.Connection:
 
 
 def build_public_directory(database_path: Path) -> dict[str, Any]:
-    """Build a deliberately narrow, read-only public directory snapshot."""
+    """Build a curated, read-only research directory snapshot."""
     connection = _read_only_connection(database_path)
     try:
         rows = connection.execute(
@@ -119,8 +139,60 @@ def build_public_directory(database_path: Path) -> dict[str, Any]:
                 e.id
             """
         ).fetchall()
+        fact_rows = connection.execute(
+            """
+            SELECT bf.entity_id, bf.fact_key, bf.normalized_value
+            FROM business_fact_observations AS bf
+            WHERE bf.normalized_value IS NOT NULL
+              AND trim(bf.normalized_value) <> ''
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM business_fact_agent_reviews AS latest
+                  WHERE latest.fact_id = bf.id
+                    AND latest.id = (
+                        SELECT MAX(r.id)
+                        FROM business_fact_agent_reviews AS r
+                        WHERE r.fact_id = bf.id
+                    )
+                    AND latest.disposition = 'reject'
+              )
+            ORDER BY bf.entity_id, bf.fact_key, bf.normalized_value
+            """
+        ).fetchall()
+        people_rows = connection.execute(
+            """
+            SELECT DISTINCT
+                pa.entity_id, p.canonical_name, pa.observed_role,
+                NULLIF(pa.branch_context, '') AS branch_context
+            FROM people AS p
+            JOIN person_affiliations AS pa
+              ON pa.person_id = p.id AND pa.active = 1
+            JOIN person_evidence AS pe
+              ON pe.person_id = p.id AND pe.review_decision = 'accepted'
+            WHERE p.status = 'active'
+            ORDER BY pa.entity_id, lower(p.canonical_name), pa.observed_role
+            """
+        ).fetchall()
     finally:
         connection.close()
+
+    facts_by_entity: dict[int, dict[str, set[str]]] = {}
+    for row in fact_rows:
+        entity_facts = facts_by_entity.setdefault(int(row["entity_id"]), {})
+        entity_facts.setdefault(str(row["fact_key"]), set()).add(
+            str(row["normalized_value"])
+        )
+    people_by_entity: dict[int, list[dict[str, str | None]]] = {}
+    for row in people_rows:
+        people_by_entity.setdefault(int(row["entity_id"]), []).append(
+            {
+                "name": _clean_public_person_name(str(row["canonical_name"])),
+                "role": str(row["observed_role"]),
+                "branch": None
+                if row["branch_context"] is None
+                else str(row["branch_context"]),
+            }
+        )
 
     records = [
         {
@@ -142,6 +214,13 @@ def build_public_directory(database_path: Path) -> dict[str, Any]:
             "website_status": (
                 None if row["website_status"] is None else str(row["website_status"])
             ),
+            "business_facts": {
+                key: sorted(values)
+                for key, values in sorted(
+                    facts_by_entity.get(int(row["entity_id"]), {}).items()
+                )
+            },
+            "people": people_by_entity.get(int(row["entity_id"]), []),
         }
         for row in rows
     ]

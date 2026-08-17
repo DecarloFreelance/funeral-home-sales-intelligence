@@ -56,6 +56,44 @@ def test_phase8_extracts_owner_manager_and_branch_context() -> None:
     assert result.candidates[1].branch_context is None
 
 
+def test_phase8_splits_paired_names_with_shared_surname() -> None:
+    result = analyze_person_page(
+        b"""
+        <article class="staff-card">
+          <h2>Wade &amp; Kelly Lumbard</h2>
+          <p>Funeral Directors</p>
+        </article>
+        <article class="staff-card">
+          <h2>Jack &amp; Joyce Lumbard</h2>
+          <p>Vice President</p>
+        </article>
+        """,
+        content_type="text/html",
+    )
+
+    assert [(item.observed_name, item.role_title) for item in result.candidates] == [
+        ("Wade Lumbard", "Funeral Directors"),
+        ("Kelly Lumbard", "Funeral Directors"),
+        ("Jack Lumbard", "Vice President"),
+        ("Joyce Lumbard", "Vice President"),
+    ]
+
+
+def test_phase8_does_not_include_role_suffix_in_name() -> None:
+    result = analyze_person_page(
+        b"""
+        <article class="staff-card">
+          <h2>Patricia A. Sweryd Vice President</h2>
+        </article>
+        """,
+        content_type="text/html",
+    )
+
+    assert len(result.candidates) == 1
+    assert result.candidates[0].observed_name == "Patricia A. Sweryd"
+    assert result.candidates[0].role_title == "Vice President"
+
+
 def test_phase8_suppresses_negative_and_unlabeled_content() -> None:
     result = analyze_person_page(
         b"""

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import csv
 import sqlite3
 from dataclasses import dataclass
+from pathlib import Path
 
 from canada_funeral_intel.storage.database import transaction
 from canada_funeral_intel.verification.models import (
@@ -42,6 +44,21 @@ class WebsiteReviewDecisionResult:
     is_primary: bool
     reviewer_note: str | None
     reviewed_at: str
+
+
+_CSV_COLUMNS = (
+    "queue_id",
+    "website_id",
+    "entity_id",
+    "url",
+    "domain",
+    "website_kind",
+    "confidence",
+    "priority",
+    "review_status",
+    "decision",
+    "reviewer_note",
+)
 
 
 def list_website_review_queue(
@@ -103,6 +120,121 @@ def list_website_review_queue(
         )
         for row in rows
     )
+
+
+def export_website_review_csv(
+    connection: sqlite3.Connection,
+    *,
+    output_path: Path,
+    status: WebsiteReviewStatus = WebsiteReviewStatus.PENDING,
+) -> dict[str, object]:
+    """Export review rows for offline spreadsheet review without network access."""
+    rows = list_website_review_queue(connection, status=status)
+    try:
+        with output_path.open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.writer(handle, lineterminator="\n")
+            writer.writerow(_CSV_COLUMNS)
+            for row in rows:
+                writer.writerow(
+                    (
+                        row.queue_id,
+                        row.website_id,
+                        row.entity_id,
+                        row.url,
+                        row.domain,
+                        row.website_kind.value,
+                        row.confidence,
+                        row.priority,
+                        row.review_status.value,
+                        "",
+                        row.reviewer_note or "",
+                    )
+                )
+    except OSError as exc:
+        raise WebsiteReviewError(
+            f"Unable to write website review export {output_path}: {exc}"
+        ) from exc
+    return {
+        "output_path": str(output_path),
+        "rows": len(rows),
+        "status": status.value,
+        "network_used": False,
+    }
+
+
+def import_website_review_csv(
+    connection: sqlite3.Connection,
+    *,
+    input_path: Path,
+) -> dict[str, object]:
+    """Validate and apply offline CSV decisions through the normal review service."""
+    try:
+        with input_path.open("r", encoding="utf-8", newline="") as handle:
+            reader = csv.DictReader(handle)
+            if reader.fieldnames is None or not {
+                "queue_id",
+                "decision",
+                "reviewer_note",
+            }.issubset(reader.fieldnames):
+                raise WebsiteReviewError(
+                    "Review CSV must include queue_id, decision, and reviewer_note"
+                )
+            rows = list(reader)
+    except OSError as exc:
+        raise WebsiteReviewError(
+            f"Unable to read website review import {input_path}: {exc}"
+        ) from exc
+
+    decisions: list[tuple[int, WebsiteReviewStatus, str | None]] = []
+    seen: set[int] = set()
+    for row_number, row in enumerate(rows, start=2):
+        raw_queue_id = (row.get("queue_id") or "").strip()
+        raw_decision = (row.get("decision") or "").strip().casefold()
+        if not raw_queue_id and not raw_decision:
+            continue
+        try:
+            queue_id = int(raw_queue_id)
+        except ValueError as exc:
+            raise WebsiteReviewError(
+                f"Review CSV row {row_number} has an invalid queue_id"
+            ) from exc
+        if queue_id < 1 or queue_id in seen:
+            raise WebsiteReviewError(
+                f"Review CSV row {row_number} has a duplicate or invalid queue_id"
+            )
+        try:
+            decision = WebsiteReviewStatus(raw_decision)
+        except ValueError as exc:
+            raise WebsiteReviewError(
+                f"Review CSV row {row_number} has invalid decision {raw_decision!r}"
+            ) from exc
+        if decision not in {
+            WebsiteReviewStatus.APPROVED,
+            WebsiteReviewStatus.REJECTED,
+            WebsiteReviewStatus.DEFERRED,
+        }:
+            raise WebsiteReviewError(
+                f"Review CSV row {row_number} decision must be approved, rejected, or deferred"
+            )
+        seen.add(queue_id)
+        note = (row.get("reviewer_note") or "").strip() or None
+        decisions.append((queue_id, decision, note))
+
+    applied = 0
+    for queue_id, decision, note in decisions:
+        apply_website_review_decision(
+            connection,
+            queue_id=queue_id,
+            status=decision,
+            reviewer_note=note,
+        )
+        applied += 1
+    return {
+        "input_path": str(input_path),
+        "rows_read": len(rows),
+        "decisions_applied": applied,
+        "network_used": False,
+    }
 
 
 def apply_website_review_decision(
@@ -299,4 +431,72 @@ def apply_website_review_decision(
         is_primary=is_primary,
         reviewer_note=note,
         reviewed_at=reviewed_at,
+    )
+
+
+def update_website_review_note(
+    connection: sqlite3.Connection,
+    *,
+    queue_id: int,
+    reviewer_note: str | None,
+) -> WebsiteReviewEntry:
+    """Update review evidence without changing the existing decision."""
+    if queue_id < 1:
+        raise WebsiteReviewError("queue_id must be a positive integer")
+    note = reviewer_note.strip() if reviewer_note is not None else None
+    note = note or None
+
+    try:
+        with transaction(connection):
+            connection.execute(
+                """
+                UPDATE website_review_queue
+                SET reviewer_note = ?
+                WHERE id = ?
+                """,
+                (note, queue_id),
+            )
+            row = connection.execute(
+                """
+                SELECT
+                    rq.id AS queue_id,
+                    rq.website_id,
+                    rq.priority,
+                    rq.status AS review_status,
+                    rq.reviewer_note,
+                    rq.reviewed_at,
+                    w.entity_id,
+                    w.url,
+                    w.domain,
+                    w.website_kind,
+                    w.confidence,
+                    w.status AS website_status,
+                    w.is_primary
+                FROM website_review_queue AS rq
+                JOIN websites AS w ON w.id = rq.website_id
+                WHERE rq.id = ?
+                """,
+                (queue_id,),
+            ).fetchone()
+            if row is None:
+                raise WebsiteReviewError(
+                    f"Website review queue entry not found: {queue_id}"
+                )
+    except sqlite3.Error as exc:
+        raise WebsiteReviewError(f"Website review note update failed: {exc}") from exc
+
+    return WebsiteReviewEntry(
+        queue_id=int(row["queue_id"]),
+        website_id=int(row["website_id"]),
+        entity_id=int(row["entity_id"]),
+        url=str(row["url"]),
+        domain=str(row["domain"]),
+        website_kind=WebsiteKind(str(row["website_kind"])),
+        confidence=float(row["confidence"]),
+        website_status=WebsiteStatus(str(row["website_status"])),
+        is_primary=bool(row["is_primary"]),
+        priority=int(row["priority"]),
+        review_status=WebsiteReviewStatus(str(row["review_status"])),
+        reviewer_note=None if row["reviewer_note"] is None else str(row["reviewer_note"]),
+        reviewed_at=None if row["reviewed_at"] is None else str(row["reviewed_at"]),
     )

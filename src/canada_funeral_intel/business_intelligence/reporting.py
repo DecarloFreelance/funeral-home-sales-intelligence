@@ -6,8 +6,25 @@ from pathlib import Path
 from .storage import list_business_facts
 
 
+def _latest_fact_dispositions(connection) -> dict[int, str]:
+    rows = connection.execute(
+        """
+        SELECT r.fact_id, r.disposition
+        FROM business_fact_agent_reviews AS r
+        JOIN (
+            SELECT fact_id, MAX(id) AS latest_id
+            FROM business_fact_agent_reviews
+            GROUP BY fact_id
+        ) AS latest ON latest.latest_id = r.id
+        """
+    ).fetchall()
+    return {int(row["fact_id"]): str(row["disposition"]) for row in rows}
+
+
 def summarize_business_facts(connection, **filters: object) -> list[dict[str, object]]:
     rows = list_business_facts(connection, **filters)
+    dispositions = _latest_fact_dispositions(connection)
+    rows = [row for row in rows if dispositions.get(int(row["id"])) != "reject"]
     groups: dict[tuple[object, ...], list[dict[str, object]]] = {}
     for row in rows:
         key = (

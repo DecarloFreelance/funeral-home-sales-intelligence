@@ -75,6 +75,70 @@ def _candidate(
     )
 
 
+def _service_area_candidates(
+    text: str, page: BusinessFactPage
+) -> list[BusinessFactCandidate]:
+    """Extract geographic service areas without preserving sentence fragments."""
+    area = re.search(
+        r"\b(?:serving|service area)\s*[:\-]?\s*([^.;!?|\n]{3,140})",
+        text,
+        re.IGNORECASE,
+    )
+    if not area:
+        return []
+
+    source = area.group(1).strip(" .:-")
+    lowered = source.casefold()
+    if any(
+        marker in lowered
+        for marker in ("skip to content", "call or text", "menu", "search")
+    ):
+        return []
+
+    if re.search(r"\b(?:death|died|president|age|years?)\b", lowered) or source[0].isdigit():
+        return []
+
+    # Common page-copy lead-ins are not locations. Keep the actual place list.
+    source = re.sub(
+        r"^(?:you\s+)?throughout\s+",
+        "",
+        source,
+        flags=re.IGNORECASE,
+    )
+    source = re.sub(
+        r"^the\s+communities\s+of\s+",
+        "",
+        source,
+        flags=re.IGNORECASE,
+    )
+    # Rae's site exposes its name immediately after the province in the copy.
+    source = re.sub(r"^(Manitoba)\s+Rae(?:\s|$).*", r"\1", source, flags=re.IGNORECASE)
+    source = re.sub(r"^(Manitoba)\s+raf$", r"\1", source, flags=re.IGNORECASE)
+
+    candidates: list[BusinessFactCandidate] = []
+    for raw in re.split(r",|\s+and\s+|&", source):
+        value = raw.strip(" .:-")
+        if len(value) < 3 or not re.search(r"[A-Za-zÀ-ÿ]", value):
+            continue
+        # Lowercase prose such as “families during their grief” is not a place.
+        if value[0].islower():
+            continue
+        candidates.append(
+            BusinessFactCandidate(
+                "service_area",
+                "multi_text",
+                value,
+                _norm(value),
+                0.78,
+                "labelled_business_text",
+                area.group(0)[:500],
+                page.scope,
+                page.scope_entity_id,
+            )
+        )
+    return candidates
+
+
 def extract_business_facts(
     body: bytes,
     *,
@@ -187,27 +251,7 @@ def extract_business_facts(
                 else "service_offering"
             )
             candidates.append(_candidate(key, value, match.group(0), page, 0.84))
-    area = re.search(
-        r"\b(?:serving|service area)\s*[:\-]?\s*([A-Za-zÀ-ÿ ,&-]{3,100})",
-        text,
-        re.IGNORECASE,
-    )
-    if area:
-        for raw in re.split(r",|\s+and\s+|&", area.group(1).strip(" .")):
-            if raw.strip():
-                candidates.append(
-                    BusinessFactCandidate(
-                        "service_area",
-                        "multi_text",
-                        raw.strip(),
-                        _norm(raw),
-                        0.78,
-                        "labelled_business_text",
-                        area.group(0)[:500],
-                        page.scope,
-                        page.scope_entity_id,
-                    )
-                )
+    candidates.extend(_service_area_candidates(text, page))
     unique = {
         (
             item.fact_key,

@@ -105,6 +105,114 @@ def run_people_review_decide(
     }
 
 
+def run_people_review_auto_triage(
+    connection: sqlite3.Connection, *, apply_safe: bool = False
+) -> dict[str, object]:
+    """Recommend safe reject/defer decisions for obvious extractor output."""
+    pending = list_person_review_queue(
+        connection, status=PersonReviewStatus.PENDING
+    )
+    role_only = {
+        "funeral director",
+        "vice president",
+        "managing funeral director",
+        "operations supervisor",
+        "funeral director embalmer",
+        "past president",
+    }
+    reject_prefixes = (
+        "contact us",
+        "our caring staff",
+        "our vision mission values",
+        "about us at brockie",
+        "difficulty.",
+        "grieving by dr.",
+    )
+    decisions: list[dict[str, object]] = []
+    applied = 0
+    for row in pending:
+        name = str(row["normalized_name"]).strip().casefold()
+        source_url = str(row["source_url"])
+        status: PersonReviewStatus | None = None
+        reason = ""
+        if name in role_only or name in {
+            "winnipeg’s oldest family owned",
+            "bardal funeral home crematorium",
+        }:
+            status = PersonReviewStatus.REJECTED
+            reason = "obvious extractor noise or business/role text"
+        elif any(name.startswith(prefix) for prefix in reject_prefixes):
+            status = PersonReviewStatus.REJECTED
+            reason = "page heading, contact block, or article text"
+        elif "/history" in source_url:
+            status = PersonReviewStatus.DEFERRED
+            reason = "historical ownership/history evidence"
+        elif name in {
+            "patricia a. sweryd vice",
+            "david e. pritchard past",
+            "michelle klemick office",
+            "cindy anderson funeral service",
+            "shelley wray grief seminar",
+            "kim lewarne funeral celebrant",
+            "wade kelly lumbard wade",
+            "jack joyce lumbard jack",
+        }:
+            status = PersonReviewStatus.DEFERRED
+            reason = "named candidate needs manual cleanup before resolution"
+        if status is None:
+            continue
+        decision = {
+            "queue_id": row["queue_id"],
+            "observation_id": row["observation_id"],
+            "observed_name": row["observed_name"],
+            "recommendation": status.value,
+            "reason": reason,
+        }
+        if apply_safe:
+            apply_person_review_decision(
+                connection,
+                queue_id=int(row["queue_id"]),
+                status=status,
+                reviewer_note=f"Safe auto-triage: {reason}.",
+            )
+            applied += 1
+        decisions.append(decision)
+    return {
+        "dry_run": not apply_safe,
+        "pending_considered": len(pending),
+        "recommendations": len(decisions),
+        "applied": applied,
+        "decisions": decisions,
+    }
+
+
+def run_people_review_agent(
+    connection: sqlite3.Connection,
+    *,
+    model: str,
+    output: Path | None,
+    provider: str = "openai",
+    keys_file: Path | None = None,
+    agent: str = "people-review",
+) -> dict[str, object]:
+    from canada_funeral_intel.people.agent_review import (
+        AgentReviewError,
+        review_deferred_people,
+    )
+
+    try:
+        return review_deferred_people(
+            connection,
+            model=model,
+            output_path=output,
+            provider=provider,
+            keys_file=keys_file,
+            agent=agent,
+        )
+    except AgentReviewError as exc:
+        raise PeopleCommandError(str(exc)) from exc
+
+
 def run_people_list(
     connection: sqlite3.Connection, entity_id: int | None
 ) -> list[dict[str, object]]:

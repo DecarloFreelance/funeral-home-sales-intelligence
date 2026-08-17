@@ -62,8 +62,9 @@ class _Element:
 _BLOCK_TAGS = frozenset({"article", "div", "li", "section", "tr", "address"})
 _SKIP_TAGS = frozenset({"script", "style", "noscript", "nav", "footer"})
 _ROLE_PATTERN = re.compile(
-    r"\b((?:(?:licensed|managing|general|location|pre[- ]planning|family service)\s+)?"
-    r"(?:funeral director|funeral home manager|manager|owner|co-owner|president|"
+    r"\b((?:(?:licensed|managing|general|location|pre[- ]planning|family service|"
+    r"vice|past)\s+)?"
+    r"(?:funeral directors?|funeral home managers?|managers?|owners?|co-owners?|president|"
     r"managing partner|embalmer|director|counsell?or|counselor|professional))\b",
     re.IGNORECASE,
 )
@@ -140,7 +141,23 @@ def _text_without_contacts(text: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"[^A-Za-z'’.-]+", " ", text)).strip()
 
 
-def _name_and_role(text: str) -> tuple[str, str, ExtractionMethod] | None:
+_PAIRED_NAME_PATTERN = re.compile(
+    r"\b([A-Z][A-Za-z'’.-]+)\s*&\s*([A-Z][A-Za-z'’.-]+)\s+"
+    r"([A-Z][A-Za-z'’.-]+)\b"
+)
+
+
+def _name_fragments(fragment: str) -> tuple[str, ...]:
+    paired = _PAIRED_NAME_PATTERN.search(fragment)
+    if paired:
+        first, second, surname = paired.groups()
+        return (f"{first} {surname}", f"{second} {surname}")
+    cleaned = _text_without_contacts(fragment)
+    match = _NAME_PATTERN.search(cleaned)
+    return (match.group(1),) if match else ()
+
+
+def _names_and_role(text: str) -> tuple[tuple[str, ...], str, ExtractionMethod] | None:
     role_match = _ROLE_PATTERN.search(text)
     if role_match is None:
         return None
@@ -151,14 +168,14 @@ def _name_and_role(text: str) -> tuple[str, str, ExtractionMethod] | None:
         (before, ExtractionMethod.ROLE_ADJACENT_NAME),
         (after, ExtractionMethod.ROLE_ADJACENT_NAME),
     ):
-        match = _NAME_PATTERN.search(_text_without_contacts(fragment))
-        if match:
-            return match.group(1), role, method
+        names = _name_fragments(fragment)
+        if names:
+            return names, role, method
     separator_parts = _SEPARATOR_PATTERN.split(text)
     for part in separator_parts:
-        match = _NAME_PATTERN.search(_text_without_contacts(part))
-        if match:
-            return match.group(1), role, ExtractionMethod.STRUCTURED_ROLE_BLOCK
+        names = _name_fragments(part)
+        if names:
+            return names, role, ExtractionMethod.STRUCTURED_ROLE_BLOCK
     return None
 
 
@@ -180,48 +197,52 @@ def analyze_person_page(
         if _NEGATIVE_PATTERN.search(text):
             rejected += 1
             continue
-        parsed = _name_and_role(text)
+        parsed = _names_and_role(text)
         if parsed is None:
             continue
-        observed_name, role_title, method = parsed
-        normalized_name = normalize_person_name(observed_name).value
+        observed_names, role_title, method = parsed
         normalized_role = normalize_role_title(role_title).value
-        if normalized_name is None or normalized_role is None:
-            rejected += 1
+        if normalized_role is None:
+            rejected += len(observed_names)
             continue
         email, normalized_email, phone, normalized_phone = extract_contact_values(text)
         branch_match = _BRANCH_PATTERN.search(text)
         branch_context = branch_match.group(1).strip() if branch_match else None
-        key = (
-            normalized_name,
-            normalized_role,
-            normalized_email or "",
-            normalized_phone or "",
-        )
-        if key in seen:
-            continue
-        seen.add(key)
-        confidence = 0.92 if method is ExtractionMethod.STRUCTURED_ROLE_BLOCK else 0.84
-        if email or phone:
-            confidence = min(0.98, confidence + 0.03)
-        if branch_context:
-            confidence = min(0.99, confidence + 0.02)
-        candidates.append(
-            PersonObservationCandidate(
-                observed_name=observed_name,
-                normalized_name=normalized_name,
-                role_title=role_title,
-                normalized_role=normalized_role,
-                email=email,
-                normalized_email=normalized_email,
-                phone=phone,
-                normalized_phone=normalized_phone,
-                branch_context=branch_context,
-                confidence=confidence,
-                extraction_method=method,
-                evidence_snippet=text[:500],
+        for observed_name in observed_names:
+            normalized_name = normalize_person_name(observed_name).value
+            if normalized_name is None:
+                rejected += 1
+                continue
+            key = (
+                normalized_name,
+                normalized_role,
+                normalized_email or "",
+                normalized_phone or "",
             )
-        )
+            if key in seen:
+                continue
+            seen.add(key)
+            confidence = 0.92 if method is ExtractionMethod.STRUCTURED_ROLE_BLOCK else 0.84
+            if email or phone:
+                confidence = min(0.98, confidence + 0.03)
+            if branch_context:
+                confidence = min(0.99, confidence + 0.02)
+            candidates.append(
+                PersonObservationCandidate(
+                    observed_name=observed_name,
+                    normalized_name=normalized_name,
+                    role_title=role_title,
+                    normalized_role=normalized_role,
+                    email=email,
+                    normalized_email=normalized_email,
+                    phone=phone,
+                    normalized_phone=normalized_phone,
+                    branch_context=branch_context,
+                    confidence=confidence,
+                    extraction_method=method,
+                    evidence_snippet=text[:500],
+                )
+            )
 
     return PersonAnalysisResult(tuple(candidates), rejected, ambiguous)
 

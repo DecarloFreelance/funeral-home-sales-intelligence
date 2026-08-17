@@ -17,6 +17,10 @@ function websiteLabel(record) {
   return labels[record.website_status] || "No website signal";
 }
 
+function titleForFact(key) {
+  return key.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 function populateProvinces(records) {
   const values = [...new Set(records.map((record) => text(record.province)).filter(Boolean))].sort();
   const select = byId("province");
@@ -69,6 +73,19 @@ function render() {
     place.className = "place";
     place.textContent = [record.city, record.province].filter(Boolean).join(", ") || "Location not yet normalized";
     body.append(heading, place);
+    const facts = record.business_facts || {};
+    Object.entries(facts).forEach(([key, values]) => {
+      const fact = document.createElement("p");
+      fact.className = "fact";
+      fact.textContent = `${titleForFact(key)}: ${values.join(", ")}`;
+      body.appendChild(fact);
+    });
+    (record.people || []).forEach((person) => {
+      const staff = document.createElement("p");
+      staff.className = "fact";
+      staff.textContent = `${person.name} — ${person.role}${person.branch ? ` (${person.branch})` : ""}`;
+      body.appendChild(staff);
+    });
     const tags = document.createElement("div");
     tags.className = "tags";
     [record.entity_type === "branch" ? "Branch" : "Organization", websiteLabel(record)].forEach((value) => {

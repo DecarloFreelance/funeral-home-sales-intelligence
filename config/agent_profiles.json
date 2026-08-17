@@ -1,0 +1,17 @@
+{
+  "people-review": {
+    "provider": "nvidia",
+    "model": "deepseek-ai/deepseek-v4-flash-0731",
+    "purpose": "Clean and disposition deferred person observations."
+  },
+  "business-facts": {
+    "provider": "nvidia",
+    "model": "deepseek-ai/deepseek-v4-flash-0731",
+    "purpose": "Review extracted business facts against page evidence."
+  },
+  "website-quality": {
+    "provider": "nvidia",
+    "model": "nvidia/llama-3.3-nemotron-super-49b-v1",
+    "purpose": "Assess crawl quality, identity confidence, and content limitations."
+  }
+}
