@@ -87,6 +87,15 @@ def review_website_candidates(
                 decoded = json.loads(nested)
             except json.JSONDecodeError:
                 break
+        if isinstance(decoded, str):
+            text = decoded.strip()
+            starts = [position for position in (text.find("{"), text.find("[")) if position >= 0]
+            if starts:
+                candidate = text[min(starts):]
+                try:
+                    decoded, _ = json.JSONDecoder().raw_decode(candidate)
+                except json.JSONDecodeError:
+                    pass
         if isinstance(decoded, list):
             recommendations = decoded
         elif isinstance(decoded, dict):
@@ -115,7 +124,7 @@ def review_website_candidates(
                 ) or "empty object"
                 raise AgentReviewError(
                     "website-candidate-review response omitted recommendations "
-                    f"(returned: {shape})"
+                    f"(returned: {shape}; text={str(decoded)[:160]!r})"
                 )
             raise AgentReviewError("website-candidate-review response omitted recommendations")
         normalized: list[dict[str, object]] = []
