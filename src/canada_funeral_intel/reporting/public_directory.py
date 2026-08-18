@@ -133,6 +133,19 @@ def build_public_directory(database_path: Path) -> dict[str, Any]:
                 ) AS website_status
             FROM entities AS e
             WHERE e.status = 'active'
+              AND (
+                  (e.canonical_name IS NOT NULL AND trim(e.canonical_name) <> '')
+                  OR EXISTS (
+                      SELECT 1
+                      FROM normalized_values AS named_nv
+                      JOIN entity_source_records AS named_esr
+                        ON named_esr.source_record_id = named_nv.source_record_id
+                      WHERE named_esr.entity_id = e.id
+                        AND named_nv.field_name = 'business_name'
+                        AND named_nv.original_value IS NOT NULL
+                        AND trim(named_nv.original_value) <> ''
+                  )
+              )
             ORDER BY
                 CASE WHEN e.canonical_name IS NULL THEN 1 ELSE 0 END,
                 lower(COALESCE(e.canonical_name, '')),
