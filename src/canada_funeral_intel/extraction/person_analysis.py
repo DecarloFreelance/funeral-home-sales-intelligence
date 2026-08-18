@@ -74,7 +74,13 @@ _NEGATIVE_PATTERN = re.compile(
     r"\b(?:obituar(?:y|ies)|death notice|tribute|memorial|guest book|"
     r"condolence|testimonial|customer review|web design|website design|"
     r"hosting|powered by|privacy policy|cookie policy|terms of service|"
-    r"supplier|vendor|seo|marketing agency)\b",
+    r"supplier|vendor|seo|marketing agency|contact us|about us|our staff|"
+    r"our team)\b|\bby\s+[A-Z]",
+    re.IGNORECASE,
+)
+_NAME_NOISE_PATTERN = re.compile(
+    r"\b(?:funeral|grief|office|vice|past|service|seminar|celebrant|"
+    r"contact|about|staff|team)\b",
     re.IGNORECASE,
 )
 _BRANCH_PATTERN = re.compile(
@@ -209,6 +215,11 @@ def analyze_person_page(
         branch_match = _BRANCH_PATTERN.search(text)
         branch_context = branch_match.group(1).strip() if branch_match else None
         for observed_name in observed_names:
+            if _NAME_NOISE_PATTERN.search(observed_name) or _ROLE_PATTERN.fullmatch(
+                observed_name.strip()
+            ):
+                rejected += 1
+                continue
             normalized_name = normalize_person_name(observed_name).value
             if normalized_name is None:
                 rejected += 1

@@ -97,8 +97,9 @@ future sessions can resume from the first unchecked item.
   while preserving the underlying observations and audit trail.
 - [x] Fix name-boundary extraction for role suffixes and paired names such as
   `Wade & Kelly Lumbard` and `Jack & Joyce Lumbard`.
-- [ ] Reduce page-heading, contact-block, article-author, and historical-noise
-  candidates before they enter the review queue.
+- [x] Reduce page-heading, contact-block, article-author, and historical-noise
+  candidates before they enter the review queue; add regression coverage for
+  the Brockie-Donovan and Bardal examples.
 - [ ] Preserve the raw observation while storing cleaned values separately.
 - [ ] Add regression fixtures for the Brockie Donovan and Bardal examples.
 

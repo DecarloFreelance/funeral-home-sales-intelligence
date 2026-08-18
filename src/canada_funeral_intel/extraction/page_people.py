@@ -28,7 +28,7 @@ _PRIMARY_PAGE_KINDS = frozenset(
         "locations",
     }
 )
-_SECONDARY_PAGE_KINDS = frozenset({"about", "root", "history"})
+_SECONDARY_PAGE_KINDS = frozenset({"about", "root"})
 
 
 @dataclass(frozen=True, slots=True)

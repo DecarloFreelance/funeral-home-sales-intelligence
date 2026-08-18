@@ -117,6 +117,25 @@ def test_phase8_suppresses_negative_and_unlabeled_content() -> None:
     assert result.candidates == ()
 
 
+def test_phase8_suppresses_heading_contact_and_article_author_noise() -> None:
+    result = analyze_person_page(
+        b"""
+        <article>
+          <h2>Contact Us</h2><p>Funeral Director</p>
+        </article>
+        <article>
+          <h2>Managing Funeral Director</h2><p>Managing Funeral Director</p>
+        </article>
+        <article>
+          <p>By Jane Example Funeral Director</p>
+        </article>
+        """,
+        content_type="text/html",
+    )
+
+    assert result.candidates == ()
+
+
 def test_phase8_ignores_non_html_bodies() -> None:
     result = analyze_person_page(
         b"Alice Smith Funeral Director",
