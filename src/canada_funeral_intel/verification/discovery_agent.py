@@ -147,6 +147,13 @@ def discover_missing_websites(
         decoded = json.loads(_response_text(payload))
         recommendations = decoded.get("recommendations")
         expected = {int(row["entity_id"]) for row in records}
+        if isinstance(recommendations, list):
+            for item in recommendations:
+                if isinstance(item, dict) and isinstance(item.get("entity_id"), str):
+                    try:
+                        item["entity_id"] = int(item["entity_id"])
+                    except ValueError:
+                        pass
         if not isinstance(recommendations, list) or {item.get("entity_id") for item in recommendations} != expected:
             raise AgentReviewError("website-discovery response omitted or duplicated entity IDs")
         for item in recommendations:
