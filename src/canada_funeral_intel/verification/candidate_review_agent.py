@@ -69,7 +69,22 @@ def review_website_candidates(
             "Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}, method="POST")
         with urlopen(request, timeout=90) as response:
             payload = json.loads(response.read().decode())
-        recommendations = json.loads(_response_text(payload)).get("recommendations")
+        response_text = _response_text(payload).strip()
+        if response_text.startswith("```"):
+            response_text = response_text.split("\n", 1)[-1]
+            if response_text.endswith("```"):
+                response_text = response_text[:-3].rstrip()
+        decoded = json.loads(response_text)
+        if isinstance(decoded, list):
+            recommendations = decoded
+        elif isinstance(decoded, dict):
+            recommendations = decoded.get("recommendations")
+            if recommendations is None:
+                recommendations = decoded.get("decisions")
+            if recommendations is None:
+                recommendations = decoded.get("results")
+        else:
+            recommendations = None
         expected = {int(row["queue_id"]) for row in records}
         if not isinstance(recommendations, list):
             raise AgentReviewError("website-candidate-review response omitted recommendations")
