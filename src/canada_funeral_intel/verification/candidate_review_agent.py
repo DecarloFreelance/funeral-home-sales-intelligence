@@ -97,6 +97,14 @@ def review_website_candidates(
             recommendations = None
         expected = {int(row["queue_id"]) for row in records}
         if not isinstance(recommendations, list):
+            if isinstance(decoded, dict):
+                shape = ", ".join(
+                    f"{key}={type(value).__name__}" for key, value in decoded.items()
+                ) or "empty object"
+                raise AgentReviewError(
+                    "website-candidate-review response omitted recommendations "
+                    f"(returned: {shape})"
+                )
             raise AgentReviewError("website-candidate-review response omitted recommendations")
         normalized: list[dict[str, object]] = []
         for item in recommendations:
