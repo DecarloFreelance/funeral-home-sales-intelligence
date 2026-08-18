@@ -53,7 +53,9 @@ def review_website_candidates(
             "Return JSON with exactly one recommendation per queue_id. Fields: queue_id, decision, "
             "confidence, rationale, reviewer_note. decision must be approved, rejected, or deferred. "
             "Approve only when identity is sufficiently supported; otherwise defer. Never infer approval "
-            "from URL plausibility alone.\n\n" + json.dumps(records, ensure_ascii=False)
+            "from URL plausibility alone. Output the review object itself. Do not output a schema, "
+            "a response-format description, or the literal string {'type': 'json_object'}.\n\n"
+            + json.dumps(records, ensure_ascii=False)
         )
         api_key = os.environ.get(f"{provider.upper()}_API_KEY", "").strip()
         endpoint = {"nvidia": "https://integrate.api.nvidia.com/v1/chat/completions",
