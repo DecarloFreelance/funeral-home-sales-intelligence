@@ -17,10 +17,12 @@ def _records(connection: sqlite3.Connection, limit: int) -> list[dict[str, objec
         SELECT e.id AS entity_id,
                COALESCE(NULLIF(trim(e.canonical_name), ''), NULLIF(trim(MAX(CASE WHEN nv.field_name='business_name' THEN nv.original_value END)), '')) AS business_name,
                MAX(CASE WHEN nv.field_name='city' THEN nv.normalized_value END) AS city,
-               MAX(CASE WHEN nv.field_name='province' THEN nv.normalized_value END) AS province
+               MAX(CASE WHEN nv.field_name='province' THEN nv.normalized_value END) AS province,
+               GROUP_CONCAT(DISTINCT w.url) AS existing_urls
         FROM entities e
         JOIN entity_source_records esr ON esr.entity_id=e.id
         JOIN normalized_values nv ON nv.source_record_id=esr.source_record_id
+        LEFT JOIN websites w ON w.entity_id=e.id
         WHERE e.status='active'
           AND NOT EXISTS (SELECT 1 FROM websites w WHERE w.entity_id=e.id AND w.status = 'selected')
         GROUP BY e.id
@@ -55,7 +57,7 @@ def discover_missing_websites(
             "Use only the supplied business name and location. Return JSON with a recommendations "
             "array containing exactly one item per entity_id. Use fields entity_id, website_url, "
             "confidence, rationale, and search_query. website_url must be an https URL or null; "
-            "do not invent a URL when uncertain. confidence must be 0 to 1. This is discovery only: "
+            "do not repeat any URL in existing_urls and do not invent a URL when uncertain. confidence must be 0 to 1. This is discovery only: "
             "never claim verification, ownership, or affiliation."
             + "\n\n" + json.dumps(records, ensure_ascii=False)
         )
