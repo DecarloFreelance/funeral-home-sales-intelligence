@@ -75,6 +75,16 @@ def review_website_candidates(
             if response_text.endswith("```"):
                 response_text = response_text[:-3].rstrip()
         decoded = json.loads(response_text)
+        if isinstance(decoded, str):
+            nested = decoded.strip()
+            if nested.startswith("```"):
+                nested = nested.split("\n", 1)[-1]
+                if nested.endswith("```"):
+                    nested = nested[:-3].rstrip()
+            try:
+                decoded = json.loads(nested)
+            except json.JSONDecodeError:
+                pass
         if isinstance(decoded, list):
             recommendations = decoded
         elif isinstance(decoded, dict):
