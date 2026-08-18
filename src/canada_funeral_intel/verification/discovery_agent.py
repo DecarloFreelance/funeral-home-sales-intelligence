@@ -5,11 +5,20 @@ import os
 import sqlite3
 from pathlib import Path
 from urllib.parse import urlencode
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from canada_funeral_intel.people.agent_review import AgentReviewError, _response_text
 
 PROMPT_VERSION = "website-discovery-v1"
+
+
+def _network_error(exc: BaseException, provider: str) -> AgentReviewError:
+    if isinstance(exc, HTTPError):
+        return AgentReviewError(
+            f"{provider} returned HTTP {exc.code}; retry later"
+        )
+    return AgentReviewError(f"{provider} search failed: {exc}")
 
 
 def _brave_search(query: str, api_key: str) -> list[dict[str, str]]:
@@ -102,11 +111,14 @@ def discover_missing_websites(
             raise AgentReviewError("SEARXNG_URL is required with --search-provider searxng")
         for record in records:
             query = f"{record['business_name']} {record.get('city') or ''} {record.get('province') or ''} official website".strip()
-            results = (
-                _brave_search(query, api_key)
-                if search_provider == "brave"
-                else _searxng_search(query, searxng_url)
-            )
+            try:
+                results = (
+                    _brave_search(query, api_key)
+                    if search_provider == "brave"
+                    else _searxng_search(query, searxng_url)
+                )
+            except (HTTPError, URLError, TimeoutError, OSError) as exc:
+                raise _network_error(exc, search_provider) from exc
             record["search_results"] = results
             search_evidence.append({"entity_id": record["entity_id"], "query": query, "results": results})
     if not records:
@@ -142,8 +154,11 @@ def discover_missing_websites(
                 "response_format": {"type": "json_object"}}
         request = Request(endpoint, data=json.dumps(body).encode(), headers={
             "Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}, method="POST")
-        with urlopen(request, timeout=90) as response:
-            payload = json.loads(response.read().decode())
+        try:
+            with urlopen(request, timeout=90) as response:
+                payload = json.loads(response.read().decode())
+        except (HTTPError, URLError, TimeoutError, OSError) as exc:
+            raise _network_error(exc, provider) from exc
         decoded = json.loads(_response_text(payload))
         recommendations = decoded.get("recommendations")
         expected = {int(row["entity_id"]) for row in records}

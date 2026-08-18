@@ -84,6 +84,7 @@ def run_agent_pipeline(
 
     discovery_path = run_dir / "website-discovery.json"
     progress("[agent-pipeline] starting; database changes are disabled" if not apply else "[agent-pipeline] starting with apply enabled")
+    progress("[agent-pipeline] website discovery: searching and asking the model")
     discovery = run_website_discovery_agent(
         connection, model=model, provider=provider, output=discovery_path,
         entity_limit=entity_limit, live_search=live_search,
@@ -99,6 +100,7 @@ def run_agent_pipeline(
     results["stages"].append({"name": "website_candidate_queue", "result": discovery_apply})
 
     review_path = run_dir / "website-review.json"
+    progress("[agent-pipeline] website candidate review: asking the model")
     review = run_website_candidate_review_agent(
         connection, model=model, provider=provider, output=review_path,
         queue_limit=queue_limit,
@@ -140,6 +142,7 @@ def run_agent_pipeline(
         results["stages"].append({"name": "approved_website_processing", "website_ids": website_ids, "result": processed})
 
     if review_people:
+        progress("[agent-pipeline] people review: populating queue and asking the model")
         people_queue = run_people_review_populate(connection)
         _emit(progress, "people queue", people_queue)
         people_path = run_dir / "people-review.json"
@@ -151,6 +154,7 @@ def run_agent_pipeline(
         results["stages"].append({"name": "people_review", "result": people})
 
     if review_facts:
+        progress("[agent-pipeline] business-facts review: asking the model")
         facts_path = run_dir / "business-facts-review.json"
         facts = run_business_facts_agent(
             connection, model=model, provider=provider, output=facts_path,
