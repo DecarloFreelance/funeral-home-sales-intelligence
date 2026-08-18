@@ -28,6 +28,10 @@ Add `--review-facts` when you intentionally want the full business-facts
 review/apply stage. People review remains artifact-only in this runner; it does
 not automatically accept or reject people observations.
 
+Use `--entity-offset 10` for the next batch of ten entities. The runner does
+not re-queue unchanged URLs, so repeated runs are safe; offsets let live-search
+batches advance through the source list.
+
 For terminals that split pasted lines, define short aliases first:
 
 ```bash

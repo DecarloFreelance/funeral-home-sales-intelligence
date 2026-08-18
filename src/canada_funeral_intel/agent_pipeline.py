@@ -56,6 +56,7 @@ def run_agent_pipeline(
     provider: str,
     output_dir: Path,
     entity_limit: int = 10,
+    entity_offset: int = 0,
     queue_limit: int = 10,
     live_search: bool = True,
     search_provider: str = "searxng",
@@ -70,6 +71,8 @@ def run_agent_pipeline(
         raise AgentPipelineError("--process-approved requires --apply")
     if not 1 <= entity_limit <= 25 or not 1 <= queue_limit <= 25:
         raise AgentPipelineError("entity_limit and queue_limit must be between 1 and 25")
+    if entity_offset < 0:
+        raise AgentPipelineError("entity_offset must be zero or greater")
     if not 0 <= minimum_confidence <= 1:
         raise AgentPipelineError("minimum_confidence must be between 0 and 1")
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -87,7 +90,7 @@ def run_agent_pipeline(
     progress("[agent-pipeline] website discovery: searching and asking the model")
     discovery = run_website_discovery_agent(
         connection, model=model, provider=provider, output=discovery_path,
-        entity_limit=entity_limit, live_search=live_search,
+        entity_limit=entity_limit, entity_offset=entity_offset, live_search=live_search,
         search_provider=search_provider,
     )
     _emit(progress, "website discovery", discovery)

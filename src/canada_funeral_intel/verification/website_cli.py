@@ -960,6 +960,7 @@ def run_website_quality_agent(
 def run_website_discovery_agent(
     connection: sqlite3.Connection,
     *, model: str, provider: str, output: Path | None, entity_limit: int,
+    entity_offset: int = 0,
     live_search: bool = False, search_provider: str = "searxng",
 ) -> dict[str, object]:
     from .discovery_agent import discover_missing_websites
@@ -967,6 +968,7 @@ def run_website_discovery_agent(
         return discover_missing_websites(
             connection, model=model, provider=provider, output_path=output,
             entity_limit=entity_limit,
+            entity_offset=entity_offset,
             live_search=live_search,
             search_provider=search_provider,
         )
@@ -1005,9 +1007,10 @@ def run_website_discovery_apply(
                 ),),
             )
             inserted += int(result.inserted)
-            queue_website_for_review(connection, result.website_id)
-            queued += 1
-        return {"applied": apply, "database_changed": bool(apply and queued),
+            if result.inserted:
+                queue_website_for_review(connection, result.website_id)
+                queued += 1
+        return {"applied": apply, "database_changed": bool(apply and (inserted or queued)),
                 "recommendations": len(recommendations), "candidates_inserted": inserted,
                 "review_queued": queued, "without_url": skipped}
     except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError, WebsiteStorageError) as exc:

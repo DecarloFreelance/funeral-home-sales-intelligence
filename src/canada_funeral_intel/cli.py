@@ -441,6 +441,7 @@ def build_parser() -> argparse.ArgumentParser:
     website_agent_discover.add_argument("--provider", choices=("openai", "nvidia"), default="nvidia")
     website_agent_discover.add_argument("--output", required=True, type=Path)
     website_agent_discover.add_argument("--entity-limit", type=int, default=10)
+    website_agent_discover.add_argument("--entity-offset", type=int, default=0)
     website_agent_discover.add_argument(
         "--live-search", action="store_true",
         help="Use live search results from the selected search provider.",
@@ -1033,6 +1034,7 @@ def build_parser() -> argparse.ArgumentParser:
     agent_pipeline_parser.add_argument("--provider", choices=("openai", "nvidia"), default="nvidia")
     agent_pipeline_parser.add_argument("--output-dir", type=Path, default=Path("exports/agent-pipeline"))
     agent_pipeline_parser.add_argument("--entity-limit", type=int, default=10)
+    agent_pipeline_parser.add_argument("--entity-offset", type=int, default=0)
     agent_pipeline_parser.add_argument("--queue-limit", type=int, default=10)
     agent_pipeline_parser.add_argument("--search-provider", choices=("searxng", "brave"), default="searxng")
     agent_pipeline_parser.add_argument("--no-live-search", action="store_true")
@@ -1706,6 +1708,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     provider=args.provider,
                     output_dir=args.output_dir,
                     entity_limit=args.entity_limit,
+                    entity_offset=args.entity_offset,
                     queue_limit=args.queue_limit,
                     live_search=not args.no_live_search,
                     search_provider=args.search_provider,
@@ -2441,6 +2444,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     payload = run_website_discovery_agent(
                         connection, model=args.model, provider=args.provider,
                         output=args.output, entity_limit=args.entity_limit,
+                        entity_offset=args.entity_offset,
                         live_search=args.live_search, search_provider=args.search_provider,
                     )
 

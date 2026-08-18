@@ -62,7 +62,7 @@ def _searxng_search(query: str, base_url: str) -> list[dict[str, str]]:
     ]
 
 
-def _records(connection: sqlite3.Connection, limit: int) -> list[dict[str, object]]:
+def _records(connection: sqlite3.Connection, limit: int, offset: int) -> list[dict[str, object]]:
     rows = connection.execute(
         """
         SELECT e.id AS entity_id,
@@ -79,9 +79,9 @@ def _records(connection: sqlite3.Connection, limit: int) -> list[dict[str, objec
         GROUP BY e.id
         HAVING business_name IS NOT NULL AND trim(business_name) <> ''
         ORDER BY e.id
-        LIMIT ?
+        LIMIT ? OFFSET ?
         """,
-        (limit,),
+        (limit, offset),
     ).fetchall()
     return [dict(row) for row in rows]
 
@@ -93,12 +93,15 @@ def discover_missing_websites(
     provider: str,
     output_path: Path | None = None,
     entity_limit: int = 10,
+    entity_offset: int = 0,
     live_search: bool = False,
     search_provider: str = "searxng",
 ) -> dict[str, object]:
     if not 1 <= entity_limit <= 25:
         raise AgentReviewError("entity_limit must be between 1 and 25")
-    records = _records(connection, entity_limit)
+    if entity_offset < 0:
+        raise AgentReviewError("entity_offset must be zero or greater")
+    records = _records(connection, entity_limit, entity_offset)
     search_evidence: list[dict[str, object]] = []
     if live_search and records:
         if search_provider not in {"brave", "searxng"}:
