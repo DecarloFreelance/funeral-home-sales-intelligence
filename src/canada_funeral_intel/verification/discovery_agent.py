@@ -172,11 +172,18 @@ def discover_missing_websites(
                         item["entity_id"] = int(item["entity_id"])
                     except ValueError:
                         pass
-        if not isinstance(recommendations, list) or {item.get("entity_id") for item in recommendations} != expected:
+        if (
+            not isinstance(recommendations, list)
+            or any(not isinstance(item, dict) for item in recommendations)
+            or {item.get("entity_id") for item in recommendations} != expected
+        ):
             raise AgentReviewError("website-discovery response omitted or duplicated entity IDs")
-        for item in recommendations:
-            if set(item) != {"entity_id", "website_url", "confidence", "rationale", "search_query"}:
+        required_fields = {"entity_id", "website_url", "confidence", "rationale", "search_query"}
+        for index, item in enumerate(recommendations):
+            if not required_fields.issubset(item):
                 raise AgentReviewError("website-discovery response failed schema validation")
+            item = {field: item[field] for field in required_fields}
+            recommendations[index] = item
             if isinstance(item["website_url"], str) and item["website_url"].startswith("http://"):
                 item["website_url"] = "https://" + item["website_url"][len("http://"):]
             if item["website_url"] is not None and (not isinstance(item["website_url"], str) or not item["website_url"].startswith("https://")):
