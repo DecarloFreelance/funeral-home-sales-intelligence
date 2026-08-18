@@ -83,6 +83,13 @@ def review_website_candidates(
                 recommendations = decoded.get("decisions")
             if recommendations is None:
                 recommendations = decoded.get("results")
+            if recommendations is None:
+                for key in ("items", "reviews", "review", "recommendation"):
+                    if decoded.get(key) is not None:
+                        recommendations = decoded[key]
+                        break
+            if recommendations is None and "queue_id" in decoded:
+                recommendations = [decoded]
         else:
             recommendations = None
         expected = {int(row["queue_id"]) for row in records}
