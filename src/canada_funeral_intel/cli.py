@@ -1493,7 +1493,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 if args.business_facts_command == "extract":
                     payload = run_business_facts_extract(
                         connection,
-                        target_website_id=args.website_id,
+                        website_id=args.website_id,
                         page_id=args.page_id,
                         user_agent=args.user_agent or settings.http_user_agent,
                         timeout_seconds=(
@@ -2349,7 +2349,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     payload = run_website_process_approved(
                         connection,
                         limit=args.limit,
-                        website_id=args.website_id,
+                        target_website_id=args.website_id,
                         user_agent=args.user_agent,
                         timeout_seconds=args.timeout,
                         max_redirects=args.max_redirects,
