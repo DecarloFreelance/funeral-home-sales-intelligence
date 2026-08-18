@@ -55,6 +55,7 @@ from canada_funeral_intel.verification.review import (
     export_website_review_csv,
     import_website_review_csv,
     list_website_review_queue,
+    reopen_website_review_queue,
     update_website_review_note,
 )
 from canada_funeral_intel.verification.storage import (
@@ -868,6 +869,16 @@ def run_website_review_decide(
         "reviewer_note": result.reviewer_note,
         "reviewed_at": result.reviewed_at,
     }
+
+
+def run_website_review_reopen(
+    connection: sqlite3.Connection, *, queue_id: int, note: str | None
+) -> dict[str, object]:
+    try:
+        reopen_website_review_queue(connection, queue_id=queue_id, note=note)
+    except WebsiteReviewError as exc:
+        raise WebsiteCommandError(str(exc)) from exc
+    return {"queue_id": queue_id, "reopened": True, "database_changed": True}
 
 
 def run_website_review_note(

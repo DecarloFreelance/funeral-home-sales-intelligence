@@ -166,6 +166,7 @@ from .verification.website_cli import (
     run_website_review_import,
     run_website_review_interactive,
     run_website_review_list,
+    run_website_review_reopen,
     run_website_verify,
 )
 from .verticals.cli import (
@@ -741,6 +742,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--note",
         help="Optional reviewer note.",
     )
+    website_review_reopen_parser = website_review_subparsers.add_parser(
+        "reopen", help="Reopen a finalized website after failed verification."
+    )
+    website_review_reopen_parser.add_argument("queue_id", type=int)
+    website_review_reopen_parser.add_argument("--note")
     website_review_export_parser = website_review_subparsers.add_parser(
         "export", help="Export review rows to a CSV for offline review."
     )
@@ -2482,6 +2488,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                             queue_id=args.queue_id,
                             status=WebsiteReviewStatus(args.decision),
                             reviewer_note=args.note,
+                        )
+
+                    elif args.website_review_command == "reopen":
+                        payload = run_website_review_reopen(
+                            connection, queue_id=args.queue_id, note=args.note
                         )
 
                     elif args.website_review_command == "export":

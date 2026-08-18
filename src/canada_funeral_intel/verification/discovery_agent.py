@@ -22,7 +22,7 @@ def _records(connection: sqlite3.Connection, limit: int) -> list[dict[str, objec
         JOIN entity_source_records esr ON esr.entity_id=e.id
         JOIN normalized_values nv ON nv.source_record_id=esr.source_record_id
         WHERE e.status='active'
-          AND NOT EXISTS (SELECT 1 FROM websites w WHERE w.entity_id=e.id AND w.status <> 'rejected')
+          AND NOT EXISTS (SELECT 1 FROM websites w WHERE w.entity_id=e.id AND w.status = 'selected')
         GROUP BY e.id
         HAVING business_name IS NOT NULL AND trim(business_name) <> ''
         ORDER BY e.id

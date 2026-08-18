@@ -434,6 +434,34 @@ def apply_website_review_decision(
     )
 
 
+def reopen_website_review_queue(
+    connection: sqlite3.Connection, *, queue_id: int, note: str | None = None
+) -> None:
+    """Return a finalized website to pending review after failed verification."""
+    if queue_id < 1:
+        raise WebsiteReviewError("queue_id must be a positive integer")
+    try:
+        with transaction(connection):
+            row = connection.execute(
+                "SELECT website_id, status FROM website_review_queue WHERE id = ?",
+                (queue_id,),
+            ).fetchone()
+            if row is None:
+                raise WebsiteReviewError(f"Website review queue entry not found: {queue_id}")
+            if row["status"] not in {"approved", "deferred"}:
+                raise WebsiteReviewError("Only approved or deferred website entries can be reopened")
+            connection.execute(
+                "UPDATE websites SET status='review', is_primary=0, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?",
+                (row["website_id"],),
+            )
+            connection.execute(
+                "UPDATE website_review_queue SET status='pending', reviewer_note=?, reviewed_at=NULL WHERE id=?",
+                (note.strip() if note and note.strip() else None, queue_id),
+            )
+    except sqlite3.Error as exc:
+        raise WebsiteReviewError(f"Could not reopen website review entry: {exc}") from exc
+
+
 def update_website_review_note(
     connection: sqlite3.Connection,
     *,
