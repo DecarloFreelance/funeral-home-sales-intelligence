@@ -84,11 +84,14 @@ def review_website_candidates(
             if recommendations is None:
                 recommendations = decoded.get("results")
             if recommendations is None:
-                for key in ("items", "reviews", "review", "recommendation"):
+                for key in (
+                    "items", "reviews", "review", "recommendation",
+                    "website_reviews", "review_recommendations", "data", "answer",
+                ):
                     if decoded.get(key) is not None:
                         recommendations = decoded[key]
                         break
-            if recommendations is None and "queue_id" in decoded:
+            if recommendations is None and ("queue_id" in decoded or "queueId" in decoded):
                 recommendations = [decoded]
         else:
             recommendations = None
@@ -99,9 +102,13 @@ def review_website_candidates(
         for item in recommendations:
             if not isinstance(item, dict):
                 raise AgentReviewError("website-candidate-review recommendation is not an object")
-            queue_id = item.get("queue_id")
+            queue_id = item.get("queue_id", item.get("queueId", item.get("id")))
             if isinstance(queue_id, str) and queue_id.strip().isdigit():
-                item = {**item, "queue_id": int(queue_id.strip())}
+                item = {key: value for key, value in item.items() if key not in {"queueId", "id"}}
+                item["queue_id"] = int(queue_id.strip())
+            elif isinstance(queue_id, int) and "queue_id" not in item:
+                item = {key: value for key, value in item.items() if key not in {"queueId", "id"}}
+                item["queue_id"] = queue_id
             normalized.append(item)
         recommendations = normalized
         if {item.get("queue_id") for item in recommendations} != expected:
