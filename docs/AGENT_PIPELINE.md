@@ -18,7 +18,30 @@ python -m canada_funeral_intel website agent-discover \
 Inspect the artifact. Suggestions with `website_url: null` are retained as
 unresolved discovery results and are not inserted.
 
-## 2. Queue candidates for verification
+## 2. Agent-review candidate identity
+
+Review the pending candidate queue:
+
+```bash
+python -m canada_funeral_intel website agent-review \
+  --model deepseek-ai/deepseek-v4-flash-0731 \
+  --provider nvidia \
+  --queue-limit 10 \
+  --output exports/website-candidate-review.json
+```
+
+Inspect the recommendations, then apply them explicitly:
+
+```bash
+python -m canada_funeral_intel website agent-review-apply \
+  --input exports/website-candidate-review.json \
+  --apply
+```
+
+The agent approves only identity-supported candidates; uncertain candidates
+should be deferred.
+
+## 3. Queue candidates for verification
 
 ```bash
 python -m canada_funeral_intel website agent-discovery-apply \
@@ -30,7 +53,7 @@ This creates candidate websites with `agent_discovery` provenance and places
 them in the existing website review queue. Approve only candidates that match
 the business and location.
 
-## 3. Verify and process approved websites
+## 4. Verify and process approved websites
 
 ```bash
 python -m canada_funeral_intel website batch-verify \
@@ -45,7 +68,7 @@ The normal review and identity checks remain the gate before a site is
 processed. 403, DNS, and identity failures are acquisition signals, not proof
 that the business is invalid.
 
-## 4. Extract and review enrichment
+## 5. Extract and review enrichment
 
 ```bash
 python -m canada_funeral_intel website extract-people --website-id WEBSITE_ID

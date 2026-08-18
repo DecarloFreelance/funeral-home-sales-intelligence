@@ -18,5 +18,10 @@
     "provider": "nvidia",
     "model": "deepseek-ai/deepseek-v4-flash-0731",
     "purpose": "Suggest likely official websites for entities without website candidates."
+  },
+  "website-candidate-review": {
+    "provider": "nvidia",
+    "model": "deepseek-ai/deepseek-v4-flash-0731",
+    "purpose": "Review pending website candidates against business identity and verification evidence."
   }
 }

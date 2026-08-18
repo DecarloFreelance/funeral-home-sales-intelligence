@@ -142,6 +142,8 @@ from .verification.website_cli import (
     WebsiteCommandError,
     print_website_payload,
     run_website_batch_verify,
+    run_website_candidate_review_agent,
+    run_website_candidate_review_apply,
     run_website_checks,
     run_website_crawl,
     run_website_discover,
@@ -443,6 +445,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     website_agent_apply.add_argument("--input", required=True, type=Path)
     website_agent_apply.add_argument("--apply", action="store_true")
+    website_candidate_review = website_subparsers.add_parser(
+        "agent-review", help="Review pending website candidates with an agent."
+    )
+    website_candidate_review.add_argument("--model", required=True)
+    website_candidate_review.add_argument("--provider", choices=("openai", "nvidia"), default="nvidia")
+    website_candidate_review.add_argument("--output", required=True, type=Path)
+    website_candidate_review.add_argument("--queue-limit", type=int, default=10)
+    website_candidate_apply = website_subparsers.add_parser(
+        "agent-review-apply", help="Apply decisions from a website candidate-review artifact."
+    )
+    website_candidate_apply.add_argument("--input", required=True, type=Path)
+    website_candidate_apply.add_argument("--apply", action="store_true")
     website_manual_parser = website_subparsers.add_parser(
         "import-manual",
         help="Import manually researched website URLs for existing entities offline.",
@@ -2373,6 +2387,17 @@ def main(argv: Sequence[str] | None = None) -> int:
 
                 elif args.website_command == "agent-discovery-apply":
                     payload = run_website_discovery_apply(
+                        connection, input_path=args.input, apply=args.apply,
+                    )
+
+                elif args.website_command == "agent-review":
+                    payload = run_website_candidate_review_agent(
+                        connection, model=args.model, provider=args.provider,
+                        output=args.output, queue_limit=args.queue_limit,
+                    )
+
+                elif args.website_command == "agent-review-apply":
+                    payload = run_website_candidate_review_apply(
                         connection, input_path=args.input, apply=args.apply,
                     )
 

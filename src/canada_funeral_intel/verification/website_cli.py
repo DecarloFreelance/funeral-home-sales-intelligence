@@ -997,6 +997,43 @@ def run_website_discovery_apply(
         raise WebsiteCommandError(str(exc)) from exc
 
 
+def run_website_candidate_review_agent(
+    connection: sqlite3.Connection, *, model: str, provider: str,
+    output: Path | None, queue_limit: int,
+) -> dict[str, object]:
+    from .candidate_review_agent import review_website_candidates
+    try:
+        return review_website_candidates(
+            connection, model=model, provider=provider,
+            output_path=output, queue_limit=queue_limit,
+        )
+    except (sqlite3.Error, ValueError, RuntimeError) as exc:
+        raise WebsiteCommandError(str(exc)) from exc
+
+
+def run_website_candidate_review_apply(
+    connection: sqlite3.Connection, *, input_path: Path, apply: bool,
+) -> dict[str, object]:
+    try:
+        artifact = json.loads(input_path.read_text(encoding="utf-8"))
+        recommendations = artifact.get("recommendations")
+        if not isinstance(recommendations, list):
+            raise TypeError("website-candidate-review artifact has no recommendations array")
+        results = {"approved": 0, "rejected": 0, "deferred": 0}
+        if apply:
+            for item in recommendations:
+                decision = WebsiteReviewStatus(str(item["decision"]))
+                apply_website_review_decision(
+                    connection, queue_id=int(item["queue_id"]), status=decision,
+                    reviewer_note=str(item.get("reviewer_note") or item["rationale"]),
+                )
+                results[decision.value] += 1
+        return {"applied": apply, "database_changed": bool(apply and recommendations),
+                "recommendations": len(recommendations), "decisions": results}
+    except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError, WebsiteReviewError) as exc:
+        raise WebsiteCommandError(str(exc)) from exc
+
+
 def run_website_quality_apply(
     connection: sqlite3.Connection,
     *,
