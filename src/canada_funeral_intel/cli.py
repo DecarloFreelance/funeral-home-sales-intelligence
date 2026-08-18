@@ -440,6 +440,10 @@ def build_parser() -> argparse.ArgumentParser:
     website_agent_discover.add_argument("--provider", choices=("openai", "nvidia"), default="nvidia")
     website_agent_discover.add_argument("--output", required=True, type=Path)
     website_agent_discover.add_argument("--entity-limit", type=int, default=10)
+    website_agent_discover.add_argument(
+        "--live-search", action="store_true",
+        help="Use Brave Web Search results; requires BRAVE_SEARCH_API_KEY.",
+    )
     website_agent_apply = website_subparsers.add_parser(
         "agent-discovery-apply",
         help="Queue URL suggestions from a discovery artifact for verification review.",
@@ -2391,6 +2395,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     payload = run_website_discovery_agent(
                         connection, model=args.model, provider=args.provider,
                         output=args.output, entity_limit=args.entity_limit,
+                        live_search=args.live_search,
                     )
 
                 elif args.website_command == "agent-discovery-apply":

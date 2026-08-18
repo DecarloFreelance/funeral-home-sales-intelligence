@@ -960,12 +960,14 @@ def run_website_quality_agent(
 def run_website_discovery_agent(
     connection: sqlite3.Connection,
     *, model: str, provider: str, output: Path | None, entity_limit: int,
+    live_search: bool = False,
 ) -> dict[str, object]:
     from .discovery_agent import discover_missing_websites
     try:
         return discover_missing_websites(
             connection, model=model, provider=provider, output_path=output,
             entity_limit=entity_limit,
+            live_search=live_search,
         )
     except (sqlite3.Error, ValueError, RuntimeError) as exc:
         raise WebsiteCommandError(str(exc)) from exc

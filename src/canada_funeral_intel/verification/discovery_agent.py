@@ -4,11 +4,34 @@ import json
 import os
 import sqlite3
 from pathlib import Path
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from canada_funeral_intel.people.agent_review import AgentReviewError, _response_text
 
 PROMPT_VERSION = "website-discovery-v1"
+
+
+def _brave_search(query: str, api_key: str) -> list[dict[str, str]]:
+    endpoint = "https://api.search.brave.com/res/v1/web/search?" + urlencode(
+        {"q": query, "country": "CA", "search_lang": "en", "count": 5}
+    )
+    request = Request(endpoint, headers={
+        "Accept": "application/json",
+        "X-Subscription-Token": api_key,
+    })
+    with urlopen(request, timeout=30) as response:
+        payload = json.loads(response.read().decode())
+    results = payload.get("web", {}).get("results", [])
+    return [
+        {
+            "title": str(item.get("title", "")),
+            "url": str(item.get("url", "")),
+            "description": str(item.get("description", "")),
+        }
+        for item in results[:5]
+        if item.get("url")
+    ]
 
 
 def _records(connection: sqlite3.Connection, limit: int) -> list[dict[str, object]]:
@@ -42,15 +65,27 @@ def discover_missing_websites(
     provider: str,
     output_path: Path | None = None,
     entity_limit: int = 10,
+    live_search: bool = False,
 ) -> dict[str, object]:
     if not 1 <= entity_limit <= 25:
         raise AgentReviewError("entity_limit must be between 1 and 25")
     records = _records(connection, entity_limit)
+    search_evidence: list[dict[str, object]] = []
+    if live_search and records:
+        api_key = os.environ.get("BRAVE_SEARCH_API_KEY", "").strip()
+        if not api_key:
+            raise AgentReviewError("BRAVE_SEARCH_API_KEY is required with --live-search")
+        for record in records:
+            query = f"{record['business_name']} {record.get('city') or ''} {record.get('province') or ''} official website".strip()
+            results = _brave_search(query, api_key)
+            record["search_results"] = results
+            search_evidence.append({"entity_id": record["entity_id"], "query": query, "results": results})
     if not records:
         result = {"agent": "website-discovery", "database_changed": False,
                   "entity_count": 0, "recommendations": [],
                   "model": model, "provider": provider,
-                  "prompt_version": PROMPT_VERSION}
+                  "prompt_version": PROMPT_VERSION, "live_search": live_search,
+                  "search_evidence": search_evidence}
     else:
         prompt = (
             "Identify likely official funeral-business websites for these Canadian entities. "
@@ -58,7 +93,8 @@ def discover_missing_websites(
             "array containing exactly one item per entity_id. Use fields entity_id, website_url, "
             "confidence, rationale, and search_query. website_url must be an https URL or null; "
             "do not repeat any URL in existing_urls and do not invent a URL when uncertain. confidence must be 0 to 1. This is discovery only: "
-            "never claim verification, ownership, or affiliation."
+            "never claim verification, ownership, or affiliation. When search_results are supplied, "
+            "choose URLs only from those results."
             + "\n\n" + json.dumps(records, ensure_ascii=False)
         )
         api_key = os.environ.get(f"{provider.upper()}_API_KEY", "").strip()
@@ -92,7 +128,8 @@ def discover_missing_websites(
                 raise AgentReviewError("website-discovery confidence must be between 0 and 1")
         result = {"agent": "website-discovery", "database_changed": False,
                   "entity_count": len(records), "model": model, "provider": provider,
-                  "prompt_version": PROMPT_VERSION, "recommendations": recommendations}
+                  "prompt_version": PROMPT_VERSION, "live_search": live_search,
+                  "search_evidence": search_evidence, "recommendations": recommendations}
     if output_path is not None:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")

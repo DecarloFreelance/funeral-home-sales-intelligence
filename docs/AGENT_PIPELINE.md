@@ -11,9 +11,14 @@ Generate a bounded, local artifact for entities without a non-rejected website:
 python -m canada_funeral_intel website agent-discover \
   --model deepseek-ai/deepseek-v4-flash-0731 \
   --provider nvidia \
+  --live-search \
   --entity-limit 10 \
   --output exports/website-discovery.json
 ```
+
+Live mode requires `BRAVE_SEARCH_API_KEY` and records the returned search URLs,
+titles, and snippets in the artifact. Without `--live-search`, discovery is
+model-only and must not be treated as web search.
 
 Inspect the artifact. Suggestions with `website_url: null` are retained as
 unresolved discovery results and are not inserted.
