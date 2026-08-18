@@ -12,13 +12,16 @@ python -m canada_funeral_intel website agent-discover \
   --model deepseek-ai/deepseek-v4-flash-0731 \
   --provider nvidia \
   --live-search \
+  --search-provider searxng \
   --entity-limit 10 \
   --output exports/website-discovery.json
 ```
 
-Live mode requires `BRAVE_SEARCH_API_KEY` and records the returned search URLs,
-titles, and snippets in the artifact. Without `--live-search`, discovery is
-model-only and must not be treated as web search.
+SearXNG live mode uses the free local/self-hosted search endpoint in
+`SEARXNG_URL` (default `http://127.0.0.1:8080`) and records the returned search
+URLs, titles, and snippets in the artifact. Use `--search-provider brave` only
+when `BRAVE_SEARCH_API_KEY` is configured. Without `--live-search`, discovery
+is model-only and must not be treated as web search.
 
 Inspect the artifact. Suggestions with `website_url: null` are retained as
 unresolved discovery results and are not inserted.

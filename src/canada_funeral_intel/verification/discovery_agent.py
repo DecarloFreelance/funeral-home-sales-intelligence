@@ -34,6 +34,25 @@ def _brave_search(query: str, api_key: str) -> list[dict[str, str]]:
     ]
 
 
+def _searxng_search(query: str, base_url: str) -> list[dict[str, str]]:
+    endpoint = base_url.rstrip("/") + "/search?" + urlencode(
+        {"q": query, "format": "json", "categories": "general", "language": "en-CA"}
+    )
+    request = Request(endpoint, headers={"Accept": "application/json"})
+    with urlopen(request, timeout=30) as response:
+        payload = json.loads(response.read().decode())
+    results = payload.get("results", [])
+    return [
+        {
+            "title": str(item.get("title", "")),
+            "url": str(item.get("url", "")),
+            "description": str(item.get("content", item.get("description", ""))),
+        }
+        for item in results[:5]
+        if item.get("url")
+    ]
+
+
 def _records(connection: sqlite3.Connection, limit: int) -> list[dict[str, object]]:
     rows = connection.execute(
         """
@@ -66,18 +85,28 @@ def discover_missing_websites(
     output_path: Path | None = None,
     entity_limit: int = 10,
     live_search: bool = False,
+    search_provider: str = "searxng",
 ) -> dict[str, object]:
     if not 1 <= entity_limit <= 25:
         raise AgentReviewError("entity_limit must be between 1 and 25")
     records = _records(connection, entity_limit)
     search_evidence: list[dict[str, object]] = []
     if live_search and records:
+        if search_provider not in {"brave", "searxng"}:
+            raise AgentReviewError("search_provider must be brave or searxng")
         api_key = os.environ.get("BRAVE_SEARCH_API_KEY", "").strip()
-        if not api_key:
-            raise AgentReviewError("BRAVE_SEARCH_API_KEY is required with --live-search")
+        searxng_url = os.environ.get("SEARXNG_URL", "http://127.0.0.1:8080").strip()
+        if search_provider == "brave" and not api_key:
+            raise AgentReviewError("BRAVE_SEARCH_API_KEY is required with --search-provider brave")
+        if search_provider == "searxng" and not searxng_url:
+            raise AgentReviewError("SEARXNG_URL is required with --search-provider searxng")
         for record in records:
             query = f"{record['business_name']} {record.get('city') or ''} {record.get('province') or ''} official website".strip()
-            results = _brave_search(query, api_key)
+            results = (
+                _brave_search(query, api_key)
+                if search_provider == "brave"
+                else _searxng_search(query, searxng_url)
+            )
             record["search_results"] = results
             search_evidence.append({"entity_id": record["entity_id"], "query": query, "results": results})
     if not records:
@@ -85,6 +114,7 @@ def discover_missing_websites(
                   "entity_count": 0, "recommendations": [],
                   "model": model, "provider": provider,
                   "prompt_version": PROMPT_VERSION, "live_search": live_search,
+                  "search_provider": search_provider,
                   "search_evidence": search_evidence}
     else:
         prompt = (
@@ -129,6 +159,7 @@ def discover_missing_websites(
         result = {"agent": "website-discovery", "database_changed": False,
                   "entity_count": len(records), "model": model, "provider": provider,
                   "prompt_version": PROMPT_VERSION, "live_search": live_search,
+                  "search_provider": search_provider,
                   "search_evidence": search_evidence, "recommendations": recommendations}
     if output_path is not None:
         output_path.parent.mkdir(parents=True, exist_ok=True)

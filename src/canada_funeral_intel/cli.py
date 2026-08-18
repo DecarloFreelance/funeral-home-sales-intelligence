@@ -442,7 +442,11 @@ def build_parser() -> argparse.ArgumentParser:
     website_agent_discover.add_argument("--entity-limit", type=int, default=10)
     website_agent_discover.add_argument(
         "--live-search", action="store_true",
-        help="Use Brave Web Search results; requires BRAVE_SEARCH_API_KEY.",
+        help="Use live search results from the selected search provider.",
+    )
+    website_agent_discover.add_argument(
+        "--search-provider", choices=("searxng", "brave"), default="searxng",
+        help="Live search provider (default: searxng; configure SEARXNG_URL).",
     )
     website_agent_apply = website_subparsers.add_parser(
         "agent-discovery-apply",
@@ -2395,7 +2399,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     payload = run_website_discovery_agent(
                         connection, model=args.model, provider=args.provider,
                         output=args.output, entity_limit=args.entity_limit,
-                        live_search=args.live_search,
+                        live_search=args.live_search, search_provider=args.search_provider,
                     )
 
                 elif args.website_command == "agent-discovery-apply":
