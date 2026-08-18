@@ -159,6 +159,8 @@ def discover_missing_websites(
         for item in recommendations:
             if set(item) != {"entity_id", "website_url", "confidence", "rationale", "search_query"}:
                 raise AgentReviewError("website-discovery response failed schema validation")
+            if isinstance(item["website_url"], str) and item["website_url"].startswith("http://"):
+                item["website_url"] = "https://" + item["website_url"][len("http://"):]
             if item["website_url"] is not None and (not isinstance(item["website_url"], str) or not item["website_url"].startswith("https://")):
                 raise AgentReviewError("website-discovery website_url must be https or null")
             if not isinstance(item["confidence"], (int, float)) or not 0 <= item["confidence"] <= 1:
