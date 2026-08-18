@@ -15,6 +15,7 @@ from .business_intelligence.cli import (
     run_business_facts_list,
     run_business_facts_summary,
 )
+from .agent_pipeline import AgentPipelineError, run_agent_pipeline
 from .collectors.afsrb_cli import (
     AFSRB_SOURCE_NAME,
     AfsrbProbeCommandError,
@@ -1024,6 +1025,23 @@ def build_parser() -> argparse.ArgumentParser:
     )
     pipeline_stages.add_argument("--run-id", required=True, type=int)
 
+    agent_pipeline_parser = subparsers.add_parser(
+        "agent-pipeline",
+        help="Run the visible, checkpointed enrichment-agent pipeline.",
+    )
+    agent_pipeline_parser.add_argument("--model", required=True)
+    agent_pipeline_parser.add_argument("--provider", choices=("openai", "nvidia"), default="nvidia")
+    agent_pipeline_parser.add_argument("--output-dir", type=Path, default=Path("exports/agent-pipeline"))
+    agent_pipeline_parser.add_argument("--entity-limit", type=int, default=10)
+    agent_pipeline_parser.add_argument("--queue-limit", type=int, default=10)
+    agent_pipeline_parser.add_argument("--search-provider", choices=("searxng", "brave"), default="searxng")
+    agent_pipeline_parser.add_argument("--no-live-search", action="store_true")
+    agent_pipeline_parser.add_argument("--apply", action="store_true", help="Enable database changes; default is dry-run.")
+    agent_pipeline_parser.add_argument("--process-approved", action="store_true")
+    agent_pipeline_parser.add_argument("--review-facts", action="store_true")
+    agent_pipeline_parser.add_argument("--no-review-people", action="store_true")
+    agent_pipeline_parser.add_argument("--minimum-confidence", type=float, default=0.85)
+
     verticals_parser = subparsers.add_parser(
         "verticals", help="Inspect and classify business verticals."
     )
@@ -1678,6 +1696,30 @@ def main(argv: Sequence[str] | None = None) -> int:
         except (DatabaseError, ValueError) as exc:
             print(f"refresh error: {exc}", file=sys.stderr)
             return 15
+
+    if args.command == "agent-pipeline":
+        try:
+            with database_session(settings.database_path) as connection:
+                payload = run_agent_pipeline(
+                    connection,
+                    model=args.model,
+                    provider=args.provider,
+                    output_dir=args.output_dir,
+                    entity_limit=args.entity_limit,
+                    queue_limit=args.queue_limit,
+                    live_search=not args.no_live_search,
+                    search_provider=args.search_provider,
+                    apply=args.apply,
+                    process_approved=args.process_approved,
+                    review_facts=args.review_facts,
+                    review_people=not args.no_review_people,
+                    minimum_confidence=args.minimum_confidence,
+                )
+            print(json.dumps(payload, indent=2, sort_keys=True))
+            return 0
+        except (AgentPipelineError, DatabaseError, ValueError, RuntimeError) as exc:
+            print(f"agent pipeline error: {exc}", file=sys.stderr)
+            return 18
 
     if args.command == "pipeline":
         if args.pipeline_command is None:

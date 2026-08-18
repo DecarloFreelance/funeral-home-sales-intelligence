@@ -3,6 +3,50 @@
 The enrichment workflow is staged. Agent suggestions never become public
 directory data by themselves.
 
+## Visible checkpointed runner
+
+Use `agent-pipeline` when you want one terminal session to show the complete
+agent workflow. It prints every stage as it finishes and writes a timestamped
+artifact directory under `--output-dir`.
+
+The default is a dry run: agents may perform live search/model calls and write
+artifacts, but database decisions are not applied.
+
+```bash
+python -m canada_funeral_intel agent-pipeline --model deepseek-ai/deepseek-v4-flash-0731 --provider nvidia --search-provider searxng --output-dir exports/agent-pipeline
+```
+
+After inspecting the dry-run output, enable database changes explicitly. The
+`--process-approved` option additionally crawls websites approved at or above
+the default 0.85 confidence threshold.
+
+```bash
+python -m canada_funeral_intel agent-pipeline --model deepseek-ai/deepseek-v4-flash-0731 --provider nvidia --search-provider searxng --apply --process-approved --output-dir exports/agent-pipeline
+```
+
+Add `--review-facts` when you intentionally want the full business-facts
+review/apply stage. People review remains artifact-only in this runner; it does
+not automatically accept or reject people observations.
+
+For terminals that split pasted lines, define short aliases first:
+
+```bash
+MODEL=deepseek-ai/deepseek-v4-flash-0731
+alias arun='python -m canada_funeral_intel agent-pipeline'
+```
+
+Then run the dry pass with one short line:
+
+```bash
+arun --model "$MODEL" --output-dir exports/agent-pipeline
+```
+
+The run directory contains `website-discovery.json`, `website-review.json`,
+`website-review-effective.json`, and `people-review.json`; the business-facts
+artifact is added when `--review-facts` is used. A failed run leaves its prior
+artifacts intact, so the terminal output and timestamped directory provide a
+checkpoint for review before rerunning.
+
 ## 1. Discover missing websites
 
 Generate a bounded, local artifact for entities without a non-rejected website:
