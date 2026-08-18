@@ -63,8 +63,7 @@ def review_website_candidates(
         body = {"model": model, "max_tokens": max(2500, len(records) * 220),
                 "temperature": 0.1,
                 "messages": [{"role": "system", "content": "You are a conservative website identity reviewer."},
-                             {"role": "user", "content": prompt}],
-                "response_format": {"type": "json_object"}}
+                             {"role": "user", "content": prompt}]}
         request = Request(endpoint, data=json.dumps(body).encode(), headers={
             "Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}, method="POST")
         with urlopen(request, timeout=90) as response:
