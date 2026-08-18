@@ -116,6 +116,8 @@ future sessions can resume from the first unchecked item.
 - [x] Build a coverage report by province, website status, people status, and
   business-fact status.
 - [ ] Add authoritative source coverage for remaining jurisdictions.
+- [x] Add a staged website-discovery agent handoff with review and verification
+  gates before downstream enrichment agents run.
 - [ ] Keep public-directory output separate from unresolved or historical
   records.
 

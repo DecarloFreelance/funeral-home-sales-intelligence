@@ -33,7 +33,12 @@ from canada_funeral_intel.verification.manual import (
     export_manual_website_template,
     import_manual_website_evidence,
 )
-from canada_funeral_intel.verification.models import WebsiteReviewStatus
+from canada_funeral_intel.verification.models import (
+    WebsiteEvidence,
+    WebsiteEvidenceClass,
+    WebsiteEvidenceType,
+    WebsiteReviewStatus,
+)
 from canada_funeral_intel.verification.page_discovery import (
     PageDiscoveryError,
     discover_website_pages,
@@ -55,6 +60,9 @@ from canada_funeral_intel.verification.review import (
 from canada_funeral_intel.verification.storage import (
     WebsiteStorageError,
     list_website_candidates,
+    make_website_candidate,
+    queue_website_for_review,
+    upsert_website_candidate,
     website_candidate_evidence_summaries,
 )
 
@@ -932,6 +940,60 @@ def run_website_quality_agent(
             keys_file=keys_file,
         )
     except (sqlite3.Error, ValueError, RuntimeError) as exc:
+        raise WebsiteCommandError(str(exc)) from exc
+
+
+def run_website_discovery_agent(
+    connection: sqlite3.Connection,
+    *, model: str, provider: str, output: Path | None, entity_limit: int,
+) -> dict[str, object]:
+    from .discovery_agent import discover_missing_websites
+    try:
+        return discover_missing_websites(
+            connection, model=model, provider=provider, output_path=output,
+            entity_limit=entity_limit,
+        )
+    except (sqlite3.Error, ValueError, RuntimeError) as exc:
+        raise WebsiteCommandError(str(exc)) from exc
+
+
+def run_website_discovery_apply(
+    connection: sqlite3.Connection, *, input_path: Path, apply: bool,
+) -> dict[str, object]:
+    try:
+        artifact = json.loads(input_path.read_text(encoding="utf-8"))
+        recommendations = artifact.get("recommendations")
+        if not isinstance(recommendations, list):
+            raise TypeError("website-discovery artifact has no recommendations array")
+        inserted = queued = skipped = 0
+        for item in recommendations:
+            if not isinstance(item, dict) or item.get("website_url") is None:
+                skipped += 1
+                continue
+            if not apply:
+                continue
+            candidate = make_website_candidate(
+                entity_id=int(item["entity_id"]), url=str(item["website_url"]),
+                discovery_method="agent_discovery", confidence=float(item["confidence"]),
+            )
+            result = upsert_website_candidate(
+                connection, candidate,
+                evidence=(WebsiteEvidence(
+                    evidence_type=WebsiteEvidenceType.MANUAL,
+                    evidence_class=WebsiteEvidenceClass.MANUAL,
+                    evidence_value=str(item.get("search_query") or "agent discovery suggestion"),
+                    contribution=0.0,
+                    derivation_method="website-discovery-agent-v1",
+                    derivation_version="website-discovery-v1",
+                ),),
+            )
+            inserted += int(result.inserted)
+            queue_website_for_review(connection, result.website_id)
+            queued += 1
+        return {"applied": apply, "database_changed": bool(apply and queued),
+                "recommendations": len(recommendations), "candidates_inserted": inserted,
+                "review_queued": queued, "without_url": skipped}
+    except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError, WebsiteStorageError) as exc:
         raise WebsiteCommandError(str(exc)) from exc
 
 

@@ -145,6 +145,8 @@ from .verification.website_cli import (
     run_website_checks,
     run_website_crawl,
     run_website_discover,
+    run_website_discovery_agent,
+    run_website_discovery_apply,
     run_website_extract_people,
     run_website_import_manual,
     run_website_list,
@@ -427,6 +429,20 @@ def build_parser() -> argparse.ArgumentParser:
         "discover",
         help="Discover website candidates from normalized source data.",
     )
+    website_agent_discover = website_subparsers.add_parser(
+        "agent-discover",
+        help="Suggest missing websites with an auditable agent artifact.",
+    )
+    website_agent_discover.add_argument("--model", required=True)
+    website_agent_discover.add_argument("--provider", choices=("openai", "nvidia"), default="nvidia")
+    website_agent_discover.add_argument("--output", required=True, type=Path)
+    website_agent_discover.add_argument("--entity-limit", type=int, default=10)
+    website_agent_apply = website_subparsers.add_parser(
+        "agent-discovery-apply",
+        help="Queue URL suggestions from a discovery artifact for verification review.",
+    )
+    website_agent_apply.add_argument("--input", required=True, type=Path)
+    website_agent_apply.add_argument("--apply", action="store_true")
     website_manual_parser = website_subparsers.add_parser(
         "import-manual",
         help="Import manually researched website URLs for existing entities offline.",
@@ -2348,6 +2364,17 @@ def main(argv: Sequence[str] | None = None) -> int:
 
                 elif args.website_command == "discover":
                     payload = run_website_discover(connection)
+
+                elif args.website_command == "agent-discover":
+                    payload = run_website_discovery_agent(
+                        connection, model=args.model, provider=args.provider,
+                        output=args.output, entity_limit=args.entity_limit,
+                    )
+
+                elif args.website_command == "agent-discovery-apply":
+                    payload = run_website_discovery_apply(
+                        connection, input_path=args.input, apply=args.apply,
+                    )
 
                 elif args.website_command == "list":
                     payload = run_website_list(

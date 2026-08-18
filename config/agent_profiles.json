@@ -13,5 +13,10 @@
     "provider": "nvidia",
     "model": "nvidia/llama-3.3-nemotron-super-49b-v1",
     "purpose": "Assess crawl quality, identity confidence, and content limitations."
+  },
+  "website-discovery": {
+    "provider": "nvidia",
+    "model": "deepseek-ai/deepseek-v4-flash-0731",
+    "purpose": "Suggest likely official websites for entities without website candidates."
   }
 }
