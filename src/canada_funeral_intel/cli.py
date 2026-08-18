@@ -514,6 +514,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Verify, crawl, extract, and queue all approved websites.",
     )
     website_process_parser.add_argument("--limit", type=int)
+    website_process_parser.add_argument("--website-id", type=int)
     website_process_parser.add_argument("--timeout", type=int, default=10)
     website_process_parser.add_argument("--max-redirects", type=int, default=5)
     website_process_parser.add_argument("--max-pages", type=int, default=25)
@@ -1492,7 +1493,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 if args.business_facts_command == "extract":
                     payload = run_business_facts_extract(
                         connection,
-                        website_id=args.website_id,
+                        target_website_id=args.website_id,
                         page_id=args.page_id,
                         user_agent=args.user_agent or settings.http_user_agent,
                         timeout_seconds=(
@@ -2348,6 +2349,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     payload = run_website_process_approved(
                         connection,
                         limit=args.limit,
+                        website_id=args.website_id,
                         user_agent=args.user_agent,
                         timeout_seconds=args.timeout,
                         max_redirects=args.max_redirects,

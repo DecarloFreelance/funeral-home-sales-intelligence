@@ -620,6 +620,7 @@ def run_website_process_approved(
     connection: sqlite3.Connection,
     *,
     limit: int | None,
+    target_website_id: int | None = None,
     user_agent: str,
     timeout_seconds: int,
     max_redirects: int,
@@ -642,6 +643,8 @@ def run_website_process_approved(
         raise WebsiteCommandError(str(exc)) from exc
 
     website_ids = list(dict.fromkeys(entry.website_id for entry in entries))
+    if target_website_id is not None:
+        website_ids = [item for item in website_ids if item == target_website_id]
     if limit is not None:
         website_ids = website_ids[:limit]
 
