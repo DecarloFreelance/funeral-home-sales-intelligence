@@ -71,7 +71,18 @@ def review_website_candidates(
             payload = json.loads(response.read().decode())
         recommendations = json.loads(_response_text(payload)).get("recommendations")
         expected = {int(row["queue_id"]) for row in records}
-        if not isinstance(recommendations, list) or {item.get("queue_id") for item in recommendations} != expected:
+        if not isinstance(recommendations, list):
+            raise AgentReviewError("website-candidate-review response omitted recommendations")
+        normalized: list[dict[str, object]] = []
+        for item in recommendations:
+            if not isinstance(item, dict):
+                raise AgentReviewError("website-candidate-review recommendation is not an object")
+            queue_id = item.get("queue_id")
+            if isinstance(queue_id, str) and queue_id.strip().isdigit():
+                item = {**item, "queue_id": int(queue_id.strip())}
+            normalized.append(item)
+        recommendations = normalized
+        if {item.get("queue_id") for item in recommendations} != expected:
             raise AgentReviewError("website-candidate-review response omitted or duplicated queue IDs")
         for item in recommendations:
             if set(item) != {"queue_id", "decision", "confidence", "rationale", "reviewer_note"}:
