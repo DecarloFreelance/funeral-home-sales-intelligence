@@ -113,7 +113,7 @@ future sessions can resume from the first unchecked item.
 - [ ] Review the seven deferred observations and decide whether they belong in
   current-person reporting or historical ownership reporting.
 - [ ] Re-export people after each accepted resolution batch.
-- [ ] Build a coverage report by province, website status, people status, and
+- [x] Build a coverage report by province, website status, people status, and
   business-fact status.
 - [ ] Add authoritative source coverage for remaining jurisdictions.
 - [ ] Keep public-directory output separate from unresolved or historical

@@ -60,6 +60,9 @@ def test_coverage_and_business_conflict_counts_are_distinct(tmp_path: Path) -> N
         )
         assert business["state_counts"]["conflict"] == 1
         assert sorted(business["fact_keys"][0]["values"]) == ["1984", "1985"]
+        province = {row["province"]: row for row in coverage["province_breakdown"]}
+        assert province["unknown"]["entity_count"] == 1
+        assert province["unknown"]["website_signal_count"] == 1
 
 
 def test_historical_business_facts_are_excluded_by_default(tmp_path: Path) -> None:

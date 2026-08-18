@@ -79,6 +79,75 @@ def coverage_report(
             "people_with_accepted_evidence", row["accepted_count"], people_denominator
         ),
     ]
+    breakdown_rows = connection.execute(
+        f"""
+        WITH eligible_entities AS (
+            SELECT e.id
+            FROM entities e
+            WHERE {entity_filter}
+        ), entity_provinces AS (
+            SELECT DISTINCT
+                e.id AS entity_id,
+                COALESCE(NULLIF(trim(nv.normalized_value), ''), 'unknown') AS province
+            FROM eligible_entities eligible
+            JOIN entities e ON e.id = eligible.id
+            LEFT JOIN entity_source_records esr ON esr.entity_id = e.id
+            LEFT JOIN normalized_values nv
+              ON nv.source_record_id = esr.source_record_id
+             AND nv.field_name = 'province'
+             AND nv.normalized_value IS NOT NULL
+            WHERE nv.id IS NOT NULL
+            UNION ALL
+            SELECT e.id, 'unknown'
+            FROM eligible_entities eligible
+            JOIN entities e ON e.id = eligible.id
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM entity_source_records esr
+                JOIN normalized_values nv ON nv.source_record_id = esr.source_record_id
+                WHERE esr.entity_id = e.id
+                  AND nv.field_name = 'province'
+                  AND nv.normalized_value IS NOT NULL
+                  AND trim(nv.normalized_value) <> ''
+            )
+        ), entity_rollup AS (
+            SELECT
+                ep.province,
+                COUNT(DISTINCT ep.entity_id) AS entity_count,
+                COUNT(DISTINCT CASE WHEN e.canonical_name IS NOT NULL AND trim(e.canonical_name) <> '' THEN e.id END) AS named_count,
+                COUNT(DISTINCT CASE WHEN w.status <> 'rejected' THEN w.entity_id END) AS website_signal_count,
+                COUNT(DISTINCT CASE WHEN w.status = 'selected' THEN w.entity_id END) AS selected_website_count,
+                COUNT(DISTINCT CASE WHEN w.status = 'review' THEN w.entity_id END) AS review_website_count,
+                COUNT(DISTINCT CASE WHEN w.status = 'candidate' THEN w.entity_id END) AS candidate_website_count,
+                COUNT(DISTINCT CASE WHEN w.status = 'rejected' THEN w.entity_id END) AS rejected_website_count,
+                COUNT(DISTINCT CASE WHEN p.id IS NOT NULL THEN ep.entity_id END) AS people_entity_count,
+                COUNT(DISTINCT CASE WHEN bf.id IS NOT NULL THEN ep.entity_id END) AS fact_entity_count
+            FROM entity_provinces ep
+            JOIN entities e ON e.id = ep.entity_id
+            LEFT JOIN websites w ON w.entity_id = e.id
+            LEFT JOIN person_affiliations pa ON pa.entity_id = e.id AND pa.active = 1
+            LEFT JOIN people p ON p.id = pa.person_id AND {person_filter}
+            LEFT JOIN business_fact_observations bf ON bf.entity_id = e.id
+            GROUP BY ep.province
+        )
+        SELECT * FROM entity_rollup ORDER BY CASE WHEN province = 'unknown' THEN 1 ELSE 0 END, province
+        """,
+    ).fetchall()
+    breakdowns = [
+        {
+            "province": str(row["province"]),
+            "entity_count": int(row["entity_count"]),
+            "named_count": int(row["named_count"] or 0),
+            "website_signal_count": int(row["website_signal_count"] or 0),
+            "selected_website_count": int(row["selected_website_count"] or 0),
+            "review_website_count": int(row["review_website_count"] or 0),
+            "candidate_website_count": int(row["candidate_website_count"] or 0),
+            "rejected_website_count": int(row["rejected_website_count"] or 0),
+            "people_entity_count": int(row["people_entity_count"] or 0),
+            "fact_entity_count": int(row["fact_entity_count"] or 0),
+        }
+        for row in breakdown_rows
+    ]
     return {
         "report_version": REPORT_VERSION,
         "reference_time": _reference(reference_time),
@@ -89,6 +158,7 @@ def coverage_report(
             "branches": int(entity_rows["branches"] or 0),
         },
         "metrics": metrics,
+        "province_breakdown": breakdowns,
     }
 
 
