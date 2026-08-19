@@ -172,12 +172,35 @@ def discover_missing_websites(
                         item["entity_id"] = int(item["entity_id"])
                     except ValueError:
                         pass
-        if (
-            not isinstance(recommendations, list)
-            or any(not isinstance(item, dict) for item in recommendations)
-            or {item.get("entity_id") for item in recommendations} != expected
-        ):
-            raise AgentReviewError("website-discovery response omitted or duplicated entity IDs")
+        by_entity: dict[int, dict[str, object]] = {}
+        duplicate_entities: set[int] = set()
+        if isinstance(recommendations, list):
+            for item in recommendations:
+                if not isinstance(item, dict):
+                    continue
+                try:
+                    entity_id = int(item.get("entity_id"))
+                except (TypeError, ValueError):
+                    continue
+                if entity_id in by_entity:
+                    duplicate_entities.add(entity_id)
+                else:
+                    by_entity[entity_id] = item
+        records_by_entity = {int(row["entity_id"]): row for row in records}
+        normalized: list[dict[str, object]] = []
+        for entity_id in sorted(expected):
+            if entity_id not in by_entity or entity_id in duplicate_entities:
+                row = records_by_entity[entity_id]
+                normalized.append({
+                    "entity_id": entity_id,
+                    "website_url": None,
+                    "confidence": 0.0,
+                    "rationale": "Model response was missing or duplicated this entity; no URL accepted.",
+                    "search_query": f"{row['business_name']} {row.get('city') or ''} {row.get('province') or ''} official website".strip(),
+                })
+            else:
+                normalized.append(by_entity[entity_id])
+        recommendations = normalized
         required_fields = {"entity_id", "website_url", "confidence", "rationale", "search_query"}
         for index, item in enumerate(recommendations):
             if not required_fields.issubset(item):
