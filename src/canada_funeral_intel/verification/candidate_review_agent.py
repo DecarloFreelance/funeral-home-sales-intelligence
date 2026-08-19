@@ -4,6 +4,7 @@ import json
 import os
 import sqlite3
 from pathlib import Path
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from canada_funeral_intel.people.agent_review import AgentReviewError, _response_text
@@ -68,8 +69,13 @@ def review_website_candidates(
                              {"role": "user", "content": prompt}]}
         request = Request(endpoint, data=json.dumps(body).encode(), headers={
             "Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}, method="POST")
-        with urlopen(request, timeout=90) as response:
-            payload = json.loads(response.read().decode())
+        try:
+            with urlopen(request, timeout=90) as response:
+                payload = json.loads(response.read().decode())
+        except HTTPError as exc:
+            raise AgentReviewError(f"{provider} returned HTTP {exc.code}; retry later") from exc
+        except (URLError, TimeoutError, OSError) as exc:
+            raise AgentReviewError(f"{provider} candidate review failed: {exc}") from exc
         response_text = _response_text(payload).strip()
         if response_text.startswith("```"):
             response_text = response_text.split("\n", 1)[-1]
