@@ -1,6 +1,6 @@
 {
   "directory_version": "public-directory-v2",
-  "generated_at": "2026-08-18T00:17:38.623846Z",
+  "generated_at": "2026-08-19T08:58:14.901583Z",
   "record_count": 955,
   "records": [
     {
@@ -42,8 +42,8 @@
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://www.paulfuneralhome.ca/"
     },
     {
       "business_facts": {},
@@ -56,8 +56,8 @@
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://amgfh.com/"
     },
     {
       "business_facts": {},
@@ -74,7 +74,11 @@
       "website_url": null
     },
     {
-      "business_facts": {},
+      "business_facts": {
+        "service_offering": [
+          "chapel"
+        ]
+      },
       "city": "Winnipeg",
       "entity_id": 4,
       "entity_type": "branch",
@@ -84,8 +88,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://www.aboriginalfuneralchapel.com/"
     },
     {
       "business_facts": {
@@ -131,8 +135,8 @@
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://www.adamsfh.ca/"
     },
     {
       "business_facts": {},
@@ -229,8 +233,8 @@
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://www.barkerfh.com/"
     },
     {
       "business_facts": {},
@@ -257,8 +261,8 @@
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://www.alexanderandhoulefuneralhome.ca/"
     },
     {
       "business_facts": {},
@@ -271,8 +275,8 @@
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://allisonfuneralhome.com/"
     },
     {
       "business_facts": {},
@@ -313,8 +317,8 @@
       "source_names": [
         "Bereavement Authority of Ontario Public Register"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://www.alternativefuneralservices.com/"
     },
     {
       "business_facts": {},
@@ -331,7 +335,17 @@
       "website_url": null
     },
     {
-      "business_facts": {},
+      "business_facts": {
+        "founded_year": [
+          "1995"
+        ],
+        "ownership_type": [
+          "family_owned"
+        ],
+        "service_offering": [
+          "pre_planning"
+        ]
+      },
       "city": "Ashern",
       "entity_id": 7,
       "entity_type": "branch",
@@ -341,8 +355,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://andersonfamilyfuneralhome.ca/"
     },
     {
       "business_facts": {},
@@ -467,8 +481,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": "rejected",
-      "website_url": "https://mts.net/"
+      "website_status": "review",
+      "website_url": "https://www.arnasonfuneralhome.com"
     },
     {
       "business_facts": {},
@@ -481,8 +495,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": "rejected",
-      "website_url": "https://mts.net/"
+      "website_status": "review",
+      "website_url": "https://www.arnasonfuneralhome.com"
     },
     {
       "business_facts": {},
@@ -1187,8 +1201,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://www.birchwoodfuneralchapel.com"
     },
     {
       "business_facts": {},
@@ -1313,8 +1327,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://www.boardmanfuneralhome.com"
     },
     {
       "business_facts": {},
@@ -1560,6 +1574,9 @@
         ],
         "ownership_type": [
           "family_owned"
+        ],
+        "parent_organization": [
+          "st. augustine"
         ],
         "service_area": [
           "area families",
@@ -2017,7 +2034,17 @@
       "website_url": null
     },
     {
-      "business_facts": {},
+      "business_facts": {
+        "founded_year": [
+          "1936"
+        ],
+        "ownership_type": [
+          "family_owned"
+        ],
+        "service_offering": [
+          "chapel"
+        ]
+      },
       "city": "Reston",
       "entity_id": 16,
       "entity_type": "branch",
@@ -2027,11 +2054,21 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": "rejected",
-      "website_url": "https://carscaddenfc.com/"
+      "website_status": "selected",
+      "website_url": "https://www.carscaddenfuneralchapel.com"
     },
     {
-      "business_facts": {},
+      "business_facts": {
+        "founded_year": [
+          "1936"
+        ],
+        "ownership_type": [
+          "family_owned"
+        ],
+        "service_offering": [
+          "chapel"
+        ]
+      },
       "city": "Virden",
       "entity_id": 17,
       "entity_type": "branch",
@@ -2041,8 +2078,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": "rejected",
-      "website_url": "https://carscaddenfc.com/"
+      "website_status": "selected",
+      "website_url": "https://www.carscaddenfuneralchapel.com"
     },
     {
       "business_facts": {},
@@ -2279,8 +2316,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.clarkesfuneralhome.com"
     },
     {
       "business_facts": {},
@@ -2293,8 +2330,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.clarkesfuneralhome.com"
     },
     {
       "business_facts": {},
@@ -2731,7 +2768,38 @@
       "website_url": null
     },
     {
-      "business_facts": {},
+      "business_facts": {
+        "founded_year": [
+          "1957"
+        ],
+        "languages_offered": [
+          "that they can understand"
+        ],
+        "ownership_type": [
+          "independent"
+        ],
+        "service_area": [
+          "man",
+          "mani",
+          "manitoba contact us anytime (204) 586-8044 about us thank you for taking the time to visit our website",
+          "manitoba contact us anytime (204) 586-8044 contact us we provide our families with an open door policy",
+          "manitoba contact us anytime (204) 586-8044 our facilities cropo funeral chapel 1442 main street access: mon-fri: 8:30 am-5:00 pm s",
+          "manitoba contact us anytime (204) 586-8044 our locations ​ cropo funeral chapel 1442 main street winnipeg",
+          "manitoba contact us anytime (204) 586-8044 pre-planning options many people plan for significant life events such as birthdays",
+          "manitoba contact us anytime (204) 586-8044 where we began cropo funeral chapel ltd",
+          "manitoba r2w 3v7 204-58",
+          "proudly serving the communities of winnipeg",
+          "winn",
+          "winnipeg"
+        ],
+        "service_offering": [
+          "chapel",
+          "crematorium",
+          "grief_resources",
+          "pre_planning",
+          "reception_facilities"
+        ]
+      },
       "city": "Winnipeg",
       "entity_id": 21,
       "entity_type": "branch",
@@ -2741,11 +2809,42 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://cropo.com/"
     },
     {
-      "business_facts": {},
+      "business_facts": {
+        "founded_year": [
+          "1957"
+        ],
+        "languages_offered": [
+          "that they can understand"
+        ],
+        "ownership_type": [
+          "independent"
+        ],
+        "service_area": [
+          "man",
+          "mani",
+          "manitoba contact us anytime (204) 586-8044 about us thank you for taking the time to visit our website",
+          "manitoba contact us anytime (204) 586-8044 contact us we provide our families with an open door policy",
+          "manitoba contact us anytime (204) 586-8044 our facilities cropo funeral chapel 1442 main street access: mon-fri: 8:30 am-5:00 pm s",
+          "manitoba contact us anytime (204) 586-8044 our locations ​ cropo funeral chapel 1442 main street winnipeg",
+          "manitoba contact us anytime (204) 586-8044 pre-planning options many people plan for significant life events such as birthdays",
+          "manitoba contact us anytime (204) 586-8044 where we began cropo funeral chapel ltd",
+          "manitoba r2w 3v7 204-58",
+          "proudly serving the communities of winnipeg",
+          "winn",
+          "winnipeg"
+        ],
+        "service_offering": [
+          "chapel",
+          "crematorium",
+          "grief_resources",
+          "pre_planning",
+          "reception_facilities"
+        ]
+      },
       "city": "Winnipeg",
       "entity_id": 22,
       "entity_type": "branch",
@@ -2755,8 +2854,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://cropo.com/"
     },
     {
       "business_facts": {},
@@ -2769,8 +2868,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://cropo.com/"
     },
     {
       "business_facts": {
@@ -3418,8 +3517,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.ejcoutu.ca/"
     },
     {
       "business_facts": {},
@@ -3726,8 +3825,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.eternalgracefunerals.com/"
     },
     {
       "business_facts": {},
@@ -4304,8 +4403,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": "rejected",
-      "website_url": "https://mts.net/"
+      "website_status": "review",
+      "website_url": "https://www.fisherfuneralhome.ca/"
     },
     {
       "business_facts": {},
@@ -4374,8 +4473,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.flynnmemorial.com/"
     },
     {
       "business_facts": {},
@@ -5046,8 +5145,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": "rejected",
-      "website_url": "https://mts.net/"
+      "website_status": "selected",
+      "website_url": "https://www.gilbartfuneralhome.com/"
     },
     {
       "business_facts": {},
@@ -5060,8 +5159,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": "rejected",
-      "website_url": "https://mts.net/"
+      "website_status": "review",
+      "website_url": "https://www.gilbartfuneralhome.com/"
     },
     {
       "business_facts": {},
@@ -5340,8 +5439,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": "rejected",
-      "website_url": "https://mymts.net/"
+      "website_status": "review",
+      "website_url": "https://www.grantfuneralhome.com/"
     },
     {
       "business_facts": {},
@@ -5764,7 +5863,17 @@
       "website_url": null
     },
     {
-      "business_facts": {},
+      "business_facts": {
+        "founded_year": [
+          "2008"
+        ],
+        "ownership_type": [
+          "nonprofit"
+        ],
+        "service_offering": [
+          "grief_resources"
+        ]
+      },
       "city": "The Pas",
       "entity_id": 39,
       "entity_type": "branch",
@@ -5774,8 +5883,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": "rejected",
-      "website_url": "https://mymts.net/"
+      "website_status": "selected",
+      "website_url": "https://www.hemauerfuneralhome.com/"
     },
     {
       "business_facts": {},
@@ -6670,8 +6779,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://www.willmorchapel.com/"
     },
     {
       "business_facts": {},
@@ -6684,8 +6793,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://www.willmorchapel.com/"
     },
     {
       "business_facts": {},
@@ -7314,8 +7423,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://www.korbanchapel.com/"
     },
     {
       "business_facts": {},
@@ -7328,8 +7437,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://www.korbanchapel.com/"
     },
     {
       "business_facts": {},
@@ -7342,8 +7451,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://interlakecremation.ca/"
     },
     {
       "business_facts": {},
@@ -7356,8 +7465,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://kowalchuks.net/"
     },
     {
       "business_facts": {},
@@ -7971,7 +8080,8 @@
           "teulon",
           "the communities of stonewall",
           "warren",
-          "woodlands"
+          "woodlands",
+          "your family as you would wish to be served"
         ],
         "service_offering": [
           "chapel",
@@ -9086,8 +9196,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.morrisfuneralhome.ca/"
     },
     {
       "business_facts": {},
@@ -9296,8 +9406,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.wolkowski.ca/"
     },
     {
       "business_facts": {},
@@ -9398,7 +9508,27 @@
       "website_url": "https://nbardal.mb.ca/"
     },
     {
-      "business_facts": {},
+      "business_facts": {
+        "founded_year": [
+          "2008"
+        ],
+        "parent_organization": [
+          "millennium masonic lodge no. 182"
+        ],
+        "service_area": [
+          "east st",
+          "stonewall",
+          "stony mountain",
+          "teulon",
+          "winnipeg"
+        ],
+        "service_offering": [
+          "chapel",
+          "crematorium",
+          "grief_resources",
+          "pre_planning"
+        ]
+      },
       "city": "Gimli",
       "entity_id": 56,
       "entity_type": "branch",
@@ -9408,8 +9538,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.neilbardalfuneralhome.com/"
     },
     {
       "business_facts": {},
@@ -9650,7 +9780,17 @@
       "website_url": null
     },
     {
-      "business_facts": {},
+      "business_facts": {
+        "languages_offered": [
+          "education",
+          "family involvement",
+          "health promotion",
+          "initiative",
+          "nutrition",
+          "parental",
+          "social support"
+        ]
+      },
       "city": "Norway House",
       "entity_id": 57,
       "entity_type": "branch",
@@ -9660,8 +9800,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": "review",
-      "website_url": "https://nhcn.ca/"
+      "website_status": "selected",
+      "website_url": "https://nhcn.ca/norway-house-funeral-home/"
     },
     {
       "business_facts": {},
@@ -10112,7 +10252,11 @@
       "website_url": "https://braendlebrucefs.ca/"
     },
     {
-      "business_facts": {},
+      "business_facts": {
+        "service_offering": [
+          "grief_resources"
+        ]
+      },
       "city": "Dauphin",
       "entity_id": 59,
       "entity_type": "branch",
@@ -10122,8 +10266,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.pathwaysfunerals.com/"
     },
     {
       "business_facts": {},
@@ -10206,8 +10350,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.paullfuneralhome.ca/"
     },
     {
       "business_facts": {},
@@ -10420,7 +10564,12 @@
       "website_url": null
     },
     {
-      "business_facts": {},
+      "business_facts": {
+        "service_offering": [
+          "chapel",
+          "grief_resources"
+        ]
+      },
       "city": "Portage La Prairie",
       "entity_id": 61,
       "entity_type": "branch",
@@ -10430,8 +10579,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.mckenziesportagefuneralchapel.com/"
     },
     {
       "business_facts": {},
@@ -10542,8 +10691,6 @@
         ],
         "service_area": [
           "families during their grief",
-          "manitoba rae's funeral service - shoal lake | 521 4th avenue / po box 167 | shoal lake",
-          "mb r0j 1z0 | tel: 1-204-759-2160 | f",
           "you throughout manitoba rae"
         ],
         "service_offering": [
@@ -10615,8 +10762,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.redpathfuneralhome.com/"
     },
     {
       "business_facts": {},
@@ -10797,8 +10944,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://www.ronaldmoffitmemorialservices.com/"
     },
     {
       "business_facts": {},
@@ -11147,8 +11294,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.seasonsfunerals.com/"
     },
     {
       "business_facts": {},
@@ -11525,8 +11672,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.sneathstrilchuk.com/"
     },
     {
       "business_facts": {},
@@ -11539,8 +11686,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.sneathstrilchuk.com/"
     },
     {
       "business_facts": {},
@@ -11553,8 +11700,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.sneathstrilchuk.com/"
     },
     {
       "business_facts": {},
@@ -11567,11 +11714,21 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.sneathstrilchuk.com/sainte-rose-du-lac"
     },
     {
-      "business_facts": {},
+      "business_facts": {
+        "founded_year": [
+          "1985"
+        ],
+        "service_offering": [
+          "chapel",
+          "crematorium",
+          "grief_resources",
+          "pre_planning"
+        ]
+      },
       "city": "Beausejour",
       "entity_id": 72,
       "entity_type": "branch",
@@ -11581,8 +11738,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": "rejected",
-      "website_url": "https://soberingmb.ca/"
+      "website_status": "selected",
+      "website_url": "https://www.soberingfuneralchapel.com/"
     },
     {
       "business_facts": {},
@@ -11875,8 +12032,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://www.swanvalleyfuneralservices.com/"
     },
     {
       "business_facts": {},
@@ -12439,8 +12596,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.transconacremation.com/"
     },
     {
       "business_facts": {},
@@ -12733,8 +12890,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://voyagefuneralhomes.com"
     },
     {
       "business_facts": {},
@@ -12747,8 +12904,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://voyagefuneralhomes.com"
     },
     {
       "business_facts": {},
@@ -12761,8 +12918,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://voyagefuneralhomes.com"
     },
     {
       "business_facts": {},
@@ -13227,7 +13384,17 @@
       "website_url": null
     },
     {
-      "business_facts": {},
+      "business_facts": {
+        "ownership_type": [
+          "family_owned",
+          "nonprofit"
+        ],
+        "service_offering": [
+          "chapel",
+          "grief_resources",
+          "pre_planning"
+        ]
+      },
       "city": "Carberry",
       "entity_id": 85,
       "entity_type": "branch",
@@ -13237,11 +13404,16 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.whitesfh.ca/carberry-mb"
     },
     {
-      "business_facts": {},
+      "business_facts": {
+        "service_offering": [
+          "grief_resources",
+          "pre_planning"
+        ]
+      },
       "city": "Neepawa",
       "entity_id": 86,
       "entity_type": "branch",
@@ -13251,8 +13423,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.whitesfh.ca/neepawa-mb"
     },
     {
       "business_facts": {},
@@ -13265,8 +13437,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.whitesfh.ca/"
     },
     {
       "business_facts": {},
@@ -13279,11 +13451,17 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "review",
+      "website_url": "https://www.wiebefuneralhomes.com/"
     },
     {
-      "business_facts": {},
+      "business_facts": {
+        "service_offering": [
+          "chapel",
+          "grief_resources",
+          "pre_planning"
+        ]
+      },
       "city": "Altona",
       "entity_id": 89,
       "entity_type": "branch",
@@ -13293,8 +13471,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.wiebefhaltona.com/"
     },
     {
       "business_facts": {},
@@ -13307,8 +13485,8 @@
       "source_names": [
         "Funeral Board of Manitoba"
       ],
-      "website_status": null,
-      "website_url": null
+      "website_status": "selected",
+      "website_url": "https://www.wiebefuneralhomes.com/about/winkler"
     },
     {
       "business_facts": {},

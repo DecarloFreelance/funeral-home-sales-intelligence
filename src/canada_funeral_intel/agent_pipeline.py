@@ -2,15 +2,19 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Callable
 
 from canada_funeral_intel.business_intelligence.cli import (
     run_business_facts_agent,
     run_business_facts_agent_apply,
 )
-from canada_funeral_intel.people.cli import run_people_review_agent, run_people_review_populate
+from canada_funeral_intel.people.cli import (
+    PeopleCommandError,
+    run_people_review_agent,
+    run_people_review_populate,
+)
 from canada_funeral_intel.verification.website_cli import (
     run_website_candidate_review_agent,
     run_website_candidate_review_apply,
@@ -149,10 +153,23 @@ def run_agent_pipeline(
         people_queue = run_people_review_populate(connection)
         _emit(progress, "people queue", people_queue)
         people_path = run_dir / "people-review.json"
-        people = run_people_review_agent(
-            connection, model=model, provider=provider, output=people_path,
-            agent="people-review",
-        )
+        try:
+            people = run_people_review_agent(
+                connection, model=model, provider=provider, output=people_path,
+                agent="people-review",
+            )
+        except PeopleCommandError as exc:
+            people = {
+                "agent": "people-review",
+                "database_changed": False,
+                "model": model,
+                "provider": provider,
+                "status": "failed",
+                "error": str(exc),
+                "recommendations": [],
+            }
+            people_path.write_text(json.dumps(people, indent=2) + "\n")
+            progress(f"[people review] skipped after recoverable error: {exc}")
         _emit(progress, "people review (artifact only)", people)
         results["stages"].append({"name": "people_review", "result": people})
 

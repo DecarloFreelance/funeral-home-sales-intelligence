@@ -8,10 +8,11 @@ from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from canada_funeral_intel.model_gateway import nvidia_chat_config
 from canada_funeral_intel.people.agent_review import (
     AgentReviewError,
     RoundRobinKeys,
-    _response_text,
+    _response_json,
 )
 
 PROMPT_VERSION = "website-quality-review-v1"
@@ -103,17 +104,20 @@ def review_websites(
             if provider == "openrouter"
             else None
         )
-        endpoint = {
-            "nvidia": "https://integrate.api.nvidia.com/v1/chat/completions",
-            "openrouter": "https://openrouter.ai/api/v1/chat/completions",
-            "openai": "https://api.openai.com/v1/chat/completions",
-        }.get(provider)
-        if endpoint is None or (not api_key and keys is None):
+        if provider == "nvidia":
+            endpoint, request_model, api_key = nvidia_chat_config(model)
+        else:
+            endpoint = {
+                "openrouter": "https://openrouter.ai/api/v1/chat/completions",
+                "openai": "https://api.openai.com/v1/chat/completions",
+            }.get(provider)
+            request_model = model
+        if endpoint is None or (provider != "nvidia" and not api_key and keys is None):
             raise AgentReviewError(
                 f"{provider.upper()}_API_KEY is not set or provider unsupported"
             )
         body = {
-            "model": model,
+            "model": request_model,
             "max_tokens": max(2500, len(batch) * 220),
             "temperature": 0.1,
             "messages": [
@@ -169,7 +173,7 @@ def review_websites(
                     ) from exc
                 time.sleep(2**attempt)
         try:
-            items = json.loads(_response_text(payload))["recommendations"]
+            items = _response_json(payload)["recommendations"]
             expected = {int(item["website_id"]) for item in batch}
             if (
                 not isinstance(items, list)

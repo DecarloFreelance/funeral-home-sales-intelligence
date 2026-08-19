@@ -3,6 +3,12 @@
 The enrichment workflow is staged. Agent suggestions never become public
 directory data by themselves.
 
+For `--provider nvidia`, calls use the local OpenAI-compatible NVCF proxy at
+`http://127.0.0.1:8000/v1/chat/completions` by default. Set `NVCF_PROXY_URL`
+to override it. The application translates supported full NVIDIA model IDs,
+such as `deepseek-ai/deepseek-v4-flash-0731`, to the proxy alias
+`deepseek-v4-flash`. The proxy itself owns `NVIDIA_API_KEY`.
+
 ## Visible checkpointed runner
 
 Use `agent-pipeline` when you want one terminal session to show the complete

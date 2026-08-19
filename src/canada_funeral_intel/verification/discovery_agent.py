@@ -4,11 +4,12 @@ import json
 import os
 import sqlite3
 from pathlib import Path
-from urllib.parse import urlencode
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from canada_funeral_intel.people.agent_review import AgentReviewError, _response_text
+from canada_funeral_intel.model_gateway import nvidia_chat_config
+from canada_funeral_intel.people.agent_review import AgentReviewError, _response_json
 
 PROMPT_VERSION = "website-discovery-v1"
 
@@ -44,22 +45,47 @@ def _brave_search(query: str, api_key: str) -> list[dict[str, str]]:
 
 
 def _searxng_search(query: str, base_url: str) -> list[dict[str, str]]:
-    endpoint = base_url.rstrip("/") + "/search?" + urlencode(
-        {"q": query, "format": "json", "categories": "general", "language": "en-CA"}
-    )
-    request = Request(endpoint, headers={"Accept": "application/json"})
-    with urlopen(request, timeout=30) as response:
-        payload = json.loads(response.read().decode())
-    results = payload.get("results", [])
-    return [
-        {
-            "title": str(item.get("title", "")),
-            "url": str(item.get("url", "")),
-            "description": str(item.get("content", item.get("description", ""))),
-        }
-        for item in results[:5]
-        if item.get("url")
-    ]
+    queries = [query]
+    fallback_query = query.removesuffix(" official website").strip()
+    if fallback_query and fallback_query != query:
+        queries.append(fallback_query)
+    unavailable_engines: list[str] = []
+    for search_query in queries:
+        endpoint = base_url.rstrip("/") + "/search?" + urlencode(
+            {
+                "q": search_query,
+                "format": "json",
+                "categories": "general",
+                "language": "en",
+            }
+        )
+        request = Request(endpoint, headers={"Accept": "application/json"})
+        with urlopen(request, timeout=30) as response:
+            payload = json.loads(response.read().decode())
+        for engine in payload.get("unresponsive_engines", []):
+            if isinstance(engine, list) and engine:
+                unavailable_engines.append(": ".join(map(str, engine)))
+            elif engine:
+                unavailable_engines.append(str(engine))
+        results = payload.get("results", [])
+        normalized = [
+            {
+                "title": str(item.get("title", "")),
+                "url": str(item.get("url", "")),
+                "description": str(item.get("content", item.get("description", ""))),
+            }
+            for item in results[:5]
+            if item.get("url")
+        ]
+        if normalized:
+            return normalized
+    if unavailable_engines:
+        engines = ", ".join(dict.fromkeys(unavailable_engines))
+        raise AgentReviewError(
+            "SearXNG returned no results because search engines are unavailable: "
+            + engines
+        )
+    return []
 
 
 def _records(connection: sqlite3.Connection, limit: int, offset: int) -> list[dict[str, object]]:
@@ -144,13 +170,16 @@ def discover_missing_websites(
         )
         api_key = os.environ.get(f"{provider.upper()}_API_KEY", "").strip()
         endpoints = {
-            "nvidia": "https://integrate.api.nvidia.com/v1/chat/completions",
             "openai": "https://api.openai.com/v1/chat/completions",
         }
-        endpoint = endpoints.get(provider)
-        if endpoint is None or not api_key:
+        if provider == "nvidia":
+            endpoint, request_model, api_key = nvidia_chat_config(model)
+        else:
+            endpoint = endpoints.get(provider)
+            request_model = model
+        if endpoint is None or (provider != "nvidia" and not api_key):
             raise AgentReviewError(f"{provider.upper()}_API_KEY is not set or provider unsupported")
-        body = {"model": model, "max_tokens": max(2500, len(records) * 220),
+        body = {"model": request_model, "max_tokens": max(2500, len(records) * 220),
                 "temperature": 0.1,
                 "messages": [{"role": "system", "content": "You are a conservative website discovery assistant."},
                              {"role": "user", "content": prompt}],
@@ -159,10 +188,17 @@ def discover_missing_websites(
             "Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}, method="POST")
         try:
             with urlopen(request, timeout=90) as response:
-                payload = json.loads(response.read().decode())
+                raw_response = response.read().decode(errors="replace")
+                try:
+                    payload = json.loads(raw_response)
+                except json.JSONDecodeError as exc:
+                    preview = raw_response[:300] or "<empty response>"
+                    raise AgentReviewError(
+                        f"{provider} returned invalid JSON from {endpoint}: {preview}"
+                    ) from exc
         except (HTTPError, URLError, TimeoutError, OSError) as exc:
             raise _network_error(exc, provider) from exc
-        decoded = json.loads(_response_text(payload))
+        decoded = _response_json(payload)
         recommendations = decoded.get("recommendations")
         expected = {int(row["entity_id"]) for row in records}
         if isinstance(recommendations, list):

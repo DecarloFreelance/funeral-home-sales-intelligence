@@ -6,6 +6,7 @@ import sqlite3
 import webbrowser
 from collections.abc import Callable
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from canada_funeral_intel.extraction.page_people import extract_website_people
 from canada_funeral_intel.extraction.storage import (
@@ -34,6 +35,7 @@ from canada_funeral_intel.verification.manual import (
     import_manual_website_evidence,
 )
 from canada_funeral_intel.verification.models import (
+    WebsiteDiscoveryError,
     WebsiteEvidence,
     WebsiteEvidenceClass,
     WebsiteEvidenceType,
@@ -70,6 +72,100 @@ from canada_funeral_intel.verification.storage import (
 
 class WebsiteCommandError(RuntimeError):
     """Raised when a website CLI command cannot complete safely."""
+
+
+def run_manual_website_intake(
+    connection: sqlite3.Connection,
+    *,
+    limit: int = 10,
+    offset: int = 0,
+    input_fn: Callable[[str], str] = input,
+    output_fn: Callable[[str], None] = print,
+) -> dict[str, object]:
+    """Collect one operator-confirmed website URL at a time."""
+
+    if not 1 <= limit <= 100:
+        raise WebsiteCommandError("limit must be between 1 and 100")
+    if offset < 0:
+        raise WebsiteCommandError("offset must be zero or greater")
+    rows = connection.execute(
+        """
+        SELECT e.id AS entity_id, e.canonical_name AS business_name,
+               MAX(CASE WHEN nv.field_name='city' THEN nv.normalized_value END) AS city,
+               MAX(CASE WHEN nv.field_name='province' THEN nv.normalized_value END) AS province,
+               GROUP_CONCAT(DISTINCT w.url) AS existing_urls
+        FROM entities e
+        JOIN entity_source_records esr ON esr.entity_id=e.id
+        JOIN normalized_values nv ON nv.source_record_id=esr.source_record_id
+        LEFT JOIN websites w ON w.entity_id=e.id
+        WHERE e.status='active'
+          AND NOT EXISTS (
+              SELECT 1 FROM websites queued
+              WHERE queued.entity_id=e.id
+                AND queued.status IN ('selected', 'candidate', 'review')
+          )
+        GROUP BY e.id
+        HAVING business_name IS NOT NULL AND trim(business_name) <> ''
+        ORDER BY e.id
+        LIMIT ? OFFSET ?
+        """,
+        (limit, offset),
+    ).fetchall()
+    inserted = skipped = 0
+    for position, row in enumerate(rows, start=1):
+        output_fn("")
+        output_fn(f"[{position}/{len(rows)}] Entity {row['entity_id']}")
+        output_fn(f"  {row['business_name']} — {row['city'] or ''}, {row['province'] or ''}")
+        if row["existing_urls"]:
+            output_fn(f"  Existing URLs: {row['existing_urls']}")
+        try:
+            answer = input_fn("Official website URL [s=skip, q=quit]: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            output_fn("\nManual intake stopped; completed URLs were saved.")
+            break
+        if answer.casefold() in {"q", "quit"}:
+            break
+        if answer.casefold() in {"", "s", "skip", "-"}:
+            skipped += 1
+            continue
+        parsed = urlsplit(answer)
+        if parsed.scheme != "https" or not parsed.netloc or any(char.isspace() for char in answer):
+            output_fn("  Invalid URL; enter a full https:// URL or s to skip.")
+            skipped += 1
+            continue
+        try:
+            candidate = make_website_candidate(
+                entity_id=int(row["entity_id"]),
+                url=answer,
+                discovery_method="manual_operator",
+                confidence=1.0,
+            )
+            result = upsert_website_candidate(
+                connection,
+                candidate,
+                evidence=(WebsiteEvidence(
+                    evidence_type=WebsiteEvidenceType.MANUAL,
+                    evidence_class=WebsiteEvidenceClass.MANUAL,
+                    evidence_value=answer,
+                    contribution=1.0,
+                    derivation_method="manual-operator-intake-v1",
+                    derivation_version="manual-operator-intake-v1",
+                ),),
+            )
+            if result.inserted:
+                queue_website_for_review(connection, result.website_id)
+                inserted += 1
+                output_fn(f"  Queued website {result.website_id} for review.")
+            else:
+                output_fn("  URL already exists; nothing new queued.")
+        except (WebsiteDiscoveryError, WebsiteStorageError) as exc:
+            output_fn(f"  Could not save URL: {exc}")
+            skipped += 1
+    return {
+        "processed": len(rows),
+        "candidates_inserted": inserted,
+        "skipped": skipped,
+    }
 
 
 def _read_reviewer_note(input_fn: Callable[[str], str]) -> str | None:

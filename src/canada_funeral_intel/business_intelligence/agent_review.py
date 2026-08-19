@@ -9,10 +9,11 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from canada_funeral_intel.business_intelligence.storage import list_business_facts
+from canada_funeral_intel.model_gateway import nvidia_chat_config
 from canada_funeral_intel.people.agent_review import (
     AgentReviewError,
     RoundRobinKeys,
-    _response_text,
+    _response_json,
 )
 
 PROMPT_VERSION = "business-facts-review-v1"
@@ -115,6 +116,7 @@ def review_business_facts(
     keys_file: Path | None = None,
     _records: list[dict[str, object]] | None = None,
 ) -> dict[str, object]:
+    request_model = model
     if _records is None:
         records = [
             {
@@ -177,18 +179,17 @@ def review_business_facts(
         endpoint = "https://openrouter.ai/api/v1/chat/completions"
     elif provider == "nvidia":
         keys = None
-        api_key = os.environ.get("NVIDIA_API_KEY", "").strip()
-        endpoint = "https://integrate.api.nvidia.com/v1/chat/completions"
+        endpoint, request_model, api_key = nvidia_chat_config(model)
     elif provider == "openai":
         keys = None
         api_key = os.environ.get("OPENAI_API_KEY", "").strip()
         endpoint = "https://api.openai.com/v1/chat/completions"
     else:
         raise AgentReviewError(f"unsupported provider: {provider}")
-    if not api_key and keys is None:
+    if provider != "nvidia" and not api_key and keys is None:
         raise AgentReviewError(f"{provider.upper()}_API_KEY is not set")
     body = {
-        "model": model,
+        "model": request_model,
         "max_tokens": max(3000, len(records) * 220),
         "temperature": 0.1,
         "messages": [
@@ -243,7 +244,7 @@ def review_business_facts(
                 raise AgentReviewError(last_error) from exc
             time.sleep(2**attempt)
     try:
-        decoded = json.loads(_response_text(payload))
+        decoded = _response_json(payload)
         recommendations = _validate(
             decoded["recommendations"], {r["fact_id"] for r in records}
         )

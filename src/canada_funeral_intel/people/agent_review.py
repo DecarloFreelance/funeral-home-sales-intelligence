@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from canada_funeral_intel.model_gateway import nvidia_chat_config
 from canada_funeral_intel.people.models import PersonReviewStatus
 from canada_funeral_intel.people.resolution import list_person_review_queue
 
@@ -113,21 +114,105 @@ _SCHEMA = {
 
 
 def _response_text(payload: dict[str, object]) -> str:
+    def content_text(value: object) -> str | None:
+        if isinstance(value, str) and value.strip():
+            return value
+        if isinstance(value, dict):
+            for key in ("text", "content", "reasoning_content", "reasoning"):
+                text = content_text(value.get(key))
+                if text is not None:
+                    return text
+        if isinstance(value, list):
+            parts = [content_text(item) for item in value]
+            joined = "".join(part for part in parts if part)
+            if joined.strip():
+                return joined
+        return None
+
     text = payload.get("output_text")
     if isinstance(text, str) and text.strip():
         return text
     choices = payload.get("choices")
     if isinstance(choices, list) and choices:
         message = choices[0].get("message") if isinstance(choices[0], dict) else None
-        if isinstance(message, dict) and isinstance(message.get("content"), str):
-            return str(message["content"])
+        if isinstance(message, dict):
+            text = content_text(message.get("content"))
+            if text is not None:
+                return text
+            text = content_text(message.get("reasoning_content"))
+            if text is not None:
+                return text
+        if isinstance(choices[0], dict):
+            text = content_text(choices[0].get("text"))
+            if text is not None:
+                return text
+            text = content_text(choices[0].get("reasoning_content"))
+            if text is not None:
+                return text
     for item in payload.get("output", []):
         if not isinstance(item, dict):
             continue
-        for content in item.get("content", []):
-            if isinstance(content, dict) and isinstance(content.get("text"), str):
-                return str(content["text"])
-    raise AgentReviewError("Responses API returned no text output")
+        for key in ("content", "text", "output_text", "reasoning_content", "reasoning"):
+            text = content_text(item.get(key))
+            if text is not None:
+                return text
+    nested = payload.get("response")
+    if isinstance(nested, dict):
+        try:
+            return _response_text(nested)
+        except AgentReviewError:
+            pass
+    for key in ("result", "data"):
+        nested = payload.get(key)
+        if isinstance(nested, dict):
+            try:
+                return _response_text(nested)
+            except AgentReviewError:
+                pass
+        elif isinstance(nested, list):
+            text = content_text(nested)
+            if text is not None:
+                return text
+    # Some compatible gateways wrap the OpenAI response in a top-level
+    # message or return a response object as a JSON string.
+    for key in ("message", "response", "result", "data"):
+        value = payload.get(key)
+        text = content_text(value)
+        if text is not None:
+            return text
+    keys = ", ".join(sorted(str(key) for key in payload))
+    choices = payload.get("choices")
+    choice_shape = ""
+    if isinstance(choices, list) and choices and isinstance(choices[0], dict):
+        choice_shape = "; choice keys=" + ", ".join(sorted(str(key) for key in choices[0]))
+        message = choices[0].get("message")
+        if isinstance(message, dict):
+            choice_shape += "; message keys=" + ", ".join(sorted(str(key) for key in message))
+    raise AgentReviewError(
+        "Responses API returned no text output"
+        f" (top-level keys={keys or 'none'}{choice_shape})"
+    )
+
+
+def _response_json(payload: dict[str, object]) -> object:
+    """Decode JSON returned by chat models, including fenced JSON replies."""
+
+    text = _response_text(payload).strip()
+    if text.startswith("```"):
+        text = text.split("\n", 1)[-1]
+        if text.endswith("```"):
+            text = text[:-3].rstrip()
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        starts = [position for position in (text.find("{"), text.find("[")) if position >= 0]
+        ends = [position for position in (text.rfind("}"), text.rfind("]")) if position >= 0]
+        if starts and ends:
+            try:
+                return json.loads(text[min(starts) : max(ends) + 1])
+            except json.JSONDecodeError:
+                pass
+        raise
 
 
 def _validate_recommendations(
@@ -204,21 +289,20 @@ def review_deferred_people(
     keys_file: Path | None = None,
     agent: str = "people-review",
 ) -> dict[str, object]:
+    request_model = model
     if provider == "openrouter":
         if keys_file is None:
             keys_file = Path("~/openrouter_keys.txt")
         keys = RoundRobinKeys(keys_file)
         endpoint = "https://openrouter.ai/api/v1/chat/completions"
     elif provider == "nvidia":
-        api_key = os.environ.get("NVIDIA_API_KEY", "").strip()
-        if not api_key:
-            raise AgentReviewError("NVIDIA_API_KEY is not set")
-        endpoint = "https://integrate.api.nvidia.com/v1/chat/completions"
+        endpoint, request_model, api_key = nvidia_chat_config(model)
     else:
         api_key = os.environ.get("OPENAI_API_KEY", "").strip()
         if not api_key:
             raise AgentReviewError("OPENAI_API_KEY is not set")
         endpoint = "https://api.openai.com/v1/responses"
+        request_model = model
 
     rows = list_person_review_queue(connection, status=PersonReviewStatus.DEFERRED)
     records = [
@@ -250,7 +334,7 @@ def review_deferred_people(
     )
     if provider in {"openrouter", "nvidia"}:
         body = {
-            "model": model,
+            "model": request_model,
             "max_tokens": max(3000, len(records) * 320),
             "temperature": 0.1,
             "messages": [
@@ -379,7 +463,7 @@ def review_deferred_people(
             raise AgentReviewError(last_error)
 
     try:
-        decoded = json.loads(_response_text(payload))
+        decoded = _response_json(payload)
         recommendations = _validate_recommendations(
             decoded["recommendations"],
             {record["queue_id"] for record in records},

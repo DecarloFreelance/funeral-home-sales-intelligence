@@ -6,6 +6,7 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
+from .agent_pipeline import AgentPipelineError, run_agent_pipeline
 from .business_intelligence.cli import (
     BusinessFactCommandError,
     run_business_facts_agent,
@@ -15,7 +16,6 @@ from .business_intelligence.cli import (
     run_business_facts_list,
     run_business_facts_summary,
 )
-from .agent_pipeline import AgentPipelineError, run_agent_pipeline
 from .collectors.afsrb_cli import (
     AFSRB_SOURCE_NAME,
     AfsrbProbeCommandError,
@@ -142,6 +142,7 @@ from .verification.models import WebsiteReviewStatus
 from .verification.website_cli import (
     WebsiteCommandError,
     print_website_payload,
+    run_manual_website_intake,
     run_website_batch_verify,
     run_website_candidate_review_agent,
     run_website_candidate_review_apply,
@@ -489,6 +490,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     website_template_parser.add_argument("--output", type=Path, required=True)
     website_template_parser.add_argument("--limit", type=int)
+    website_manual_intake_parser = website_subparsers.add_parser(
+        "manual-intake",
+        help="Interactively enter one official website URL at a time.",
+    )
+    website_manual_intake_parser.add_argument("--limit", type=int, default=10)
+    website_manual_intake_parser.add_argument("--offset", type=int, default=0)
     website_populate_parser = website_subparsers.add_parser(
         "populate-candidates",
         help="Populate website candidates offline from trusted source provenance.",
@@ -2384,6 +2391,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                         connection,
                         output_path=args.output,
                         limit=args.limit,
+                    )
+
+                elif args.website_command == "manual-intake":
+                    payload = run_manual_website_intake(
+                        connection,
+                        limit=args.limit,
+                        offset=args.offset,
                     )
 
                 elif args.website_command == "batch-verify":

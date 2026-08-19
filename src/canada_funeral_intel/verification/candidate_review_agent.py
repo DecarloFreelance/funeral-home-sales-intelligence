@@ -7,7 +7,8 @@ from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from canada_funeral_intel.people.agent_review import AgentReviewError, _response_text
+from canada_funeral_intel.model_gateway import nvidia_chat_config
+from canada_funeral_intel.people.agent_review import AgentReviewError, _response_json
 
 PROMPT_VERSION = "website-candidate-review-v1"
 DECISIONS = {"approved", "rejected", "deferred"}
@@ -59,11 +60,14 @@ def review_website_candidates(
             + json.dumps(records, ensure_ascii=False)
         )
         api_key = os.environ.get(f"{provider.upper()}_API_KEY", "").strip()
-        endpoint = {"nvidia": "https://integrate.api.nvidia.com/v1/chat/completions",
-                    "openai": "https://api.openai.com/v1/chat/completions"}.get(provider)
-        if endpoint is None or not api_key:
+        if provider == "nvidia":
+            endpoint, request_model, api_key = nvidia_chat_config(model)
+        else:
+            endpoint = {"openai": "https://api.openai.com/v1/chat/completions"}.get(provider)
+            request_model = model
+        if endpoint is None or (provider != "nvidia" and not api_key):
             raise AgentReviewError(f"{provider.upper()}_API_KEY is not set or provider unsupported")
-        body = {"model": model, "max_tokens": max(2500, len(records) * 220),
+        body = {"model": request_model, "max_tokens": max(2500, len(records) * 220),
                 "temperature": 0.1,
                 "messages": [{"role": "system", "content": "You are a conservative website identity reviewer."},
                              {"role": "user", "content": prompt}]}
@@ -73,15 +77,18 @@ def review_website_candidates(
             with urlopen(request, timeout=90) as response:
                 payload = json.loads(response.read().decode())
         except HTTPError as exc:
-            raise AgentReviewError(f"{provider} returned HTTP {exc.code}; retry later") from exc
+            try:
+                detail = exc.read().decode("utf-8", errors="replace")[:500]
+            except OSError:
+                detail = ""
+            suffix = f": {detail}" if detail else ""
+            raise AgentReviewError(
+                f"{provider} returned HTTP {exc.code}{suffix}"
+            ) from exc
         except (URLError, TimeoutError, OSError) as exc:
             raise AgentReviewError(f"{provider} candidate review failed: {exc}") from exc
-        response_text = _response_text(payload).strip()
-        if response_text.startswith("```"):
-            response_text = response_text.split("\n", 1)[-1]
-            if response_text.endswith("```"):
-                response_text = response_text[:-3].rstrip()
-        decoded = json.loads(response_text)
+        response_text = _response_json(payload)
+        decoded = response_text
         for _ in range(3):
             if not isinstance(decoded, str):
                 break
