@@ -145,8 +145,8 @@ def run_people_review_auto_triage(
             status = PersonReviewStatus.REJECTED
             reason = "page heading, contact block, or article text"
         elif "/history" in source_url:
-            status = PersonReviewStatus.DEFERRED
-            reason = "historical ownership/history evidence"
+            status = PersonReviewStatus.REJECTED
+            reason = "historical ownership/history evidence; exclude from current personnel"
         elif name in {
             "patricia a. sweryd vice",
             "david e. pritchard past",
@@ -194,6 +194,9 @@ def run_people_review_agent(
     provider: str = "openai",
     keys_file: Path | None = None,
     agent: str = "people-review",
+    queue_limit: int = 10,
+    apply_safe: bool = False,
+    minimum_confidence: float = 0.95,
 ) -> dict[str, object]:
     from canada_funeral_intel.people.agent_review import (
         AgentReviewError,
@@ -208,6 +211,9 @@ def run_people_review_agent(
             provider=provider,
             keys_file=keys_file,
             agent=agent,
+            queue_limit=queue_limit,
+            apply_safe=apply_safe,
+            minimum_confidence=minimum_confidence,
         )
     except AgentReviewError as exc:
         raise PeopleCommandError(str(exc)) from exc

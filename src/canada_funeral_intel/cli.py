@@ -448,8 +448,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="Use live search results from the selected search provider.",
     )
     website_agent_discover.add_argument(
-        "--search-provider", choices=("searxng", "brave"), default="searxng",
-        help="Live search provider (default: searxng; configure SEARXNG_URL).",
+        "--search-provider", choices=("searxng", "brave", "langsearch"), default="searxng",
+        help="Live search provider (default: searxng; configure its matching environment variable).",
     )
     website_agent_apply = website_subparsers.add_parser(
         "agent-discovery-apply",
@@ -496,6 +496,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     website_manual_intake_parser.add_argument("--limit", type=int, default=10)
     website_manual_intake_parser.add_argument("--offset", type=int, default=0)
+    website_manual_intake_parser.add_argument(
+        "--entity-id", type=int, help="Intake a specific entity without using an offset."
+    )
     website_populate_parser = website_subparsers.add_parser(
         "populate-candidates",
         help="Populate website candidates offline from trusted source provenance.",
@@ -1043,7 +1046,11 @@ def build_parser() -> argparse.ArgumentParser:
     agent_pipeline_parser.add_argument("--entity-limit", type=int, default=10)
     agent_pipeline_parser.add_argument("--entity-offset", type=int, default=0)
     agent_pipeline_parser.add_argument("--queue-limit", type=int, default=10)
-    agent_pipeline_parser.add_argument("--search-provider", choices=("searxng", "brave"), default="searxng")
+    agent_pipeline_parser.add_argument(
+        "--search-provider",
+        choices=("searxng", "brave", "langsearch"),
+        default="searxng",
+    )
     agent_pipeline_parser.add_argument("--no-live-search", action="store_true")
     agent_pipeline_parser.add_argument("--apply", action="store_true", help="Enable database changes; default is dry-run.")
     agent_pipeline_parser.add_argument("--process-approved", action="store_true")
@@ -1120,10 +1127,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     people_review_agent_parser = people_review_subparsers.add_parser(
         "agent-review",
-        help="Generate API recommendations for deferred people; never mutates DB.",
+        help="Generate API recommendations for people; optionally apply only safe decisions.",
     )
     people_review_agent_parser.add_argument("--model")
     people_review_agent_parser.add_argument("--output", type=Path)
+    people_review_agent_parser.add_argument(
+        "--queue-limit", type=int, default=10,
+        help="Maximum deferred observations to send per agent request.",
+    )
+    people_review_agent_parser.add_argument(
+        "--apply-safe",
+        action="store_true",
+        help="Apply only high-confidence agent decisions; leave uncertain records pending.",
+    )
+    people_review_agent_parser.add_argument(
+        "--minimum-confidence",
+        type=float,
+        default=0.95,
+        help="Minimum confidence required when --apply-safe is enabled.",
+    )
     people_review_agent_parser.add_argument(
         "--provider", choices=("openai", "openrouter", "nvidia")
     )
@@ -2127,6 +2149,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                                 provider=args.provider or profile["provider"],
                                 keys_file=args.keys_file,
                                 agent=args.agent,
+                                queue_limit=args.queue_limit,
+                                apply_safe=args.apply_safe,
+                                minimum_confidence=args.minimum_confidence,
                             )
                     else:
                         parser.parse_args(["people", "people-review", "--help"])
@@ -2398,6 +2423,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                         connection,
                         limit=args.limit,
                         offset=args.offset,
+                        entity_id=args.entity_id,
                     )
 
                 elif args.website_command == "batch-verify":

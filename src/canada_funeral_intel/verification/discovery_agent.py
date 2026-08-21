@@ -44,6 +44,38 @@ def _brave_search(query: str, api_key: str) -> list[dict[str, str]]:
     ]
 
 
+def _langsearch_search(query: str, api_key: str) -> list[dict[str, str]]:
+    request = Request(
+        "https://api.langsearch.com/v1/web-search",
+        data=json.dumps(
+            {
+                "query": query,
+                "freshness": "noLimit",
+                "summary": False,
+                "count": 5,
+            }
+        ).encode("utf-8"),
+        headers={
+            "Accept": "application/json",
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    with urlopen(request, timeout=30) as response:
+        payload = json.loads(response.read().decode())
+    results = payload.get("data", {}).get("webPages", {}).get("value", [])
+    return [
+        {
+            "title": str(item.get("name", "")),
+            "url": str(item.get("url", "")),
+            "description": str(item.get("snippet", item.get("summary", ""))),
+        }
+        for item in results[:5]
+        if item.get("url")
+    ]
+
+
 def _searxng_search(query: str, base_url: str) -> list[dict[str, str]]:
     queries = [query]
     fallback_query = query.removesuffix(" official website").strip()
@@ -130,12 +162,19 @@ def discover_missing_websites(
     records = _records(connection, entity_limit, entity_offset)
     search_evidence: list[dict[str, object]] = []
     if live_search and records:
-        if search_provider not in {"brave", "searxng"}:
-            raise AgentReviewError("search_provider must be brave or searxng")
+        if search_provider not in {"brave", "langsearch", "searxng"}:
+            raise AgentReviewError(
+                "search_provider must be brave, langsearch, or searxng"
+            )
         api_key = os.environ.get("BRAVE_SEARCH_API_KEY", "").strip()
+        langsearch_api_key = os.environ.get("LANGSEARCH_API_KEY", "").strip()
         searxng_url = os.environ.get("SEARXNG_URL", "http://127.0.0.1:8080").strip()
         if search_provider == "brave" and not api_key:
             raise AgentReviewError("BRAVE_SEARCH_API_KEY is required with --search-provider brave")
+        if search_provider == "langsearch" and not langsearch_api_key:
+            raise AgentReviewError(
+                "LANGSEARCH_API_KEY is required with --search-provider langsearch"
+            )
         if search_provider == "searxng" and not searxng_url:
             raise AgentReviewError("SEARXNG_URL is required with --search-provider searxng")
         for record in records:
@@ -144,6 +183,8 @@ def discover_missing_websites(
                 results = (
                     _brave_search(query, api_key)
                     if search_provider == "brave"
+                    else _langsearch_search(query, langsearch_api_key)
+                    if search_provider == "langsearch"
                     else _searxng_search(query, searxng_url)
                 )
             except (HTTPError, URLError, TimeoutError, OSError) as exc:
@@ -199,7 +240,12 @@ def discover_missing_websites(
         except (HTTPError, URLError, TimeoutError, OSError) as exc:
             raise _network_error(exc, provider) from exc
         decoded = _response_json(payload)
-        recommendations = decoded.get("recommendations")
+        if isinstance(decoded, list):
+            recommendations = decoded
+        elif isinstance(decoded, dict):
+            recommendations = decoded.get("recommendations")
+        else:
+            recommendations = None
         expected = {int(row["entity_id"]) for row in records}
         if isinstance(recommendations, list):
             for item in recommendations:

@@ -142,9 +142,24 @@ def review_website_candidates(
                 )
             raise AgentReviewError("website-candidate-review response omitted recommendations")
         normalized: list[dict[str, object]] = []
+        expanded: list[object] = []
+        decoder = json.JSONDecoder()
         for item in recommendations:
+            if isinstance(item, (dict, list)):
+                expanded.extend(item if isinstance(item, list) else [item])
+                continue
+            if isinstance(item, str):
+                text = item.strip()
+                starts = [position for position in (text.find("{"), text.find("[")) if position >= 0]
+                if starts:
+                    try:
+                        decoded_item, _ = decoder.raw_decode(text[min(starts):])
+                    except json.JSONDecodeError:
+                        continue
+                    expanded.extend(decoded_item if isinstance(decoded_item, list) else [decoded_item])
+        for item in expanded:
             if not isinstance(item, dict):
-                raise AgentReviewError("website-candidate-review recommendation is not an object")
+                continue
             queue_id = item.get("queue_id", item.get("queueId", item.get("id")))
             if isinstance(queue_id, str) and queue_id.strip().isdigit():
                 item = {key: value for key, value in item.items() if key not in {"queueId", "id"}}
@@ -154,6 +169,11 @@ def review_website_candidates(
                 item["queue_id"] = queue_id
             normalized.append(item)
         recommendations = normalized
+        if len(records) == 1 and len(recommendations) == 1:
+            # A one-item review has an unambiguous queue target. Some smaller
+            # models omit or hallucinate the queue id even when the decision
+            # itself is usable; bind it to the only item requested.
+            recommendations[0]["queue_id"] = int(records[0]["queue_id"])
         if {item.get("queue_id") for item in recommendations} != expected:
             raise AgentReviewError("website-candidate-review response omitted or duplicated queue IDs")
         for item in recommendations:

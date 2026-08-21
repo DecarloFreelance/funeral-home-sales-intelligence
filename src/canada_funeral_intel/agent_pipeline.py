@@ -157,6 +157,8 @@ def run_agent_pipeline(
             people = run_people_review_agent(
                 connection, model=model, provider=provider, output=people_path,
                 agent="people-review",
+                apply_safe=apply,
+                minimum_confidence=0.95,
             )
         except PeopleCommandError as exc:
             people = {
@@ -170,7 +172,7 @@ def run_agent_pipeline(
             }
             people_path.write_text(json.dumps(people, indent=2) + "\n")
             progress(f"[people review] skipped after recoverable error: {exc}")
-        _emit(progress, "people review (artifact only)", people)
+        _emit(progress, "people review (safe apply)" if apply else "people review (artifact only)", people)
         results["stages"].append({"name": "people_review", "result": people})
 
     if review_facts:

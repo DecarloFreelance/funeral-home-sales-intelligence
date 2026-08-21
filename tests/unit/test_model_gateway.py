@@ -2,7 +2,7 @@ from canada_funeral_intel.model_gateway import (
     NVCF_PROXY_DEFAULT,
     nvidia_chat_config,
 )
-from canada_funeral_intel.people.agent_review import _response_text
+from canada_funeral_intel.people.agent_review import _response_json, _response_text
 
 
 def test_nvidia_config_uses_local_proxy_and_translates_full_model(monkeypatch):
@@ -37,3 +37,12 @@ def test_response_text_accepts_openai_content_parts_and_nested_response():
     assert _response_text(
         {"choices": [{"message": {"reasoning_content": "OK"}}]}
     ) == "OK"
+
+
+def test_response_json_accepts_concatenated_model_json():
+    first = '{"recommendations": []}'
+    second = '{"extra": true}'
+
+    assert _response_json(
+        {"choices": [{"message": {"content": first + second}}]}
+    ) == {"recommendations": []}

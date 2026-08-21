@@ -74,7 +74,13 @@ def list_person_review_queue(
     if status is not None:
         query += " WHERE q.status = ?"
         parameters = (status.value,)
-    query += " ORDER BY q.id"
+    # Current staff/team evidence should be reviewed before historical pages.
+    # History observations remain in the queue for auditability, but they must
+    # not consume the small agent-review batches ahead of current candidates.
+    query += (
+        " ORDER BY CASE WHEN lower(o.source_url) LIKE '%history%' "
+        "THEN 1 ELSE 0 END, q.id"
+    )
     try:
         rows = connection.execute(query, parameters).fetchall()
     except sqlite3.Error as exc:

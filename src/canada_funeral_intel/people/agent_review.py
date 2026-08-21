@@ -18,7 +18,7 @@ class AgentReviewError(RuntimeError):
     """Raised when API-assisted review cannot complete safely."""
 
 
-_PROMPT_VERSION = "people-review-v2"
+_PROMPT_VERSION = "people-review-v6"
 
 
 def _write_failure_artifact(
@@ -205,13 +205,18 @@ def _response_json(payload: dict[str, object]) -> object:
     try:
         return json.loads(text)
     except json.JSONDecodeError:
-        starts = [position for position in (text.find("{"), text.find("[")) if position >= 0]
-        ends = [position for position in (text.rfind("}"), text.rfind("]")) if position >= 0]
-        if starts and ends:
+        decoder = json.JSONDecoder()
+        starts = sorted(
+            position
+            for position in (text.find("{"), text.find("["))
+            if position >= 0
+        )
+        for start in starts:
             try:
-                return json.loads(text[min(starts) : max(ends) + 1])
+                decoded, _ = decoder.raw_decode(text[start:])
             except json.JSONDecodeError:
-                pass
+                continue
+            return decoded
         raise
 
 
@@ -254,14 +259,15 @@ def _validate_recommendations(
         recommendation = item["recommendation"]
         if not isinstance(recommendation, str) or recommendation not in allowed:
             raise AgentReviewError("agent response contains an invalid recommendation")
-        for field in (
-            "cleaned_name",
-            "cleaned_role",
-            "rationale",
-            "evidence_reference",
-        ):
+        for field in ("rationale", "evidence_reference"):
             if not isinstance(item[field], str) or not item[field].strip():
                 raise AgentReviewError(f"agent response {field} must be non-empty text")
+        if recommendation == "accept_candidate":
+            for field in ("cleaned_name", "cleaned_role"):
+                if not isinstance(item[field], str) or not item[field].strip():
+                    raise AgentReviewError(
+                        f"accepted candidate {field} must be non-empty text"
+                    )
         confidence = item["confidence"]
         if (
             isinstance(confidence, bool)
@@ -288,7 +294,14 @@ def review_deferred_people(
     provider: str = "openai",
     keys_file: Path | None = None,
     agent: str = "people-review",
+    queue_limit: int = 10,
+    apply_safe: bool = False,
+    minimum_confidence: float = 0.95,
 ) -> dict[str, object]:
+    if not 1 <= queue_limit <= 25:
+        raise AgentReviewError("queue_limit must be between 1 and 25")
+    if not 0 <= minimum_confidence <= 1:
+        raise AgentReviewError("minimum_confidence must be between 0 and 1")
     request_model = model
     if provider == "openrouter":
         if keys_file is None:
@@ -304,7 +317,13 @@ def review_deferred_people(
         endpoint = "https://api.openai.com/v1/responses"
         request_model = model
 
-    rows = list_person_review_queue(connection, status=PersonReviewStatus.DEFERRED)
+    rows = [
+        row
+        for row in list_person_review_queue(connection, status=None)
+        if row["status"]
+        in {PersonReviewStatus.PENDING.value, PersonReviewStatus.DEFERRED.value}
+        and "history" not in str(row["source_url"]).casefold()
+    ][:queue_limit]
     records = [
         {
             "queue_id": int(row["queue_id"]),
@@ -316,17 +335,38 @@ def review_deferred_people(
         }
         for row in rows
     ]
+    if not records:
+        result = {
+            "model": model,
+            "provider": provider,
+            "agent": agent,
+            "prompt_version": _PROMPT_VERSION,
+            "pending_or_deferred_considered": 0,
+            "deferred_considered": 0,
+            "recommendations": [],
+            "database_changed": False,
+        }
+        if output_path is not None:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(
+                json.dumps(result, indent=2, ensure_ascii=False) + "\n"
+            )
+            result["output"] = str(output_path)
+        return result
     prompt = (
-        "Review these deferred funeral-home people observations. Use only the supplied "
+        "Review these pending or deferred funeral-home people observations. Use only the supplied "
         "evidence. Recommend, do not execute, a disposition. Accept_candidate is "
         "allowed only when the evidence clearly identifies a real named person; "
-        "historical people should normally be deferred. Never invent contact data. "
+        "historical people from history pages should be rejected for the current "
+        "personnel dataset, not accepted as current staff. Never invent contact data. "
         "For malformed names, provide the likely cleaned name only when directly "
         "supported by the evidence. Return a single JSON object whose only top-level "
         "field is recommendations. recommendations must be an array containing "
         "exactly one object for every queue_id. "
         "Use the exact field names queue_id, recommendation, cleaned_name, "
-        "cleaned_role, confidence, rationale, and evidence_reference. "
+        "cleaned_role, confidence, rationale, and evidence_reference. For reject "
+        "or no_change, cleaned_name and cleaned_role may be empty strings; "
+        "accepted candidates must have both fields populated. "
         "evidence_reference must identify a supplied source URL or page/observation "
         "identifier. recommendation must be one of "
         "accept_candidate, defer, reject, or no_change. confidence must be 0 to 1.\n\n"
@@ -496,10 +536,48 @@ def review_deferred_people(
         "provider": provider,
         "agent": agent,
         "prompt_version": _PROMPT_VERSION,
-        "deferred_considered": len(records),
+        "pending_or_deferred_considered": len(records),
+        "deferred_considered": sum(
+            1 for row in rows if row["status"] == PersonReviewStatus.DEFERRED.value
+        ),
         "recommendations": recommendations,
         "database_changed": False,
+        "safe_apply": apply_safe,
+        "minimum_confidence": minimum_confidence,
     }
+    applied: list[int] = []
+    if apply_safe:
+        from canada_funeral_intel.people.resolution import apply_person_review_decision
+
+        rows_by_queue = {int(row["queue_id"]): row for row in rows}
+        for item in recommendations:
+            if float(item["confidence"]) < minimum_confidence:
+                continue
+            recommendation = str(item["recommendation"])
+            if recommendation == "accept_candidate":
+                source_url = str(rows_by_queue[int(item["queue_id"])] ["source_url"])
+                if "history" in source_url.casefold():
+                    continue
+                status = PersonReviewStatus.ACCEPTED
+            elif recommendation == "reject":
+                status = PersonReviewStatus.REJECTED
+            elif recommendation == "defer":
+                status = PersonReviewStatus.DEFERRED
+            else:
+                continue
+            apply_person_review_decision(
+                connection,
+                queue_id=int(item["queue_id"]),
+                status=status,
+                reviewer_note=(
+                    f"Safe agent apply ({minimum_confidence:.2f}+ confidence): "
+                    f"{item['rationale']}"
+                ),
+            )
+            applied.append(int(item["queue_id"]))
+        result["applied_queue_ids"] = applied
+        result["applied"] = len(applied)
+        result["database_changed"] = bool(applied)
     if output_path is not None:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")

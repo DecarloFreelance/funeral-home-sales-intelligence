@@ -79,6 +79,7 @@ def run_manual_website_intake(
     *,
     limit: int = 10,
     offset: int = 0,
+    entity_id: int | None = None,
     input_fn: Callable[[str], str] = input,
     output_fn: Callable[[str], None] = print,
 ) -> dict[str, object]:
@@ -88,8 +89,15 @@ def run_manual_website_intake(
         raise WebsiteCommandError("limit must be between 1 and 100")
     if offset < 0:
         raise WebsiteCommandError("offset must be zero or greater")
+    if entity_id is not None and entity_id < 1:
+        raise WebsiteCommandError("entity_id must be positive")
+    entity_filter = ""
+    parameters: list[object] = [limit, offset]
+    if entity_id is not None:
+        entity_filter = " AND e.id = ?"
+        parameters = [entity_id, limit, offset]
     rows = connection.execute(
-        """
+        f"""
         SELECT e.id AS entity_id, e.canonical_name AS business_name,
                MAX(CASE WHEN nv.field_name='city' THEN nv.normalized_value END) AS city,
                MAX(CASE WHEN nv.field_name='province' THEN nv.normalized_value END) AS province,
@@ -98,7 +106,8 @@ def run_manual_website_intake(
         JOIN entity_source_records esr ON esr.entity_id=e.id
         JOIN normalized_values nv ON nv.source_record_id=esr.source_record_id
         LEFT JOIN websites w ON w.entity_id=e.id
-        WHERE e.status='active'
+          WHERE e.status='active'
+          {entity_filter}
           AND NOT EXISTS (
               SELECT 1 FROM websites queued
               WHERE queued.entity_id=e.id
@@ -109,7 +118,7 @@ def run_manual_website_intake(
         ORDER BY e.id
         LIMIT ? OFFSET ?
         """,
-        (limit, offset),
+        tuple(parameters),
     ).fetchall()
     inserted = skipped = 0
     for position, row in enumerate(rows, start=1):
