@@ -120,6 +120,38 @@ across 19 organizations. An adversarial first pass incorrectly treated expected
 multi-valued staff, location, social, and page-canonical facts as conflicts; the
 resolution rule was narrowed to singleton identity fields and regression-tested.
 
+## Current Milestone: Continuous Gap Remediation
+
+Evidence and triage details are preserved in `audit/GAP_REGISTRY.md`.
+
+- [x] **GAP-2026-001 (HIGH): fail closed on blocked or failed agent dependencies.**
+  Evidence: the orchestrator returns partially modified records after an agent
+  exception and continues past retry-exhausted upstream work. Fix the orchestration
+  layer so publication aborts, previous atomic outputs survive, dependent agents
+  do not run, and bounded retry/recovery tests prove the behavior on disk.
+- [ ] **GAP-2026-002 (HIGH): separate observed schema names from canonical identity.**
+  Evidence: 13/35 real records report false canonical conflicts from branch,
+  staff-section, or legal-variant names, while `martinbros.com` is a genuine site
+  identity mismatch. Preserve schema names as sourced candidates and add a
+  deterministic mismatch finding that retains the true defect. Add entity/name
+  fixtures and verify the real review delta without forced resolution.
+- [ ] **GAP-2026-003 (MEDIUM): make freshness transitions observable through the
+  agent cache.** Add crawl observation timestamps, use them for page facts, and
+  expire only quality-cache validity at fact horizons. Tests must prove stale
+  detection after unchanged-input skips without repeatedly re-enriching old pages.
+- [ ] **GAP-2026-004 (MEDIUM): unify quality-based CRM/outreach readiness.** Six
+  identity-conflicted records currently say `Ready For Outreach`. Add one
+  fail-closed safety policy used by quality results, review artifacts, and the
+  operator views, with regression tests for blocking and non-blocking findings.
+- [ ] **GAP-2026-005 (LOW): add reproducible coverage/gap metrics and regression
+  comparison.** Generate machine-readable field/contact/quality/staleness/agent
+  metrics from local artifacts, compare with a prior snapshot using explicit
+  thresholds, test it deterministically, and document the command.
+- [ ] **GAP-2026-006 (LOW): implement the existing technology detector from
+  observed HTML markers.** Add conservative, provenance-retaining enrichment for
+  real WordPress/Elementor/Gravity Forms/FuneralTech/GTM patterns, with negative
+  fixtures and a measured production-data result.
+
 ## Data and Release Hygiene
 
 - [x] Align `verify_audit.py` with the production feature detector. Discovered

@@ -13,6 +13,18 @@ from automation.agents import RecordAgent
 TERMINAL = {"COMPLETED", "SKIPPED", "BLOCKED", "FAILED", "NEEDS_REVIEW"}
 
 
+class AgentPipelineError(RuntimeError):
+    """Base error for a record that must not be published."""
+
+
+class AgentBlockedError(AgentPipelineError):
+    pass
+
+
+class AgentExecutionError(AgentPipelineError):
+    pass
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
@@ -101,7 +113,9 @@ class AgentOrchestrator:
             attempts = previous.get("attempts", 0) if previous.get("input_fingerprint") == fingerprint else 0
             if attempts >= agent.max_attempts:
                 self._audit(entity_id, agent, "BLOCKED", reason="RETRY_LIMIT", retry_count=attempts)
-                continue
+                raise AgentBlockedError(
+                    f"Agent {agent.name} is blocked for {entity_id}: retry limit reached"
+                )
 
             task = {
                 "agent": agent.name,
@@ -137,5 +151,7 @@ class AgentOrchestrator:
                 self._save()
                 self._audit(entity_id, agent, "FAILED", retry_count=attempts,
                     error_class=type(error).__name__, retryable=task["retryable"])
-                break
+                raise AgentExecutionError(
+                    f"Agent {agent.name} failed for {entity_id}: {type(error).__name__}"
+                ) from error
         return working["record"]

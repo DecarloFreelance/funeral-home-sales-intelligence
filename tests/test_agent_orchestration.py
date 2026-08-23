@@ -3,8 +3,10 @@ from pathlib import Path
 import tempfile
 import threading
 import unittest
+from unittest.mock import patch
 
 from automation import AgentOrchestrator, EnrichmentAgent, QualityControlAgent
+from automation.orchestrator import AgentBlockedError, AgentExecutionError
 from automation.agents import RecordAgent
 from run_enrichment import run
 
@@ -19,6 +21,19 @@ class AlwaysFails(RecordAgent):
 
     def run(self, context):
         raise RuntimeError("controlled failure")
+
+
+class MustNotRun(RecordAgent):
+    name = "dependent_test"
+    version = "1"
+    calls = 0
+
+    def fingerprint_payload(self, context):
+        return context["domain"]
+
+    def run(self, context):
+        type(self).calls += 1
+        return {"unexpected": True}
 
 
 class AgentOrchestrationTests(unittest.TestCase):
@@ -78,14 +93,39 @@ class AgentOrchestrationTests(unittest.TestCase):
                     "input_fingerprint": "old"}
             }}), encoding="utf-8")
             runner = AgentOrchestrator(state, audit, [AlwaysFails()])
-            runner.process({"domain": "example.ca", "record": {}})
-            runner.process({"domain": "example.ca", "record": {}})
-            runner.process({"domain": "example.ca", "record": {}})
+            with self.assertRaises(AgentExecutionError):
+                runner.process({"domain": "example.ca", "record": {}})
+            with self.assertRaises(AgentExecutionError):
+                runner.process({"domain": "example.ca", "record": {}})
+            with self.assertRaises(AgentBlockedError):
+                runner.process({"domain": "example.ca", "record": {}})
             task = json.loads(state.read_text())["tasks"]["example.ca:failure_test"]
             self.assertEqual(task["status"], "FAILED")
             self.assertEqual(task["attempts"], 2)
             self.assertFalse(task["retryable"])
             self.assertEqual(json.loads(audit.read_text())[-1]["outcome"], "BLOCKED")
+
+    def test_failed_upstream_agent_does_not_run_dependency(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            MustNotRun.calls = 0
+            runner = AgentOrchestrator(
+                Path(temporary) / "state.json", Path(temporary) / "audit.json",
+                [AlwaysFails(), MustNotRun()],
+            )
+            with self.assertRaises(AgentExecutionError):
+                runner.process({"domain": "example.ca", "record": {}})
+            self.assertEqual(MustNotRun.calls, 0)
+
+    def test_pipeline_failure_preserves_previous_atomic_outputs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            paths = self.fixture_paths(Path(temporary))
+            paths[2].write_text('[{"sentinel": true}]\n', encoding="utf-8")
+            paths[5].write_text('[{"sentinel": true}]\n', encoding="utf-8")
+            with patch("run_enrichment.QualityControlAgent", return_value=AlwaysFails()):
+                with self.assertRaises(AgentExecutionError):
+                    run(*paths)
+            self.assertEqual(json.loads(paths[2].read_text()), [{"sentinel": True}])
+            self.assertEqual(json.loads(paths[5].read_text()), [{"sentinel": True}])
 
     def test_concurrent_pipeline_invocations_are_serialized(self):
         with tempfile.TemporaryDirectory() as temporary:
