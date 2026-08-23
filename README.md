@@ -235,6 +235,11 @@ retries, and records every success or failure without modifying local lead
 state. A live self-hosted instance is optional for development; automated tests
 use deterministic fake sessions and backends and never make API calls.
 
+For a pinned localhost-only test stack and real two-pass synchronization check,
+follow `dev/espocrm/README.md`. Runtime credentials stay in the ignored
+`dev/espocrm/.env`; the live harness uses a temporary SQLite database and never
+prints the API key.
+
 ## Platform-Candidate Workflow
 
 Platform candidates are potential buyers or partners for the reusable system;

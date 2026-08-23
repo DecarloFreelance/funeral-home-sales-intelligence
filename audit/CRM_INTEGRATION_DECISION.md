@@ -32,6 +32,16 @@ The selected contract is:
 - Deterministic fake backends cover automated validation without external API
   usage. Live instance validation remains environment-dependent.
 
+## Local Test Provisioning
+
+The pinned, localhost-only Compose stack and live round-trip harness are under
+`dev/espocrm`. On 2026-08-22, provisioning was attempted with both installed
+container runtimes. Docker was inactive and host administrative authentication
+was unavailable; rootless Podman could not create its required user namespace.
+The Compose model remains validated statically, but the live task must remain
+open until a container runtime is enabled and a least-privilege API user is
+created.
+
 No synchronization runs implicitly. The operator must provide the instance URL,
 API key, and an explicit `--domain` or `--all` command. No credentials are
 committed. JSON and CSV exports remain supported external handoff mechanisms.

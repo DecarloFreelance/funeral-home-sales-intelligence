@@ -10,6 +10,7 @@ venv/
 
 # Environment secrets
 .env
+dev/espocrm/.env
 
 # Generated data
 data/results.json

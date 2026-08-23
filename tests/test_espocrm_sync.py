@@ -98,6 +98,17 @@ class EspoCRMBackendTests(unittest.TestCase):
         self.assertEqual(result, "remote/id")
         self.assertTrue(session.calls[0][1].endswith("/Account/remote%2Fid"))
 
+    def test_reads_account_through_public_boundary(self):
+        session = FakeSession([FakeResponse({"id": "remote/id", "name": "Example"})])
+        backend = EspoCRMBackend(
+            "https://crm.example", "private-key", session=session, retries=0,
+        )
+
+        result = backend.get_account("remote/id")
+
+        self.assertEqual(result["name"], "Example")
+        self.assertTrue(session.calls[0][1].endswith("/Account/remote%2Fid"))
+
     def test_failure_does_not_expose_api_key(self):
         backend = EspoCRMBackend(
             "https://crm.example", "private-key",

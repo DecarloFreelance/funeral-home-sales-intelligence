@@ -75,3 +75,11 @@ class EspoCRMBackend(CRMBackend):
         if len(records) > 1:
             raise EspoCRMError("Multiple EspoCRM accounts match the local domain")
         return str(records[0].get("id") or "") if records else None
+
+    def get_account(self, remote_id):
+        result = self._request(
+            "GET", f"Account/{quote(str(remote_id), safe='')}",
+        )
+        if not isinstance(result, dict):
+            raise EspoCRMError("EspoCRM account read returned an invalid response")
+        return result
