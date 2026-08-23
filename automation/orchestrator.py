@@ -39,12 +39,22 @@ class AgentOrchestrator:
 
     schema_version = 1
 
-    def __init__(self, state_path: Path, audit_path: Path, agents: Iterable[RecordAgent]):
+    def __init__(self, state_path: Path, audit_path: Path, agents: Iterable[RecordAgent], *, defer_skipped_audit=False):
         self.state_path = Path(state_path)
         self.audit_path = Path(audit_path)
         self.agents = list(agents)
         self.state = self._load_state()
+        self.audit_events = self._load_audit()
+        self.defer_skipped_audit = defer_skipped_audit
         self.run_id = uuid.uuid4().hex
+
+    def _load_audit(self):
+        if not self.audit_path.is_file():
+            return []
+        value = json.loads(self.audit_path.read_text(encoding="utf-8"))
+        if not isinstance(value, list):
+            raise ValueError("Agent audit must contain a JSON list")
+        return value
 
     def _load_state(self):
         if not self.state_path.is_file():
@@ -76,11 +86,6 @@ class AgentOrchestrator:
         self._atomic_json(self.state_path, self.state)
 
     def _audit(self, entity_id: str, agent: RecordAgent, outcome: str, **details):
-        existing = []
-        if self.audit_path.is_file():
-            value = json.loads(self.audit_path.read_text(encoding="utf-8"))
-            if isinstance(value, list):
-                existing = value
         event = {
             "id": uuid.uuid4().hex,
             "run_id": self.run_id,
@@ -91,8 +96,12 @@ class AgentOrchestrator:
             "outcome": outcome,
             **details,
         }
-        existing.append(event)
-        self._atomic_json(self.audit_path, existing)
+        self.audit_events.append(event)
+        if outcome != "SKIPPED" or not self.defer_skipped_audit:
+            self.flush_audit()
+
+    def flush_audit(self):
+        self._atomic_json(self.audit_path, self.audit_events)
 
     def process(self, context: Dict[str, Any]) -> Dict[str, Any]:
         entity_id = str(context.get("domain") or "").strip().lower()

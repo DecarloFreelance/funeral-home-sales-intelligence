@@ -12,6 +12,7 @@ BAD_EMAIL_DOMAINS = [
     "google.com",
     "wordpress.com"
 ]
+BAD_EMAIL_ADDRESSES = {"filler@godaddy.com"}
 
 
 def clean_emails(emails, domain):
@@ -21,6 +22,9 @@ def clean_emails(emails, domain):
     for email in emails:
 
         email = email.lower().strip()
+
+        if email in BAD_EMAIL_ADDRESSES:
+            continue
 
 
         if not validate_email(email):

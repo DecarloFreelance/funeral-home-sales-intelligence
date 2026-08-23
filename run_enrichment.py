@@ -22,13 +22,17 @@ def _run_locked(pages_path: Path, results_path: Path, output_path: Path, state_p
     pages_by_domain = {}
     for page in pages:
         pages_by_domain.setdefault(_domain(page), []).append(page)
-    orchestrator = AgentOrchestrator(state_path, audit_path, [EnrichmentAgent(), QualityControlAgent()])
+    orchestrator = AgentOrchestrator(
+        state_path, audit_path, [EnrichmentAgent(), QualityControlAgent()],
+        defer_skipped_audit=True,
+    )
     enriched = []
     review = []
     for record in results:
         domain = str(record.get("domain") or "").lower().removeprefix("www.")
         output = orchestrator.process({"domain": domain, "pages": pages_by_domain.get(domain, []), "record": record})
         enriched.append(output)
+    orchestrator.flush_audit()
     dataset_findings = evaluate_dataset_quality(enriched)
     for output in enriched:
         domain = output.get("domain", "")

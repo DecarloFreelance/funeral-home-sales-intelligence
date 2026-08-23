@@ -12,12 +12,13 @@ def _load(path, default):
     return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else default
 
 
-def generate(results_path, review_path, state_path, audit_path, output_path, history_path):
+def generate(results_path, review_path, state_path, audit_path, output_path, history_path, crawl_path=None):
     history = _load(history_path, [])
     baseline = history[-1] if isinstance(history, list) and history else None
     metrics = build_metrics(
         _load(results_path, []), _load(review_path, []),
         _load(state_path, {"tasks": {}}), _load(audit_path, []), baseline=baseline,
+        crawl=_load(crawl_path, {}) if crawl_path else None,
     )
     if not isinstance(history, list):
         raise ValueError("Metrics history must be a JSON list")
@@ -37,10 +38,11 @@ def main():
     parser.add_argument("--audit", default=f"{root}/agent_audit.json")
     parser.add_argument("--output", default=f"{root}/gap_metrics.json")
     parser.add_argument("--history", default=f"{root}/gap_metrics_history.json")
+    parser.add_argument("--crawl-report")
     args = parser.parse_args()
     metrics, snapshots = generate(*(Path(value) for value in (
         args.results, args.review, args.state, args.audit, args.output, args.history,
-    )))
+    )), Path(args.crawl_report) if args.crawl_report else None)
     print(
         f"Organizations={metrics['organizations']} facts={metrics['facts']} "
         f"review={metrics['review_required']} stale={metrics['stale_facts']} "

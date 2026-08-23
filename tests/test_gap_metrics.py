@@ -32,6 +32,19 @@ class GapMetricsTests(unittest.TestCase):
         self.assertEqual(metrics["stale_facts"], 1)
         self.assertEqual(metrics["quality_findings"], {"EMAIL_DOMAIN_MISMATCH": 1})
         self.assertEqual(metrics["latest_agent_run"]["outcomes"], {"SKIPPED": 1})
+        self.assertEqual(metrics["field_coverage"]["contact.public_email"]["direct_organizations"], 1)
+        self.assertEqual(metrics["missing_provenance_facts"], 1)
+        self.assertEqual(metrics["duplicate_fact_ids"], 0)
+
+    def test_includes_bounded_crawl_observability(self):
+        metrics = build_metrics(*self.fixture(), crawl={
+            "queued_domains": 2, "successful_domains": 1, "failed_domains": ["bad.ca"],
+            "pages": 2, "attempt_outcomes": {"SUCCESS": 2, "REQUEST_ERROR": 1},
+            "duration_ms": 1200, "average_domain_duration_ms": 600,
+            "median_domain_duration_ms": 700,
+        })
+        self.assertEqual(metrics["crawl"]["successful_domains"], 1)
+        self.assertEqual(metrics["crawl"]["attempt_outcomes"]["REQUEST_ERROR"], 1)
 
     def test_flags_material_regression_not_small_change(self):
         before = build_metrics(*self.fixture(), now=datetime(2025, 5, 1, tzinfo=timezone.utc))

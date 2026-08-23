@@ -38,6 +38,29 @@ class MustNotRun(RecordAgent):
 
 
 class AgentOrchestrationTests(unittest.TestCase):
+    def test_malformed_audit_is_rejected_before_processing(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            audit = root / "audit.json"
+            audit.write_text("{}", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "audit"):
+                AgentOrchestrator(root / "state.json", audit, [EnrichmentAgent()])
+
+    def test_deferred_skip_audit_flushes_once_without_delaying_state_changes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            audit = root / "audit.json"
+            runner = AgentOrchestrator(
+                root / "state.json", audit, [EnrichmentAgent()], defer_skipped_audit=True,
+            )
+            context = {"domain": "example.ca", "pages": [], "record": {}}
+            runner.process(context)
+            self.assertEqual(len(json.loads(audit.read_text())), 2)  # RUNNING and COMPLETED
+            runner.process(context)
+            self.assertEqual(len(json.loads(audit.read_text())), 2)
+            runner.flush_audit()
+            self.assertEqual(json.loads(audit.read_text())[-1]["outcome"], "SKIPPED")
+
     @staticmethod
     def fixture_paths(root):
         paths = tuple(root / name for name in ("pages.json", "results.json", "output.json", "state.json", "audit.json", "review.json"))

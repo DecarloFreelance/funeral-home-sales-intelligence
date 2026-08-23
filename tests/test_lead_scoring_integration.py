@@ -11,6 +11,38 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 class LeadScoringIntegrationTests(unittest.TestCase):
 
+    def test_queue_retains_uncrawled_organization_without_scoring_missing_features(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = Path(temp_dir) / "pages.json"
+            queue_path = Path(temp_dir) / "queue.json"
+            output_path = Path(temp_dir) / "results.json"
+            input_path.write_text("[]", encoding="utf-8")
+            queue_path.write_text(json.dumps([{
+                "domain": "unavailable.example", "company": "Unavailable Funeral Home",
+                "website": "https://unavailable.example/", "phone": "780-555-1234",
+                "source": "association", "source_url": "https://directory.example/member/1",
+                "sources": ["association"], "provenance": [{
+                    "source": "association", "source_url": "https://directory.example/member/1",
+                }], "locations": [{"company": "Unavailable Funeral Home", "province": "AB"}],
+                "business_names": ["Unavailable Funeral Home"],
+            }]), encoding="utf-8")
+
+            subprocess.run([
+                sys.executable, "lead_scoring.py", "--input", str(input_path),
+                "--queue", str(queue_path), "--output", str(output_path),
+            ], cwd=PROJECT_ROOT, check=True, capture_output=True, text=True)
+            result = json.loads(output_path.read_text(encoding="utf-8"))[0]
+
+        self.assertEqual(result["pages"], 0)
+        self.assertEqual(result["processing_status"], "NO_USABLE_WEBSITE_EVIDENCE")
+        self.assertEqual(result["business_profile"]["company"], "Unavailable Funeral Home")
+        self.assertEqual(result["opportunity"], 0)
+        self.assertEqual(result["missing"], [])
+        self.assertFalse(result["quality_control"]["crm_sync_safe"])
+        self.assertIn("NO_USABLE_WEBSITE_EVIDENCE", {
+            item["code"] for item in result["quality_control"]["findings"]
+        })
+
     def test_discovery_profile_reaches_contact_intelligence(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             input_path = Path(temp_dir) / "pages.json"

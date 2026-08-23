@@ -5,6 +5,30 @@ from enrichment.quality import evaluate_dataset_quality, evaluate_quality
 
 
 class EnrichmentQualityTests(unittest.TestCase):
+    def test_first_party_published_cross_domain_email_is_retained_without_review(self):
+        result = evaluate_quality({
+            "domain": "branch.ca", "pages": 1, "enrichment": {"facts": []},
+            "contact_intelligence": {
+                "email_validation": [{"email": "care@parent.ca", "verification_state": "DNS_VALID"}],
+                "email_sources": [{"value": "care@parent.ca", "source_type": "page_text",
+                    "source_url": "https://branch.ca/contact"}],
+            },
+        })
+        finding = next(item for item in result["findings"] if item["code"] == "EMAIL_DOMAIN_FIRST_PARTY_CONFIRMED")
+        self.assertFalse(finding["requires_review"])
+        self.assertTrue(result["outreach_ready"])
+
+    def test_multi_location_domain_requires_crm_identity_review(self):
+        result = evaluate_quality({
+            "domain": "network.ca", "pages": 1, "enrichment": {"facts": []},
+            "business_profile": {"locations": [
+                {"company": "Network North", "city": "North"},
+                {"company": "Network South", "city": "South"},
+            ]},
+        })
+        self.assertIn("MULTI_LOCATION_ACCOUNT_REVIEW", {item["code"] for item in result["findings"]})
+        self.assertFalse(result["crm_sync_safe"])
+
     def test_reports_semantic_overclaims_and_attribution_risk_without_mutation(self):
         record = {
             "domain": "example.ca",

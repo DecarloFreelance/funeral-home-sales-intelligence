@@ -22,30 +22,49 @@ def _stale(fact, now):
         return False
 
 
-def build_metrics(results, review, state, audit, *, now=None, baseline=None):
+def build_metrics(results, review, state, audit, *, now=None, baseline=None, crawl=None):
     now = now or datetime.now(timezone.utc)
     results = list(results)
     review = list(review)
     audit = list(audit)
     organizations = len(results)
     field_entities = defaultdict(set)
+    direct_entities = defaultdict(set)
+    derived_entities = defaultdict(set)
     states = Counter()
     facts = []
+    missing_provenance = 0
+    duplicate_facts = 0
+    required_fact_fields = {
+        "id", "field", "value", "source", "source_url", "source_type",
+        "observed_at", "stale_after", "detector", "detector_version",
+        "confidence", "verification_state", "evidence", "derived",
+    }
     contact_fields = {
         "email": "contact.public_email",
         "phone": "contact.public_phone",
         "named_contact": "contact.person",
         "decision_maker_candidate": "contact.role_category",
+        "directory_contact_candidate": "contact.directory_candidate",
     }
     for record in results:
         domain = str(record.get("domain") or "")
-        for item in (record.get("enrichment") or {}).get("facts") or []:
+        record_facts = (record.get("enrichment") or {}).get("facts") or []
+        ids = [item.get("id") for item in record_facts]
+        duplicate_facts += len(ids) - len(set(ids))
+        for item in record_facts:
             facts.append(item)
             field_entities[item.get("field")].add(domain)
+            (derived_entities if item.get("derived") else direct_entities)[item.get("field")].add(domain)
             states[item.get("verification_state")] += 1
+            missing_provenance += bool(required_fact_fields - set(item))
 
     fields = {
-        field: {"organizations": len(domains), "percent": _percent(len(domains), organizations)}
+        field: {
+            "organizations": len(domains), "percent": _percent(len(domains), organizations),
+            "direct_organizations": len(direct_entities[field]),
+            "derived_organizations": len(derived_entities[field]),
+        }
         for field, domains in sorted(field_entities.items())
     }
     contact_coverage = {
@@ -60,6 +79,14 @@ def build_metrics(results, review, state, audit, *, now=None, baseline=None):
     latest_outcomes = Counter(item.get("outcome") for item in latest_events)
     tasks = state.get("tasks", {}) if isinstance(state, dict) else {}
     task_statuses = Counter(item.get("status") for item in tasks.values())
+    task_durations = []
+    for item in tasks.values():
+        try:
+            started = datetime.fromisoformat(str(item.get("started_at")).replace("Z", "+00:00"))
+            completed = datetime.fromisoformat(str(item.get("completed_at")).replace("Z", "+00:00"))
+            task_durations.append(max(0.0, (completed - started).total_seconds()))
+        except (TypeError, ValueError):
+            continue
     crm_ready = sum((record.get("quality_control") or {}).get("crm_sync_safe") is True for record in results)
     outreach_ready = sum((record.get("quality_control") or {}).get("outreach_ready") is True for record in results)
     metrics = {
@@ -87,14 +114,35 @@ def build_metrics(results, review, state, audit, *, now=None, baseline=None):
             for item in review
         ),
         "crm_ready": crm_ready,
+        "crm_ready_rate_percent": _percent(crm_ready, organizations),
         "outreach_ready": outreach_ready,
+        "outreach_ready_rate_percent": _percent(outreach_ready, organizations),
+        "missing_provenance_facts": missing_provenance,
+        "duplicate_fact_ids": duplicate_facts,
         "agent_tasks": dict(sorted(task_statuses.items())),
+        "agent_retries": sum(max(0, int(item.get("attempts", 0)) - 1) for item in tasks.values()),
+        "agent_max_attempts": max((int(item.get("attempts", 0)) for item in tasks.values()), default=0),
+        "average_task_duration_ms": round(sum(task_durations) / len(task_durations) * 1000) if task_durations else 0,
         "latest_agent_run": {
             "run_id": latest_run_id,
             "outcomes": dict(sorted(latest_outcomes.items())),
             "events": len(latest_events),
         },
+        "entity_snapshot": {
+            str(record.get("domain") or ""): {
+                "facts": len((record.get("enrichment") or {}).get("facts") or []),
+                "fields": sorted({item.get("field") for item in (record.get("enrichment") or {}).get("facts") or []}),
+                "findings": len((record.get("quality_control") or {}).get("findings") or []),
+            }
+            for record in results
+        },
     }
+    if isinstance(crawl, dict):
+        metrics["crawl"] = {key: crawl.get(key) for key in (
+            "queued_domains", "successful_domains", "failed_domains", "pages",
+            "attempt_outcomes", "duration_ms", "average_domain_duration_ms",
+            "median_domain_duration_ms",
+        )}
     metrics["regressions"] = compare_metrics(baseline, metrics) if baseline else []
     fingerprint_value = {
         key: value for key, value in metrics.items()

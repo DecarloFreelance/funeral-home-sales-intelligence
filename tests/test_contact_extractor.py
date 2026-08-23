@@ -104,6 +104,12 @@ class ContactExtractorTests(unittest.TestCase):
 
         self.assertEqual(result["people"], [])
 
+    def test_rejects_observed_hosted_form_placeholder_email(self):
+        result = extract_contact_intelligence([{
+            "url": "https://example.com/", "text": "Email info@example.com or filler@godaddy.com",
+        }], "example.com")
+        self.assertEqual(result["emails"], ["info@example.com"])
+
     def test_preserves_directory_contacts_and_branch_locations(self):
         result = extract_contact_intelligence([{
             "url": "https://example.com/",
@@ -123,6 +129,10 @@ class ContactExtractorTests(unittest.TestCase):
                     "country": "Canada",
                     "email": "north@example.com",
                     "phone": "780-555-5678",
+                    "field_sources": {
+                        "email": ["https://directory.example/north-email"],
+                        "contact_name": ["https://directory.example/north-contact"],
+                    },
                 }],
             },
         }], "example.com")
@@ -141,6 +151,8 @@ class ContactExtractorTests(unittest.TestCase):
             "https://directory.example/example",
         )
         self.assertEqual(result["email_sources"][0]["source_url"], "https://directory.example/example")
+        north = next(item for item in result["email_sources"] if item["value"] == "north@example.com")
+        self.assertEqual(north["source_url"], "https://directory.example/north-email")
 
 
 if __name__ == "__main__":

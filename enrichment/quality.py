@@ -12,11 +12,12 @@ from enrichment.evidence import CONFIDENCE_STATES, utc_now, iso
 
 
 AGENT = "quality_control"
-VERSION = "1.2.0"
+VERSION = "1.5.0"
 CRM_BLOCKING_CODES = {
     "CONFLICTING_FACTS",
     "POSSIBLE_DUPLICATE_ORGANIZATION",
     "ORGANIZATION_WEBSITE_MISMATCH",
+    "MULTI_LOCATION_ACCOUNT_REVIEW",
 }
 
 
@@ -63,6 +64,21 @@ def evaluate_quality(record: Dict[str, Any], *, evaluated_at=None) -> Dict[str, 
     enrichment = record.get("enrichment") or {}
     facts = enrichment.get("facts") or []
     findings: List[Dict[str, Any]] = []
+    if record.get("pages") == 0 or record.get("processing_status") == "NO_USABLE_WEBSITE_EVIDENCE":
+        findings.append(_finding(entity_id, "NO_USABLE_WEBSITE_EVIDENCE", "HIGH",
+            "No public website page was retrieved for this organization.",
+            {"pages": record.get("pages", 0)},
+            "Resolve or recrawl the website before CRM synchronization or outreach."))
+    locations = (record.get("business_profile") or {}).get("locations") or []
+    location_names = sorted({
+        " ".join(str(location.get("company") or "").split())
+        for location in locations if isinstance(location, dict) and location.get("company")
+    })
+    if len(location_names) > 1:
+        findings.append(_finding(entity_id, "MULTI_LOCATION_ACCOUNT_REVIEW", "MEDIUM",
+            "One website domain represents multiple named locations.",
+            {"location_count": len(locations), "business_names": location_names[:25]},
+            "Choose network-level versus branch-level CRM identity before synchronization."))
 
     mandatory = {
         "id", "field", "value", "source", "source_url", "source_type",
@@ -126,10 +142,24 @@ def evaluate_quality(record: Dict[str, Any], *, evaluated_at=None) -> Dict[str, 
     for item in email_items:
         email = str(item.get("email") or item.get("normalized") or "")
         if email and entity_id and _email_domain(email) not in {entity_id, f"www.{entity_id}"}:
-            findings.append(_finding(entity_id, "EMAIL_DOMAIN_MISMATCH", "MEDIUM",
-                "A contact email domain does not match the organization domain.",
-                {"email": email, "company_domain": entity_id, "state": item.get("verification_state")},
-                "Confirm the contact-to-company attribution before CRM synchronization."))
+            sources = [source for source in contacts.get("email_sources") or []
+                if str(source.get("value") or "").casefold() == email.casefold()]
+            first_party = any(
+                source.get("source_type") in {"page_text", "structured_data"}
+                and (urlsplit(str(source.get("source_url") or "")).hostname or "").lower().removeprefix("www.") == entity_id
+                for source in sources
+            )
+            if first_party:
+                findings.append(_finding(entity_id, "EMAIL_DOMAIN_FIRST_PARTY_CONFIRMED", "LOW",
+                    "A cross-domain contact address is published on the organization's own website.",
+                    {"email": email, "company_domain": entity_id,
+                     "source_urls": sorted({source.get("source_url") for source in sources if source.get("source_url")})},
+                    "Retain the attribution with its first-party source; investigate parent ownership separately."))
+            else:
+                findings.append(_finding(entity_id, "EMAIL_DOMAIN_MISMATCH", "MEDIUM",
+                    "A contact email domain does not match the organization domain.",
+                    {"email": email, "company_domain": entity_id, "state": item.get("verification_state")},
+                    "Confirm the contact-to-company attribution before CRM synchronization."))
         if item.get("verification_state") == "DNS_VALID" and item.get("deliverability") not in {None, "NOT_CHECKED"}:
             findings.append(_finding(entity_id, "DNS_CLAIMED_DELIVERABLE", "HIGH",
                 "DNS validation is being represented as mailbox deliverability.", item,

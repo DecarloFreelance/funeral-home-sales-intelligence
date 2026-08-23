@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+from collections import Counter
 import json
 from pathlib import Path
 
@@ -11,6 +12,25 @@ DEFAULT_INPUT = Path("data/crawl_queue.json")
 DEFAULT_OUTPUT = Path("data/discovered_leads.json")
 
 
+def _summarize(leads):
+    attempts = Counter(
+        attempt.get("outcome")
+        for lead in leads for attempt in lead.get("attempts", [])
+    )
+    durations = sorted(lead.get("duration_ms", 0) for lead in leads)
+    return {
+        "queued_domains": len(leads),
+        "successful_domains": sum(lead.get("status") == "SUCCESS" for lead in leads),
+        "failed_domains": [lead["domain"] for lead in leads if lead.get("status") != "SUCCESS"],
+        "pages": sum(int(lead.get("pages", 0)) for lead in leads),
+        "attempt_outcomes": dict(sorted(attempts.items())),
+        "duration_ms": sum(durations),
+        "average_domain_duration_ms": round(sum(durations) / len(durations)) if durations else 0,
+        "median_domain_duration_ms": durations[len(durations) // 2] if durations else 0,
+        "leads": leads,
+    }
+
+
 def merge_crawl_reports(existing, incoming):
     leads = {
         lead.get("domain"): lead
@@ -18,15 +38,14 @@ def merge_crawl_reports(existing, incoming):
         if lead.get("domain")
     }
     values = list(leads.values())
-    return {
-        "queued_domains": len(values),
-        "successful_domains": sum(lead.get("status") == "SUCCESS" for lead in values),
-        "failed_domains": [
-            lead["domain"] for lead in values if lead.get("status") != "SUCCESS"
-        ],
-        "pages": sum(int(lead.get("pages", 0)) for lead in values),
-        "leads": values,
-    }
+    return _summarize(values)
+
+
+def _atomic_json(path, value):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    temporary.replace(path)
 
 
 def crawl_queue(
@@ -42,6 +61,7 @@ def crawl_queue(
     progress=False,
     progress_callback=None,
     report_path=None,
+    resume=False,
 ):
     leads = json.loads(input_path.read_text(encoding="utf-8"))
     if not isinstance(leads, list):
@@ -57,45 +77,49 @@ def crawl_queue(
     if limit is not None:
         selected = selected[:limit]
 
+    existing_records = []
+    existing_report = {"leads": []}
+    if append and output_path.exists():
+        existing_records = json.loads(output_path.read_text(encoding="utf-8"))
+        if not isinstance(existing_records, list):
+            raise ValueError("Existing crawler output must contain a JSON list")
+    if append and report_path is not None and report_path.exists():
+        existing_report = json.loads(report_path.read_text(encoding="utf-8"))
+    if resume:
+        completed = {item.get("domain") for item in existing_report.get("leads", [])}
+        selected = [lead for lead in selected if lead.get("domain") not in completed]
+
+    current_records = {item.get("url"): item for item in existing_records if item.get("url")}
+    current_report = existing_report
+
+    def checkpoint(lead_records, lead_report):
+        nonlocal current_report
+        current_records.update({item.get("url"): item for item in lead_records if item.get("url")})
+        current_report = merge_crawl_reports(current_report, {"leads": [lead_report]})
+        _atomic_json(output_path, list(current_records.values()))
+        if report_path is not None:
+            _atomic_json(report_path, current_report)
+
     callback = progress_callback
     if progress and callback is None:
         callback = lambda index, total, domain, pages: print(
             f"[{index}/{total}] {domain}: {pages} pages", flush=True,
         )
-    records = crawler.crawl_queue(selected, on_lead=callback)
+    records = crawler.crawl_queue(selected, on_lead=callback, checkpoint=checkpoint)
 
-    if append and output_path.exists():
-        existing = json.loads(output_path.read_text(encoding="utf-8"))
-        if not isinstance(existing, list):
-            raise ValueError("Existing crawler output must contain a JSON list")
-        records = list({
-            record.get("url"): record
-            for record in [*existing, *records]
-            if record.get("url")
-        }.values())
+    if append:
+        records = list(current_records.values())
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = output_path.with_suffix(output_path.suffix + ".tmp")
-    temporary.write_text(
-        json.dumps(records, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
-    temporary.replace(output_path)
+    _atomic_json(output_path, records)
 
     report = crawler.last_report
     if report_path is not None:
         if append and report_path.exists():
             existing_report = json.loads(report_path.read_text(encoding="utf-8"))
             report = merge_crawl_reports(existing_report, report)
-        report_path.parent.mkdir(parents=True, exist_ok=True)
-        report_temporary = report_path.with_suffix(report_path.suffix + ".tmp")
-        report_temporary.write_text(
-            json.dumps(report, indent=2, ensure_ascii=False) + "\n",
-            encoding="utf-8",
-        )
-        report_temporary.replace(report_path)
+        _atomic_json(report_path, report)
 
-    return crawler.last_report
+    return report
 
 
 def main():
@@ -111,6 +135,7 @@ def main():
     parser.add_argument("--offset", type=int, default=0)
     parser.add_argument("--delay", type=float, default=0.25)
     parser.add_argument("--append", action="store_true")
+    parser.add_argument("--resume", action="store_true")
     parser.add_argument("--report-output", type=Path)
     args = parser.parse_args()
 
@@ -129,6 +154,7 @@ def main():
         append=args.append,
         progress=True,
         report_path=report_path,
+        resume=args.resume,
     )
     print(
         f"Crawled {report['pages']} pages across "

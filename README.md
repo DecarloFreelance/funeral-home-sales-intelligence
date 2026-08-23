@@ -50,6 +50,12 @@ shows direct versus derived facts, source evidence, confidence/conflicts,
 freshness, and recommended research actions. See
 `audit/ENRICHMENT_AUTOMATION.md` for contracts and recovery behavior.
 
+For the reproducible 211-domain Canadian scale workflow—including approved
+AFSA/CANA discovery, checkpointed crawling, queue-backed zero-page handling,
+scoring, enrichment, metrics, research output, and representative localhost
+EspoCRM sampling—follow `audit/SCALE_VALIDATION.md`. The workflow never sends
+outreach and does not invoke optional paid validation providers.
+
 Generate a repeatable coverage, quality, freshness, readiness, and agent-run
 snapshot after enrichment with:
 

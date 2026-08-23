@@ -53,6 +53,21 @@ class DiscoveryIngestionTests(unittest.TestCase):
         self.assertEqual(queue[0]["source"], "association,manual")
         self.assertEqual(len(queue[0]["priority_urls"]), len(PRIORITY_PATHS))
 
+    def test_duplicate_location_merge_preserves_complementary_fields_and_sources(self):
+        queue = build_crawl_queue([
+            DiscoveryLead(company="Example Home", website="example.com", address="1 Main",
+                city="Town", province="AB", email="care@example.com",
+                source="association", source_url="https://first.example/member"),
+            DiscoveryLead(company="Example Home", website="example.com", address="1 Main",
+                city="Town", province="AB", contact_name="Jane Smith",
+                source="directory", source_url="https://second.example/member"),
+        ])
+        location = queue[0]["locations"][0]
+        self.assertEqual(location["email"], "care@example.com")
+        self.assertEqual(location["contact_name"], "Jane Smith")
+        self.assertEqual(location["field_sources"]["email"], ["https://first.example/member"])
+        self.assertEqual(location["field_sources"]["contact_name"], ["https://second.example/member"])
+
     def test_manual_csv_import_writes_normalized_queue(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             input_path = Path(temp_dir) / "manual.csv"

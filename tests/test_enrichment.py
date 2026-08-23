@@ -8,6 +8,16 @@ NOW = datetime(2026, 8, 23, 12, 0, tzinfo=timezone.utc)
 
 
 class EnrichmentTests(unittest.TestCase):
+    def test_directory_contact_remains_candidate_not_role_verified_person(self):
+        result = enrich_company("example.ca", [], {"company": "Example"}, {
+            "directory_contacts": [{"name": "Jane Smith", "title": "Directory contact",
+                "source_url": "https://directory.example/member/1", "source": "directory"}],
+        })
+        candidate = next(item for item in result["facts"] if item["field"] == "contact.directory_candidate")
+        self.assertEqual(candidate["verification_state"], "DISCOVERED")
+        self.assertFalse(candidate["derived"])
+        self.assertFalse(any(item["field"] == "contact.person" for item in result["facts"]))
+
     def test_extracts_direct_and_derived_facts_with_provenance(self):
         pages = [{
             "url": "https://example.ca/about",

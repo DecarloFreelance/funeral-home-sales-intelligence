@@ -21,6 +21,7 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument("--input", default="data/generated/campaign/leads.json")
 parser.add_argument("--output", default="data/generated/campaign/results.json")
+parser.add_argument("--queue", help="Optional normalized queue retaining organizations with no usable crawl pages.")
 args = parser.parse_args()
 
 INPUT = args.input
@@ -64,13 +65,45 @@ def merge_discovery_profile(profile, incoming):
         if not profile.get(field) and incoming.get(field):
             profile[field] = incoming[field]
 
-    for field in ("business_names", "sources", "provenance", "locations"):
+    for field in ("business_names", "sources", "provenance"):
         values = incoming.get(field) or []
         for value in values:
             if value not in profile[field]:
                 profile[field].append(value)
 
+    location_index = {
+        tuple(str(location.get(key) or "").casefold() for key in ("company", "address", "city", "province")): location
+        for location in profile["locations"] if isinstance(location, dict)
+    }
+    for location in incoming.get("locations") or []:
+        if not isinstance(location, dict):
+            continue
+        key = tuple(str(location.get(name) or "").casefold() for name in ("company", "address", "city", "province"))
+        if key not in location_index:
+            profile["locations"].append(location)
+            location_index[key] = location
+            continue
+        current = location_index[key]
+        for name, value in location.items():
+            if name == "field_sources":
+                for source_field, urls in value.items():
+                    target = current.setdefault("field_sources", {}).setdefault(source_field, [])
+                    target.extend(url for url in urls if url not in target)
+            elif not current.get(name) and value:
+                current[name] = value
+
 companies = {}
+
+
+def new_company():
+    return {
+        "pages": 0, "documents": [], "directory_documents": [],
+        "business_profile": {
+            "company": "", "city": "", "province": "", "country": "",
+            "address": "", "phone": "", "email": "", "business_names": [],
+            "sources": [], "provenance": [], "locations": [],
+        },
+    }
 
 
 with open(INPUT, "r", encoding="utf-8") as f:
@@ -81,9 +114,9 @@ with open(INPUT, "r", encoding="utf-8") as f:
 
 for lead in leads:
 
-    domain = clean_domain(
-        lead.get("url","")
-    )
+    domain = str((lead.get("discovery") or {}).get("queue_domain") or clean_domain(
+        lead.get("url", "")
+    )).lower().removeprefix("www.")
 
     if not domain:
         continue
@@ -91,23 +124,7 @@ for lead in leads:
 
     if domain not in companies:
 
-        companies[domain] = {
-            "pages":0,
-            "documents":[],
-            "business_profile": {
-                "company": "",
-                "city": "",
-                "province": "",
-                "country": "",
-                "address": "",
-                "phone": "",
-                "email": "",
-                "business_names": [],
-                "sources": [],
-                "provenance": [],
-                "locations": [],
-            }
-        }
+        companies[domain] = new_company()
 
 
     companies[domain]["pages"] += 1
@@ -136,7 +153,23 @@ for lead in leads:
     })
 
 
-if leads and not companies:
+if args.queue:
+    queue = json.loads(Path(args.queue).read_text(encoding="utf-8"))
+    if not isinstance(queue, list):
+        raise ValueError("Normalized queue must contain a JSON list")
+    for item in queue:
+        domain = str(item.get("domain") or "").lower().removeprefix("www.")
+        if not domain:
+            continue
+        company = companies.setdefault(domain, new_company())
+        merge_discovery_profile(company["business_profile"], item)
+        company["directory_documents"].append({
+            "url": str(item.get("source_url") or ""), "text": "", "metadata": {},
+            "html": "", "discovery": item,
+        })
+
+
+if (leads or args.queue) and not companies:
     raise ValueError("No valid website domains were found in the crawl input")
 
 
@@ -243,7 +276,7 @@ for domain,data in companies.items():
 
 
     contact_intelligence = extract_contact_intelligence(
-        data["documents"],
+        [*data["documents"], *data["directory_documents"]],
         domain,
         check_email_dns=True,
     )
@@ -1909,6 +1942,22 @@ for domain,data in companies.items():
             generate_pitch(missing)
 
     }
+
+    if data["pages"] == 0:
+        result.update({
+            "processing_status": "NO_USABLE_WEBSITE_EVIDENCE",
+            "conversion": 0, "opportunity": 0, "lead_value": 0,
+            "sales_readiness": 0, "sales_stage": "Research Required",
+            "outreach_priority": 0, "outreach_priority_level": "Research Required",
+            "outreach_level": "Research Required", "outreach_readiness_score": 0,
+            "sales_priority_score": 0, "executive_priority_score": 0,
+            "executive_action": "Research website identity and availability",
+            "crm_status": "Research Required", "found": [], "missing": [],
+            "evidence": {}, "pitch": [], "pain_points": [],
+            "recommended_contact_method": "Research Required", "priority": "Research Required",
+        })
+    else:
+        result["processing_status"] = "WEBSITE_PROCESSED"
 
     result["quality_control"] = evaluate_quality(result)
     results.append(result)

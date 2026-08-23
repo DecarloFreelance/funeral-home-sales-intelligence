@@ -150,14 +150,10 @@ def build_crawl_queue(leads: Iterable[DiscoveryLead]) -> List[Dict[str, object]]
         provenance.setdefault(lead.domain, set()).add(
             (lead.source, lead.source_url)
         )
-        locations.setdefault(lead.domain, {})[
-            (
-                lead.company.lower(),
-                lead.address.lower(),
-                lead.city.lower(),
-                lead.province.lower(),
-            )
-        ] = {
+        location_key = (
+            lead.company.lower(), lead.address.lower(), lead.city.lower(), lead.province.lower(),
+        )
+        incoming_location = {
             "company": lead.company,
             "address": lead.address,
             "city": lead.city,
@@ -169,6 +165,25 @@ def build_crawl_queue(leads: Iterable[DiscoveryLead]) -> List[Dict[str, object]]
             "contact_name": lead.contact_name,
             "contact_title": lead.contact_title,
         }
+        incoming_location["field_sources"] = {
+            field: [lead.source_url]
+            for field in ("company", "address", "city", "province", "country", "phone", "email", "contact_name", "contact_title")
+            if incoming_location.get(field) and lead.source_url
+        }
+        domain_locations = locations.setdefault(lead.domain, {})
+        if location_key not in domain_locations:
+            domain_locations[location_key] = incoming_location
+        else:
+            current = domain_locations[location_key]
+            for field, value in incoming_location.items():
+                if field == "field_sources":
+                    continue
+                if not current.get(field) and value:
+                    current[field] = value
+                if value and lead.source_url:
+                    sources = current.setdefault("field_sources", {}).setdefault(field, [])
+                    if lead.source_url not in sources:
+                        sources.append(lead.source_url)
         if lead.domain in by_domain:
             by_domain[lead.domain] = _merge(by_domain[lead.domain], lead)
         else:

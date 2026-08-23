@@ -172,6 +172,52 @@ contact-domain attribution findings remain visible. The repeat run skipped 70/70
 tasks, metrics reported no regression, 34 Accounts are CRM-safe, and 20 records
 are outreach-ready under the shared quality policy.
 
+## Production-Representative Scale Validation
+
+- [x] **GAP-2026-013 (HIGH): checkpoint controlled crawls per organization.**
+  A deliberate interruption after completed live requests proved the CLI wrote
+  nothing until the whole queue finished. Persist pages and reports atomically
+  after every domain, add explicit resume filtering, duration/outcome metrics,
+  and prove restart skips completed work.
+- [x] **GAP-2026-014 (HIGH): retain and fail closed organizations with no usable
+  website evidence.** The scorer previously emitted only domains represented by
+  fetched pages, dropping 159/211 canonical organizations at scale. Accept the
+  normalized queue, preserve directory facts, assign no missing-feature or
+  opportunity claims, mark research required, and block CRM/outreach.
+- [x] **GAP-2026-015 (HIGH): block ambiguous multi-location domains from CRM.**
+  Domain deduplication can represent several named branches while the canonical
+  label names only one. Require explicit network-versus-branch review before CRM
+  synchronization; test the readiness boundary.
+- [x] **GAP-2026-016 (MEDIUM): distinguish directory contact candidates from
+  role-verified people.** Preserve the 160/211 public association contacts as
+  sourced candidates without increasing named-person or decision-maker coverage,
+  and label both categories clearly for operators.
+- [x] **GAP-2026-017 (MEDIUM): resolve deterministic email-attribution noise.**
+  Reject the observed hosted-form placeholder `filler@godaddy.com`; retain
+  first-party-published cross-domain addresses with a low-severity confirmation,
+  while directory-only/free/corporate mismatches remain reviewable.
+- [x] **GAP-2026-018 (LOW): extend scale observability.** Metrics now distinguish
+  direct/derived coverage and track crawl outcomes/duration, provenance omissions,
+  duplicate fact IDs, readiness rates, agent retry counts, and task duration.
+- [x] **GAP-2026-021 (LOW): remove repeated full audit-file parsing.** The
+  211-record repeat run reparsed the growing JSON audit for every one of 422
+  events. Load the validated list once per locked run while retaining atomic
+  event persistence and the existing format; batch only unchanged skip events
+  under the pipeline lock. A production repeat completes in 2.4 seconds.
+- [x] **GAP-2026-022 (HIGH): preserve complementary multi-source location
+  fields.** Duplicate location rows replaced earlier rows wholesale, allowing a
+  later empty email/phone to erase existing evidence and misattribute fields to
+  one generic source URL. Merge nonempty fields and retain field-level source
+  URLs; exercise them through queue ingestion and contact extraction tests.
+
+Scale evidence: 342 AFSA/CANA records containing 257 websites normalized to 211
+domains across all ten provinces, a reduction of 46 duplicate website records.
+The controlled crawl reused 31 domains and attempted 180; 22 new domains yielded
+45 pages and 158 remained in the research queue. All 211 organizations were
+scored/enriched into 3,257 facts across 25 fields. The repeat pass skipped
+422/422 tasks. Zero provenance omissions, duplicate fact IDs, stale facts, agent
+failures, or metric regressions were observed. See `audit/SCALE_VALIDATION.md`.
+
 ## Data and Release Hygiene
 
 - [x] Align `verify_audit.py` with the production feature detector. Discovered
@@ -198,7 +244,7 @@ are outreach-ready under the shared quality policy.
 
 ## Current Verification
 
-- Automated tests: 125 passing on 2026-08-23.
+- Automated tests: 136 passing on 2026-08-23.
 - Local enrichment validation: 35 organizations, 1,610 unique facts across 24
   fields, 15 explicit review records, and a 70-of-70 unchanged-task skip on the
   second run. No uncontrolled enrichment network requests were made.

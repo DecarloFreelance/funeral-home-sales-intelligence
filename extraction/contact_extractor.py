@@ -218,11 +218,15 @@ def extract_contact_intelligence(
             emails.extend(_values(location.get("email")))
             phones.extend(_values(location.get("phone")))
             business_names.extend(_values(location.get("company")))
+            location_url = str(location.get("source_url") or discovery.get("source_url") or source_url)
+            field_sources = location.get("field_sources") or {}
+            def location_source(field):
+                return next(iter(field_sources.get(field) or []), location_url)
             if location.get("contact_name"):
                 directory_contacts.append({
                     "name": str(location["contact_name"]).strip(),
                     "title": str(location.get("contact_title") or "Directory contact").strip(),
-                    "source_url": str(location.get("source_url") or source_url),
+                    "source_url": str(location_source("contact_name")),
                     "source": "directory",
                 })
             address = {
@@ -234,7 +238,7 @@ def extract_contact_intelligence(
             address = {key: value for key, value in address.items() if value}
             if address:
                 address["formatted"] = ", ".join(address.values())
-                address["source_url"] = str(location.get("source_url") or source_url)
+                address["source_url"] = str(location_source("address"))
                 addresses.append(address)
 
         metadata = page.get("metadata") or {}
@@ -307,10 +311,11 @@ def extract_contact_intelligence(
             if not isinstance(location, dict):
                 continue
             location_url = str(location.get("source_url") or discovery_url)
+            field_sources = location.get("field_sources") or {}
             for value in _values(location.get("email")):
-                email_sources.append({"value": value.lower(), "source_url": location_url, "source_type": "directory"})
+                email_sources.append({"value": value.lower(), "source_url": next(iter(field_sources.get("email") or []), location_url), "source_type": "directory"})
             for value in _values(location.get("phone")):
-                phone_sources.append({"value": value, "source_url": location_url, "source_type": "directory"})
+                phone_sources.append({"value": value, "source_url": next(iter(field_sources.get("phone") or []), location_url), "source_type": "directory"})
         metadata = page.get("metadata") or {}
         json_ld_values = [metadata.get("jsonLd") or [], *_parse_html_json_ld(page.get("html") or "")]
         for node in _json_ld_nodes(json_ld_values):

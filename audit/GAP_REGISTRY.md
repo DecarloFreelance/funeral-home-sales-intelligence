@@ -236,3 +236,134 @@ and rejected suspicions so they are not repeatedly rediscovered.
 - Reason: unreachable historical placeholders do not affect a documented or
   observed workflow. Implementing them would invent a parallel interface rather
   than remediate repository behavior.
+
+## Scale-validation gaps (2026-08-23)
+
+### GAP-2026-013 — Interrupted CLI crawl loses completed domains
+
+- Category: recovery / observability
+- Severity: HIGH
+- Evidence: interrupting the 180-domain live crawl after eight domains left no
+  new pages or per-domain report because persistence occurred only after the
+  complete queue returned.
+- Root cause: the CLI buffered the crawler's whole result list in memory.
+- Acceptance: atomic per-domain page/report checkpoints; explicit resume skips
+  terminal domains; duration/outcome metrics; live stop/restart and regression test.
+- Status: VALIDATED — 56 live domains survived a second deliberate interruption;
+  resume selected exactly the remaining 124 and duplicated no completed work.
+
+### GAP-2026-014 — Zero-page organizations disappear or receive false opportunity claims
+
+- Category: pipeline/scoring correctness
+- Severity: HIGH
+- Evidence: only 52/211 canonical domains had reusable pages. `lead_scoring.py`
+  previously created organizations only while iterating pages, so 159 valid
+  directory organizations would disappear; treating an empty page set as nine
+  missing website features would also manufacture opportunity.
+- Root cause: scoring had no normalized-queue input contract.
+- Acceptance: retain all queue entities and directory provenance; use zero scores
+  and no absence claims; mark research required; block CRM/outreach; test it.
+- Status: VALIDATED — all 211 records are represented; all 159 zero-page records
+  have zero opportunity/executive score and are fail-closed.
+
+### GAP-2026-015 — Multi-location domain can sync one arbitrary branch identity
+
+- Category: entity resolution / CRM correctness
+- Severity: HIGH
+- Evidence: `dignitymemorial.com` represents eight named locations in this
+  cohort while the profile's canonical label is the first branch; eight other
+  domains also contain multiple distinct location names.
+- Root cause: domain deduplication correctly preserves locations, but Account
+  readiness did not require a network-versus-branch mapping decision.
+- Acceptance: material multi-location domains remain intact but CRM/outreach is
+  blocked pending explicit identity review; single-location records unchanged.
+- Status: VALIDATED — nine affected domains emit a deterministic review finding
+  and are excluded from CRM-safe scale sampling.
+
+### GAP-2026-016 — Public directory people are invisible to enrichment/operators
+
+- Category: contact coverage / operator correctness
+- Severity: MEDIUM
+- Evidence: CANA exposes public contact candidates for 160/211 domains, retained
+  by contact extraction but absent from enrichment facts and the operator view.
+- Root cause: only website role-verified people entered the evidence layer.
+- Acceptance: retain directory candidates with source and `DISCOVERED` state;
+  never classify them as role-verified people or decision makers; expose labels.
+- Status: VALIDATED — candidate coverage is 160/211 while role-verified named and
+  derived decision-maker coverage correctly remain 11/211.
+
+### GAP-2026-017 — Scale email attribution includes deterministic noise
+
+- Category: contact attribution
+- Severity: MEDIUM
+- Evidence: `aquamations.ca` contained the hosted-form placeholder
+  `filler@godaddy.com`; several other cross-domain addresses were directly
+  published on the organization's own fetched page.
+- Root cause: cleaning accepted a known template placeholder and quality ignored
+  source type when assessing domain mismatch.
+- Acceptance: reject only the observed placeholder; classify first-party page
+  publication separately without suppressing directory/free/corporate ambiguity.
+- Status: VALIDATED — placeholder count fell to zero; one current cross-domain
+  address is first-party-confirmed; 21 unresolved mismatches remain reviewable.
+
+### GAP-2026-018 — Baseline metrics omit scale/recovery invariants
+
+- Category: observability / regression detection
+- Severity: LOW
+- Evidence: the prior snapshot omitted crawl outcomes/duration, direct/derived
+  coverage, duplicate fact IDs, provenance omissions, retries, and task duration.
+- Acceptance: expose each metric without persisting private runtime data in Git;
+  deterministic tests and a production snapshot pass.
+- Status: VALIDATED — the expanded snapshot records all listed metrics and reports
+  no provenance omission, duplicate fact ID, retry, failure, or regression.
+
+### GAP-2026-019 — Low role-verified named-contact coverage proves extractor failure
+
+- Category: extraction / contact coverage
+- Evidence: role-verified coverage is 11/211. Review of retrieved role-bearing
+  pages found generic role prose, collective staff descriptions, or historical
+  narrative rather than a systematic current name/title pattern missed by the
+  extractor.
+- Status: NOT_A_DEFECT
+- Reason: association candidates are now visible separately; promoting them or
+  extracting historical prose would reduce precision.
+
+### GAP-2026-020 — Corporate redirect targets should be merged automatically
+
+- Category: entity resolution / research
+- Evidence: 138 attempts redirected across domains, often from legacy branch
+  domains to location-specific Dignity Memorial URLs.
+- Status: NOT_A_DEFECT
+- Reason: collapsing branch URLs into one corporate domain would lose branch
+  identity. All 158 unresolved domains remain in the research queue with redirect
+  evidence for operator resolution.
+
+### GAP-2026-021 — Every audit event reparses the complete audit history
+
+- Category: performance / observability
+- Severity: LOW
+- Evidence: scale repeat runs emit 422 events; `_audit` read and decoded the
+  growing JSON file before every atomic replacement, dominating unchanged work.
+- Root cause: audit history was treated as uncached external state despite the
+  pipeline's file lock and single orchestrator owning a run.
+- Acceptance: validate/load the audit list once per orchestrator; preserve atomic
+  persistence and JSON compatibility; orchestration tests and scale timing pass.
+- Status: VALIDATED — two 422-skip production repeats completed in 15.9 and 17.4
+  seconds after eliminating repeated parsing; batching only unchanged skip events
+  reduced the final 422-skip repeat to 2.4 seconds, with state-changing/failure
+  events still immediately durable and no audit-format change.
+
+### GAP-2026-022 — Duplicate source rows overwrite complementary location evidence
+
+- Category: data integrity / provenance
+- Severity: HIGH
+- Evidence: controlled AFSA/CANA-shaped duplicate location rows show
+  `build_crawl_queue` assigning the later row wholesale. A later empty email can
+  erase an earlier address, phone, or email, while a newly supplied contact can
+  inherit the wrong generic `source_url`.
+- Root cause: location deduplication used dictionary replacement rather than the
+  field-preserving merge already used for top-level leads.
+- Acceptance: merge complementary nonempty fields; retain field-level source
+  URLs; contact extraction uses the matching field source; regression tests.
+- Status: VALIDATED — queue and extractor tests prove complementary fields and
+  their distinct evidence URLs survive repeated-source ingestion.

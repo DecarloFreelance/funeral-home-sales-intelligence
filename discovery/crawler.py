@@ -1,6 +1,7 @@
 import json
 import time
 from collections import deque
+from collections import Counter
 from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List
 from urllib.parse import urljoin, urlsplit, urlunsplit
@@ -136,6 +137,7 @@ class PriorityPageCrawler:
         raise requests.TooManyRedirects("Redirect limit exceeded")
 
     def crawl_lead(self, lead: Dict[str, Any]) -> List[Dict[str, Any]]:
+        started = time.monotonic()
         domain = str(lead.get("domain", "")).lower().strip()
         homepage = _canonical_page_url(lead.get("url") or lead.get("website") or "")
         outcome = {
@@ -289,6 +291,7 @@ class PriorityPageCrawler:
                     pending.append(discovered)
 
         outcome["pages"] = len(records)
+        outcome["duration_ms"] = round((time.monotonic() - started) * 1000)
         outcome["status"] = "SUCCESS" if records else "FAILED"
         if not records and "reason" not in outcome:
             outcomes = [attempt["outcome"] for attempt in outcome["attempts"]]
@@ -300,6 +303,7 @@ class PriorityPageCrawler:
         self,
         leads: Iterable[Dict[str, Any]],
         on_lead=None,
+        checkpoint=None,
     ) -> List[Dict[str, Any]]:
         leads = list(leads)
         records = []
@@ -315,13 +319,24 @@ class PriorityPageCrawler:
                 successful_domains.append(domain)
             else:
                 failed_domains.append(domain)
+            if checkpoint:
+                checkpoint(lead_records, self.last_lead_report)
             if on_lead:
                 on_lead(index, len(leads), domain, len(lead_records))
+        attempt_outcomes = Counter(
+            attempt.get("outcome")
+            for report in lead_reports for attempt in report.get("attempts", [])
+        )
+        durations = sorted(report.get("duration_ms", 0) for report in lead_reports)
         self.last_report = {
             "queued_domains": len(leads),
             "successful_domains": len(successful_domains),
             "failed_domains": failed_domains,
             "pages": len(records),
             "leads": lead_reports,
+            "attempt_outcomes": dict(sorted(attempt_outcomes.items())),
+            "duration_ms": sum(durations),
+            "average_domain_duration_ms": round(sum(durations) / len(durations)) if durations else 0,
+            "median_domain_duration_ms": durations[len(durations) // 2] if durations else 0,
         }
         return records

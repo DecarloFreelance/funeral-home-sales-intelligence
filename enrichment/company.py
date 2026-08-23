@@ -13,7 +13,7 @@ from technology_detector import detect_technology
 
 
 DETECTOR = "public_business_enrichment"
-VERSION = "1.4.1"
+VERSION = "1.5.1"
 SOCIAL_HOSTS = {
     "facebook.com": "facebook",
     "instagram.com": "instagram",
@@ -124,7 +124,8 @@ def enrich_company(
             "discovery", 0.7, "DISCOVERED", str(name))
     for location in profile.get("locations") or []:
         if isinstance(location, dict):
-            source_url = location.get("source_url") or primary_source_url
+            field_sources = location.get("field_sources") or {}
+            source_url = next(iter(field_sources.get("address") or field_sources.get("city") or []), location.get("source_url") or primary_source_url)
             address = {key: location.get(key) for key in ("address", "city", "province", "country") if location.get(key)}
             add("organization.location", address, "discovery", source_url, "directory",
                 0.72, "DISCOVERED", ", ".join(address.values()), days=120)
@@ -217,6 +218,16 @@ def enrich_company(
                 "decision_maker_probability": probability}, "role_classifier", source_url,
                 "derived", probability, "INFERRED", f"Derived from observed title: {title}",
                 derived=True, days=60)
+
+    for person in contacts.get("directory_contacts") or []:
+        if not isinstance(person, dict) or not person.get("name"):
+            continue
+        source_url = str(person.get("source_url") or primary_source_url)
+        current_observed_at = observation_by_url.get(source_url, observed_at)
+        add("contact.directory_candidate", {
+            "name": person["name"], "title": person.get("title") or "Directory contact",
+        }, person.get("source", "directory"), source_url, "directory", 0.65,
+            "DISCOVERED", "Public association-directory contact; role not website-verified.", days=90)
 
     email_validation = {item.get("email"): item for item in contacts.get("email_validation") or []}
     for item in contacts.get("email_sources") or []:
