@@ -28,6 +28,8 @@ class LeadIntelligence:
     opportunity: Dict[str, Any] = field(default_factory=dict)
     outreach: Dict[str, Any] = field(default_factory=dict)
     crm: Dict[str, Any] = field(default_factory=dict)
+    enrichment: Dict[str, Any] = field(default_factory=dict)
+    quality_control: Dict[str, Any] = field(default_factory=dict)
 
 
     @classmethod
@@ -123,7 +125,10 @@ class LeadIntelligence:
                 "crm_status": result.get("crm_status"),
                 "sales_lane": result.get("sales_lane"),
                 **crm_state,
-            }
+            },
+
+            enrichment=result.get("enrichment", {}),
+            quality_control=result.get("quality_control", {}),
         )
 
 
@@ -348,4 +353,6 @@ class LeadIntelligence:
             "opportunity": self.opportunity,
             "outreach": self.outreach,
             "crm": self.crm,
+            "enrichment": self.enrichment,
+            "quality_control": self.quality_control,
         }

@@ -29,6 +29,11 @@ class ContactExtractorTests(unittest.TestCase):
         )
         self.assertEqual(result["people"][0]["name"], "Jane O'Connor")
         self.assertEqual(result["people"][0]["source"], "page_text")
+        self.assertEqual(result["email_sources"], [{
+            "value": "info@example.com", "source_url": "https://example.com/team",
+            "source_type": "page_text",
+        }])
+        self.assertEqual(result["phone_sources"][0]["source_url"], "https://example.com/team")
         self.assertEqual(result["completeness_score"], 75)
 
     def test_extracts_business_person_and_address_from_json_ld(self):
@@ -64,6 +69,7 @@ class ContactExtractorTests(unittest.TestCase):
 
         self.assertEqual(result["business_names"], ["Example Funeral Home"])
         self.assertEqual(result["addresses"][0]["city"], "Calgary")
+        self.assertEqual(result["addresses"][0]["source_url"], "https://example.com/about")
         self.assertEqual(result["people"][0]["name"], "John Smith")
         self.assertEqual(result["people"][0]["source"], "schema.org")
         self.assertEqual(result["completeness_score"], 100)
@@ -134,6 +140,7 @@ class ContactExtractorTests(unittest.TestCase):
             result["directory_contacts"][0]["source_url"],
             "https://directory.example/example",
         )
+        self.assertEqual(result["email_sources"][0]["source_url"], "https://directory.example/example")
 
 
 if __name__ == "__main__":

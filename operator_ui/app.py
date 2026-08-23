@@ -261,6 +261,10 @@ def create_app(config=None):
             abort(404)
         return render_template("lead_detail.html", lead=lead)
 
+    @app.get("/quality")
+    def quality_review():
+        return render_template("quality.html", records=repository().quality_review())
+
     @app.get("/candidates")
     def candidates():
         return render_template("candidates.html", records=repository().candidates())

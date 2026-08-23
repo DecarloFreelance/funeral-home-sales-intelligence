@@ -185,6 +185,7 @@ def extract_contact_intelligence(
     phone_provider=None,
     check_email_dns: bool = False,
 ) -> Dict[str, Any]:
+    pages = list(pages)
     emails: List[str] = []
     phones: List[str] = []
     people: List[Dict[str, str]] = []
@@ -233,6 +234,7 @@ def extract_contact_intelligence(
             address = {key: value for key, value in address.items() if value}
             if address:
                 address["formatted"] = ", ".join(address.values())
+                address["source_url"] = str(location.get("source_url") or source_url)
                 addresses.append(address)
 
         metadata = page.get("metadata") or {}
@@ -252,6 +254,7 @@ def extract_contact_intelligence(
                 business_names.extend(_values(node.get("name")))
                 address = _format_address(node.get("address"))
                 if address:
+                    address["source_url"] = source_url
                     addresses.append(address)
 
             if "person" in normalized_types and node.get("name"):
@@ -284,6 +287,44 @@ def extract_contact_intelligence(
         for item in directory_contacts if item["name"]
     }.values())
 
+    # Retain public source attribution separately from normalized/ranked values.
+    email_sources = []
+    phone_sources = []
+    for page in pages:
+        text = page.get("text") or page.get("markdown") or ""
+        page_url = str(page.get("url") or "")
+        discovery = page.get("discovery") or {}
+        for value in EMAIL_PATTERN.findall(text):
+            email_sources.append({"value": value.lower(), "source_url": page_url, "source_type": "page_text"})
+        for value in PHONE_PATTERN.findall(text):
+            phone_sources.append({"value": value, "source_url": page_url, "source_type": "page_text"})
+        discovery_url = str(discovery.get("source_url") or page_url)
+        for value in _values(discovery.get("email")):
+            email_sources.append({"value": value.lower(), "source_url": discovery_url, "source_type": "discovery"})
+        for value in _values(discovery.get("phone")):
+            phone_sources.append({"value": value, "source_url": discovery_url, "source_type": "discovery"})
+        for location in discovery.get("locations") or []:
+            if not isinstance(location, dict):
+                continue
+            location_url = str(location.get("source_url") or discovery_url)
+            for value in _values(location.get("email")):
+                email_sources.append({"value": value.lower(), "source_url": location_url, "source_type": "directory"})
+            for value in _values(location.get("phone")):
+                phone_sources.append({"value": value, "source_url": location_url, "source_type": "directory"})
+        metadata = page.get("metadata") or {}
+        json_ld_values = [metadata.get("jsonLd") or [], *_parse_html_json_ld(page.get("html") or "")]
+        for node in _json_ld_nodes(json_ld_values):
+            for value in _values(node.get("email")):
+                email_sources.append({"value": value.lower(), "source_url": page_url, "source_type": "structured_data"})
+            for value in _values(node.get("telephone")):
+                phone_sources.append({"value": value, "source_url": page_url, "source_type": "structured_data"})
+    email_sources = list({(item["value"], item["source_url"], item["source_type"]): item for item in email_sources}.values())
+    phone_sources = list({(item["value"], item["source_url"], item["source_type"]): item for item in phone_sources}.values())
+    usable_emails = {item.lower() for item in cleaned["emails"]}
+    usable_phones = set(cleaned["phones"])
+    email_sources = [item for item in email_sources if item["value"] in usable_emails]
+    phone_sources = [item for item in phone_sources if item["value"] in usable_phones]
+
     completeness = min(100, sum((
         10 if unique_names else 0,
         10 if domain else 0,
@@ -297,8 +338,10 @@ def extract_contact_intelligence(
         "business_names": unique_names,
         "emails": cleaned["emails"],
         "email_validation": email_validation,
+        "email_sources": email_sources,
         "phones": cleaned["phones"],
         "phone_verification": phone_verification,
+        "phone_sources": phone_sources,
         "addresses": unique_addresses,
         "people": unique_people,
         "directory_contacts": unique_directory_contacts,

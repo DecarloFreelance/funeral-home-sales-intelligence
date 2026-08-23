@@ -1,6 +1,6 @@
 # Product Task List
 
-Last reconciled: 2026-08-22
+Last reconciled: 2026-08-23
 
 This file tracks current work. Historical v34/v35 recommendations are preserved
 in the handoff and audit documents; they are not active tasks unless listed
@@ -82,6 +82,44 @@ below.
   duplicate handling, retrieval rates, and contact yield. See
   `audit/CANA_LIVE_DISCOVERY_VALIDATION.md`.
 
+## Next Milestone: Evidence-Driven Enrichment Automation
+
+Added 2026-08-23 after repository inspection found that crawled HTML, JSON-LD,
+contact validation, and operator review exist, but enriched facts have no common
+provenance contract and there is no persistent, bounded record-level agent
+runner. This milestone extends the existing file-based pipeline rather than the
+operator UI's deliberately in-process crawl-job mechanism.
+
+- [x] Add deterministic organization and contact enrichment from already
+  permitted crawl/discovery evidence. Every fact must retain its value, source
+  URL/type, observation time, detector/version, confidence, verification state,
+  direct/derived status, and stable deduplication key; conflicts must remain
+  visible rather than being silently overwritten.
+- [x] Add freshness and input-fingerprint caching so unchanged records are
+  skipped, stale facts can be refreshed, and no external call is repeated merely
+  because the runner restarts.
+- [x] Add bounded, persistent enrichment and quality-control agents with explicit
+  input/output contracts, retry/failure/skip audit records, safe interruption
+  recovery, and idempotent output.
+- [x] Add quality findings for provenance/confidence violations, contact-domain
+  mismatches, unsupported decision-maker claims, duplicate entities/contacts,
+  conflicting facts, and scores or CRM-readiness claims unsupported by evidence.
+  Ambiguous findings must enter review rather than silently changing canonical
+  data.
+- [x] Surface enrichment facts, uncertainty, conflicts, evidence, freshness, and
+  recommended research actions in the existing operator lead review.
+- [x] Exercise the real local enrichment-agent workflow end to end with a
+  representative multi-page record, including repeat-run skip/idempotency,
+  interrupted-run recovery, malformed/conflicting inputs, and operator output.
+
+Validation evidence: the real 35-organization local crawl produced 1,480 unique
+facts in 22 fields with no missing mandatory provenance and 70 completed durable
+agent tasks. A second identical run skipped all 70 tasks. Review output retained
+13 canonical-name conflicts and 22 cross-domain email-attribution findings
+across 19 organizations. An adversarial first pass incorrectly treated expected
+multi-valued staff, location, social, and page-canonical facts as conflicts; the
+resolution rule was narrowed to singleton identity fields and regression-tested.
+
 ## Data and Release Hygiene
 
 - [x] Align `verify_audit.py` with the production feature detector. Discovered
@@ -108,7 +146,10 @@ below.
 
 ## Current Verification
 
-- Automated tests: 98 passing on 2026-08-22.
+- Automated tests: 110 passing on 2026-08-23.
+- Local enrichment validation: 35 organizations, 1,480 unique facts across 22
+  fields, 19 explicit review records, and a 70-of-70 unchanged-task skip on the
+  second run. No uncontrolled enrichment network requests were made.
 - Controlled DNS validation: MX-positive and Null-MX/negative domain behavior
   confirmed without claiming mailbox deliverability.
 - Live EspoCRM validation: authenticated Account create/update/read round trip,

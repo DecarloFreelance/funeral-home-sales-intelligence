@@ -12,6 +12,8 @@ from report import print_report
 from contact_cleaner import clean_contact_data
 from contact_ranker import choose_email, choose_phone
 from extraction.contact_extractor import extract_contact_intelligence
+from enrichment.company import enrich_company
+from enrichment.quality import evaluate_quality
 
 
 parser = argparse.ArgumentParser(
@@ -244,6 +246,13 @@ for domain,data in companies.items():
         data["documents"],
         domain,
         check_email_dns=True,
+    )
+
+    enrichment = enrich_company(
+        domain,
+        data["documents"],
+        data["business_profile"],
+        contact_intelligence,
     )
 
     emails_found = contact_intelligence["emails"]
@@ -1710,7 +1719,7 @@ for domain,data in companies.items():
     }
 
 
-    results.append({
+    result = {
 
         "domain":domain,
 
@@ -1727,6 +1736,8 @@ for domain,data in companies.items():
         "phones_found":phones_found,
 
         "contact_intelligence":contact_intelligence,
+
+        "enrichment":enrichment,
 
         "business_profile":data["business_profile"],
 
@@ -1897,7 +1908,10 @@ for domain,data in companies.items():
         "pitch":
             generate_pitch(missing)
 
-    })
+    }
+
+    result["quality_control"] = evaluate_quality(result)
+    results.append(result)
 
 
 

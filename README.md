@@ -13,6 +13,8 @@ AI-powered platform for discovering, auditing, scoring, and prioritizing funeral
 - CRM-ready exports
 - Persistent CRM lead state and engagement history
 - Prioritized CRM action queue with start/completion tracking
+- Provenance-first public business enrichment and quality review
+- Persistent, bounded record-agent execution with retry and skip auditing
 
 ## Current Development Status
 
@@ -30,6 +32,23 @@ Run the automated checks with:
 ```bash
 python -m unittest discover -v
 ```
+
+Run enrichment and quality control over an existing crawl and score set with:
+
+```bash
+python run_enrichment.py \
+  --pages data/discovered_leads.json \
+  --results data/discovered_results.json
+```
+
+The command uses only previously permitted crawl/discovery evidence; it performs
+no new network requests. Versioned input fingerprints skip unchanged agent work,
+while timestamps and freshness horizons keep old observations from being treated
+as permanent truth. Outputs, durable task state, audit events, and the review
+queue are written beneath ignored `data/generated/enrichment/`. The operator UI
+shows direct versus derived facts, source evidence, confidence/conflicts,
+freshness, and recommended research actions. See
+`audit/ENRICHMENT_AUTOMATION.md` for contracts and recovery behavior.
 
 Automated discovery, public contact extraction, platform-candidate ranking, and
 reviewable outreach generation, the operator interface, progressive local

@@ -30,7 +30,7 @@ class OperatorUiTests(unittest.TestCase):
         path.write_text(json.dumps(value), encoding="utf-8")
 
     def test_all_views_have_safe_empty_states(self):
-        for path in ["/", "/queues", "/imports", "/crawl", "/research", "/leads", "/candidates", "/drafts", "/crm/actions"]:
+        for path in ["/", "/queues", "/imports", "/crawl", "/research", "/leads", "/quality", "/candidates", "/drafts", "/crm/actions"]:
             response = self.client.get(path)
             self.assertEqual(response.status_code, 200, path)
 
@@ -57,6 +57,33 @@ class OperatorUiTests(unittest.TestCase):
         detail = self.client.get("/leads/example.com")
         self.assertIn(b"Jane Smith", detail.data)
         self.assertEqual(self.client.get("/leads/not-found.example").status_code, 404)
+
+    def test_enrichment_and_quality_uncertainty_are_visible(self):
+        self.write_json("generated/enrichment/results.json", [{
+            "domain": "example.com", "business_profile": {"company": "Example"},
+            "enrichment": {"detector": "fixture", "detector_version": "1", "facts": [{
+                "field": "contact.role_category", "value": {"role": "OWNER"},
+                "verification_state": "INFERRED", "derived": True,
+                "source_url": "https://example.com/team", "observed_at": "2026-08-23T00:00:00Z",
+                "confidence": 0.9, "evidence": "Derived from observed title: Owner",
+            }]},
+            "quality_control": {"status": "NEEDS_REVIEW", "findings": [{
+                "severity": "MEDIUM", "code": "CONFLICTING_FACTS",
+                "message": "Sources disagree.", "recommended_action": "Research both sources.",
+            }]},
+        }])
+        self.write_json("generated/enrichment/review_queue.json", [{
+            "domain": "example.com", "status": "NEEDS_REVIEW", "crm_sync_safe": False,
+            "findings": [{"severity": "MEDIUM", "code": "CONFLICTING_FACTS",
+                "message": "Sources disagree.", "recommended_action": "Research both sources."}],
+        }])
+
+        detail = self.client.get("/leads/example.com")
+        self.assertIn(b"INFERRED", detail.data)
+        self.assertIn(b"Derived from observed title", detail.data)
+        review = self.client.get("/quality")
+        self.assertIn(b"CONFLICTING_FACTS", review.data)
+        self.assertIn(b"CRM sync safe: no", review.data)
 
     def test_crm_actions_are_read_from_configured_database(self):
         database = self.data / "custom.sqlite"

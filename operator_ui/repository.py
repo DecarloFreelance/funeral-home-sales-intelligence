@@ -33,7 +33,9 @@ class OperatorRepository:
         return value if isinstance(value, list) else []
 
     def leads(self):
-        value = self._json("generated/campaign/results.json", None)
+        value = self._json("generated/enrichment/results.json", None)
+        if not isinstance(value, list):
+            value = self._json("generated/campaign/results.json", None)
         if not isinstance(value, list):
             value = self._json("discovered_results.json", [])
         if not isinstance(value, list):
@@ -46,6 +48,10 @@ class OperatorRepository:
 
     def lead(self, domain):
         return next((item for item in self.leads() if item.get("domain") == domain), None)
+
+    def quality_review(self):
+        value = self._json("generated/enrichment/review_queue.json", [])
+        return value if isinstance(value, list) else []
 
     def candidates(self):
         value = self._json("generated/platform/platform_candidate_results.json", [])
@@ -124,6 +130,7 @@ class OperatorRepository:
             "failed": len(report.get("failed_domains", [])),
             "research": len(self.research()),
             "leads": len(self.leads()),
+            "quality_review": len(self.quality_review()),
             "candidates": len(self.candidates()),
             "drafts": len(self.drafts()),
             "open_actions": sum(action.get("status") in {"OPEN", "IN_PROGRESS"} for action in actions),
