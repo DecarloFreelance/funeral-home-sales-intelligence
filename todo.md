@@ -71,12 +71,11 @@ below.
 - [x] Add deterministic fake-adapter tests for EspoCRM synchronization.
   - [x] Add a pinned, localhost-only EspoCRM Compose stack and a credential-safe
     live validation harness under `dev/espocrm`.
-  - [ ] Validate against a live self-hosted instance. Blocked: no running
-    EspoCRM instance or least-privilege API-user credentials are available. The
-    installed Docker service cannot be started without host administrative
-    authentication, and rootless Podman cannot create a user namespace in this
-    environment. Run the documented stack after enabling either runtime; no
-    implicit transmission is permitted.
+  - [x] Validate against a live self-hosted EspoCRM 10.0.5 instance using an
+    Account-only API-key user. Two independent two-pass runs reused remote ID
+    `6a8a9037cd3452fe3`; exactly one Account exists. Bad authentication and an
+    unreachable endpoint failed closed without changing local lead state. See
+    `audit/CRM_INTEGRATION_DECISION.md`.
 - [x] Add a controlled CANA public member-directory provider beyond AFSA, with
   selectable Canada and United States coverage.
 - [x] Expand live validation beyond Alberta and document Canada/USA coverage,
@@ -112,6 +111,9 @@ below.
 - Automated tests: 98 passing on 2026-08-22.
 - Controlled DNS validation: MX-positive and Null-MX/negative domain behavior
   confirmed without claiming mailbox deliverability.
+- Live EspoCRM validation: authenticated Account create/update/read round trip,
+  remote-ID reuse, local mapping/audit persistence, and failure isolation
+  passed on 2026-08-23.
 - Live AFSA validation: 35 scored companies from 52 normalized website domains.
 - Platform-candidate dataset: 27 reviewed candidates, including 21 site-verified
   records and 6 evidence-only records.

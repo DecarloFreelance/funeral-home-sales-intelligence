@@ -7,7 +7,9 @@ credentials in the ignored `.env` file.
 1. Copy `.env.example` to `.env` and replace every password.
 2. Start the stack with `docker compose --env-file .env up -d` from this folder.
 3. Open `http://localhost:8080`, sign in as the configured administrator, and
-   create a Role with Account read/create/edit permissions only.
+   create a Role with Account read/create/edit permissions only. Set Account
+   delete and stream access and all global assignment, user, message, export,
+   mass-update, and audit permissions to `no`.
 4. Create an API User using API Key authentication and assign that Role.
 5. Export `ESPOCRM_URL=http://localhost:8080` and the generated key as
    `ESPOCRM_API_KEY`.
