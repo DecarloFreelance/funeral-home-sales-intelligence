@@ -6,8 +6,10 @@ from contact_ranker import choose_email, choose_phone
 from crm.status_engine import initial_status, follow_up_schedule
 
 from intelligence.phone_intelligence import (
-    phone_quality_score
+    phone_quality_score,
+    verify_phones,
 )
+from intelligence.email_intelligence import validate_emails
 
 
 @dataclass
@@ -35,12 +37,30 @@ class LeadIntelligence:
         into canonical intelligence format.
         """
 
+        contacts = cls.build_contacts(result)
+        outreach_priority = cls.build_outreach_priority(
+            result,
+            contacts
+        )
+        crm_state = cls.build_crm_state(
+            result,
+            outreach_priority["priority_level"],
+            outreach_priority["best_contact_method"]
+        )
+
+        business_profile = result.get("business_profile", {})
+
         return cls(
 
             company={
                 "domain": result.get("domain"),
                 "lead_type": result.get("lead_type"),
                 "prospect_type": result.get("prospect_type"),
+                "name": business_profile.get("company"),
+                "business_names": business_profile.get("business_names", []),
+                "locations": business_profile.get("locations", []),
+                "sources": business_profile.get("sources", []),
+                "provenance": business_profile.get("provenance", []),
             },
 
             website={
@@ -50,7 +70,7 @@ class LeadIntelligence:
                 "evidence": result.get("evidence", {}),
             },
 
-            contacts=cls.build_contacts(result),
+            contacts=contacts,
 
             scoring={
                 "conversion": result.get("conversion"),
@@ -96,18 +116,13 @@ class LeadIntelligence:
                 "personalization_profile": result.get(
                     "personalization_profile"
                 ),
-                **cls.build_outreach_priority(
-                    result,
-                    cls.build_contacts(result)
-                ),
+                **outreach_priority,
             },
 
             crm={
                 "crm_status": result.get("crm_status"),
                 "sales_lane": result.get("sales_lane"),
-                **cls.build_crm_state(
-                    result
-                ),
+                **crm_state,
             }
         )
 
@@ -122,6 +137,11 @@ class LeadIntelligence:
         domain = result.get(
             "domain",
             ""
+        )
+
+        extracted = result.get(
+            "contact_intelligence",
+            {}
         )
 
         raw_emails = result.get(
@@ -152,6 +172,12 @@ class LeadIntelligence:
         phone_analysis = phone_quality_score(
             primary_phone
         )
+        email_validation = extracted.get(
+            "email_validation"
+        ) or validate_emails(cleaned["emails"], domain)
+        phone_verification = extracted.get(
+            "phone_verification"
+        ) or verify_phones(cleaned["phones"])
 
         return {
             "emails_found": cleaned["emails"],
@@ -159,9 +185,11 @@ class LeadIntelligence:
 
             "primary_email": primary_email,
             "email_confidence": email_confidence,
+            "email_validation": email_validation,
 
             "primary_phone": primary_phone,
             "phone_confidence": phone_confidence,
+            "phone_verification": phone_verification,
 
             "normalized_phone":
                 phone_analysis["normalized"],
@@ -171,6 +199,26 @@ class LeadIntelligence:
 
             "phone_reason":
                 phone_analysis["reasons"],
+
+            "business_names": extracted.get(
+                "business_names", []
+            ),
+
+            "addresses": extracted.get(
+                "addresses", []
+            ),
+
+            "people": extracted.get(
+                "people", []
+            ),
+
+            "directory_contacts": extracted.get(
+                "directory_contacts", []
+            ),
+
+            "completeness_score": extracted.get(
+                "completeness_score", 0
+            ),
 
             "contact_quality_score": round(
                 (
@@ -251,19 +299,22 @@ class LeadIntelligence:
 
 
     @classmethod
-    def build_crm_state(cls, result):
+    def build_crm_state(
+        cls,
+        result,
+        priority=None,
+        method=None
+    ):
         """
         Generate CRM workflow state.
         """
 
-        priority = result.get(
-            "outreach_priority",
-            ""
+        priority = priority or result.get(
+            "outreach_priority", ""
         )
 
-        method = result.get(
-            "outreach_channel",
-            "email"
+        method = method or result.get(
+            "outreach_channel", "email"
         )
 
 

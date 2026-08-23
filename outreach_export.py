@@ -7,8 +7,8 @@ from crm.database import initialize, upsert_lead
 from crm.action_queue import initialize_queue, create_action
 
 
-INPUT = Path("data/results.json")
-OUTPUT = Path("data/outreach_contacts.csv")
+INPUT = Path("data/generated/campaign/results.json")
+OUTPUT = Path("data/generated/campaign/outreach_contacts.csv")
 
 
 with INPUT.open() as f:
@@ -44,6 +44,7 @@ fields = [
     "recommended_pitch"
 ]
 
+OUTPUT.parent.mkdir(parents=True, exist_ok=True)
 
 with OUTPUT.open(
     "w",

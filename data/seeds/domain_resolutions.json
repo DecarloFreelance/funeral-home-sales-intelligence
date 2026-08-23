@@ -1,0 +1,107 @@
+[
+  {
+    "old_domain": "bearcreekfuneral.com",
+    "new_website": "https://bcfh.ca/",
+    "confidence": "HIGH",
+    "evidence_url": "https://bcfh.ca/",
+    "notes": "Current official site matches company, city, phone, and address."
+  },
+  {
+    "old_domain": "cochranecountryfuneralhome.com",
+    "new_website": "https://www.cochranecountryfuneral.ca/",
+    "confidence": "HIGH",
+    "evidence_url": "https://www.cochranecountryfuneral.ca/",
+    "notes": "Current official site uses the .ca domain."
+  },
+  {
+    "old_domain": "countryhillscares.ca",
+    "new_website": "https://www.countryhillscrematorium.ca/",
+    "confidence": "HIGH",
+    "evidence_url": "https://www.countryhillscrematorium.ca/",
+    "notes": "Current official Calgary facility site."
+  },
+  {
+    "old_domain": "edsonfuneralhome.com",
+    "new_website": "https://www.foothillsmemorialchapel.com/",
+    "confidence": "HIGH",
+    "evidence_url": "https://www.foothillsmemorialchapel.com/",
+    "notes": "Official site lists Hinton Funeral Services as a location."
+  },
+  {
+    "old_domain": "eventidefuneralchapels.com",
+    "new_website": "https://www.arbormemorial.ca/en/eventide/obituaries.html",
+    "confidence": "HIGH",
+    "evidence_url": "https://www.arbormemorial.ca/en/eventide/obituaries.html",
+    "notes": "Current Arbor Memorial Eventide property."
+  },
+  {
+    "old_domain": "evergreenmemorial.com",
+    "new_website": "https://www.arbormemorial.ca/en/evergreen.html",
+    "confidence": "HIGH",
+    "evidence_url": "https://www.arbormemorial.ca/en/evergreen.html",
+    "notes": "Current Arbor Memorial Evergreen property."
+  },
+  {
+    "old_domain": "firstmemorialfuneral.com",
+    "new_website": "https://www.dignitymemorial.com/funeral-homes/alberta/fort-saskatchewan/first-memorial-funeral-services-riverview-chapel/3648",
+    "confidence": "HIGH",
+    "evidence_url": "https://www.dignitymemorial.com/funeral-homes/alberta/fort-saskatchewan/first-memorial-funeral-services-riverview-chapel/3648",
+    "notes": "Current official Dignity Memorial location page."
+  },
+  {
+    "old_domain": "fostercmgarvey.com",
+    "new_website": "https://www.connelly-mckinley.com/",
+    "confidence": "HIGH",
+    "evidence_url": "https://www.fostermcgarvey.com/obituaries.php",
+    "notes": "Foster & McGarvey states it transitioned to Connelly-McKinley."
+  },
+  {
+    "old_domain": "fostersgardenchapel.com",
+    "new_website": "https://www.dignitymemorial.com/en-ca/funeral-homes/alberta/calgary/fosters-garden-chapel-funeral-home-crematorium/3600",
+    "confidence": "HIGH",
+    "evidence_url": "https://www.dignitymemorial.com/en-ca/funeral-homes/alberta/calgary/fosters-garden-chapel-funeral-home-crematorium/3600",
+    "notes": "Current official Dignity Memorial location page."
+  },
+  {
+    "old_domain": "leydens.com",
+    "new_website": "https://www.arbormemorial.ca/en/leydens-calgary/about.html",
+    "confidence": "HIGH",
+    "evidence_url": "https://www.arbormemorial.ca/en/leydens-calgary/about.html",
+    "notes": "Current Arbor Memorial staff and facility page."
+  },
+  {
+    "old_domain": "oliversfuneralchapel.com",
+    "new_website": "https://www.oliversfuneralhome.com/",
+    "confidence": "HIGH",
+    "evidence_url": "https://www.oliversfuneralhome.com/",
+    "notes": "Current official site reflects the Oliver's Funeral Home name."
+  },
+  {
+    "old_domain": "parklandfuneralservices.com",
+    "new_website": "https://www.dignitymemorial.com/en-ca/funeral-homes/alberta/stony-plain/parkland-funeral-services/3647",
+    "confidence": "HIGH",
+    "evidence_url": "https://www.dignitymemorial.com/en-ca/funeral-homes/alberta/stony-plain/parkland-funeral-services/3647",
+    "notes": "Current official Dignity Memorial location page."
+  },
+  {
+    "old_domain": "reddeerfuneralhome.com",
+    "new_website": "https://www.arbormemorial.ca/en/reddeer.html",
+    "confidence": "HIGH",
+    "evidence_url": "https://www.arbormemorial.ca/en/reddeer.html",
+    "notes": "Current Arbor Memorial Red Deer property."
+  },
+  {
+    "old_domain": "southsidememorial.com",
+    "new_website": "https://www.arbormemorial.ca/en/southside.html",
+    "confidence": "HIGH",
+    "evidence_url": "https://www.arbormemorial.ca/en/southside.html",
+    "notes": "Current Arbor Memorial South Side property."
+  },
+  {
+    "old_domain": "wilsonsfuneralchapel.ca",
+    "new_website": "https://www.wilsonsfh.com/",
+    "confidence": "MEDIUM",
+    "evidence_url": "https://www.uccab.ca/wp-content/uploads/2026/05/CUAET-Holders_Death-of-Family-Member_Ukr.pdf",
+    "notes": "A current 2026 community guide lists the replacement domain."
+  }
+]

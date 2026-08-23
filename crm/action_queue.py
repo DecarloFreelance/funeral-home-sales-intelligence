@@ -4,9 +4,9 @@ from datetime import datetime, timedelta
 from crm.database import connect
 
 
-def initialize_queue():
+def initialize_queue(db_path=None):
 
-    conn = connect()
+    conn = connect(db_path)
 
     cur = conn.cursor()
 
@@ -34,16 +34,19 @@ def initialize_queue():
     conn.commit()
     conn.close()
 
+    migrate_action_queue(db_path)
+
 
 
 def create_action(
     domain,
     action_type,
     priority,
-    notes=""
+    notes="",
+    db_path=None,
 ):
 
-    conn = connect()
+    conn = connect(db_path)
 
     cur = conn.cursor()
 
@@ -57,6 +60,25 @@ def create_action(
     due = datetime.utcnow() + timedelta(
         days=days.get(priority, 14)
     )
+
+    cur.execute(
+        """
+        SELECT id
+        FROM action_queue
+        WHERE domain=?
+          AND action_type=?
+          AND status IN ('OPEN', 'IN_PROGRESS')
+        ORDER BY id
+        LIMIT 1
+        """,
+        (domain, action_type)
+    )
+
+    existing = cur.fetchone()
+
+    if existing:
+        conn.close()
+        return existing[0]
 
     cur.execute(
         """
@@ -84,14 +106,17 @@ def create_action(
         )
     )
 
+    action_id = cur.lastrowid
     conn.commit()
     conn.close()
 
+    return action_id
 
 
-def get_open_actions():
 
-    conn = connect()
+def get_open_actions(db_path=None):
+
+    conn = connect(db_path)
 
     cur = conn.cursor()
 
@@ -119,11 +144,8 @@ def get_open_actions():
     return rows
 
 
-def migrate_action_queue():
-
-    from crm.database import connect
-
-    conn = connect()
+def migrate_action_queue(db_path=None):
+    conn = connect(db_path)
     cur = conn.cursor()
 
 
@@ -156,3 +178,4 @@ def migrate_action_queue():
 
 
     conn.commit()
+    conn.close()

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
+import argparse
 import json
+from pathlib import Path
 import re
 
 from feature_detector import detect_features
@@ -9,10 +11,18 @@ from ai_audit import generate_pitch
 from report import print_report
 from contact_cleaner import clean_contact_data
 from contact_ranker import choose_email, choose_phone
+from extraction.contact_extractor import extract_contact_intelligence
 
 
-INPUT = "data/leads.json"
-OUTPUT = "data/results.json"
+parser = argparse.ArgumentParser(
+    description="Score crawled funeral-home website pages."
+)
+parser.add_argument("--input", default="data/generated/campaign/leads.json")
+parser.add_argument("--output", default="data/generated/campaign/results.json")
+args = parser.parse_args()
+
+INPUT = args.input
+OUTPUT = args.output
 
 
 FEATURES = [
@@ -42,6 +52,22 @@ def clean_domain(url):
     )
 
 
+def merge_discovery_profile(profile, incoming):
+    if not incoming:
+        return
+
+    for field in (
+        "company", "city", "province", "country", "address", "phone", "email"
+    ):
+        if not profile.get(field) and incoming.get(field):
+            profile[field] = incoming[field]
+
+    for field in ("business_names", "sources", "provenance", "locations"):
+        values = incoming.get(field) or []
+        for value in values:
+            if value not in profile[field]:
+                profile[field].append(value)
+
 companies = {}
 
 
@@ -65,11 +91,29 @@ for lead in leads:
 
         companies[domain] = {
             "pages":0,
-            "documents":[]
+            "documents":[],
+            "business_profile": {
+                "company": "",
+                "city": "",
+                "province": "",
+                "country": "",
+                "address": "",
+                "phone": "",
+                "email": "",
+                "business_names": [],
+                "sources": [],
+                "provenance": [],
+                "locations": [],
+            }
         }
 
 
     companies[domain]["pages"] += 1
+
+    merge_discovery_profile(
+        companies[domain]["business_profile"],
+        lead.get("discovery", {})
+    )
 
 
     companies[domain]["documents"].append({
@@ -79,9 +123,19 @@ for lead in leads:
         "text": lead.get(
             "markdown",
             ""
-        )
+        ),
+
+        "metadata": lead.get("metadata", {}),
+
+        "html": lead.get("html", ""),
+
+        "discovery": lead.get("discovery", {})
 
     })
+
+
+if leads and not companies:
+    raise ValueError("No valid website domains were found in the crawl input")
 
 
 
@@ -186,24 +240,14 @@ for domain,data in companies.items():
     )
 
 
-    emails_found = sorted(
-        set(
-            re.findall(
-                r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}",
-                combined_text
-            )
-        )
+    contact_intelligence = extract_contact_intelligence(
+        data["documents"],
+        domain
     )
 
+    emails_found = contact_intelligence["emails"]
 
-    phones_found = sorted(
-        set(
-            re.findall(
-                r"(?:\+?\d[\d\s().-]{8,}\d)",
-                combined_text
-            )
-        )
-    )
+    phones_found = contact_intelligence["phones"]
 
 
     contact_confidence = 0
@@ -290,32 +334,6 @@ for domain,data in companies.items():
     value = lead_value(
         conversion,
         opportunity
-    )
-
-
-    combined_text = " ".join(
-        doc["text"]
-        for doc in data["documents"]
-    )
-
-
-    emails_found = sorted(
-        set(
-            re.findall(
-                r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}",
-                combined_text
-            )
-        )
-    )
-
-
-    phones_found = sorted(
-        set(
-            re.findall(
-                r"(?:\+?\d[\d\s().-]{8,}\d)",
-                combined_text
-            )
-        )
     )
 
 
@@ -1707,6 +1725,10 @@ for domain,data in companies.items():
 
         "phones_found":phones_found,
 
+        "contact_intelligence":contact_intelligence,
+
+        "business_profile":data["business_profile"],
+
         "contact_confidence":contact_confidence,
 
         "outreach_priority":round(outreach_priority,1),
@@ -1892,6 +1914,8 @@ for index, item in enumerate(results, start=1):
 
 
 print_report(results)
+
+Path(OUTPUT).parent.mkdir(parents=True, exist_ok=True)
 
 
 

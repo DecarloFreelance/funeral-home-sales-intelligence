@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Sales Intelligence{% endblock %}
+{% block content %}
+<h1>Operator dashboard</h1>
+<p class="lede">Local read-only status across discovery, scoring, outreach, and CRM.</p>
+<div class="cards">
+{% for label, value in [('Queued domains', summary.queued), ('Crawled domains', summary.crawled), ('Crawl failures', summary.failed), ('Research items', summary.research), ('Ranked leads', summary.leads), ('Platform candidates', summary.candidates), ('Drafts', summary.drafts), ('Active CRM actions', summary.open_actions)] %}
+  <section class="card"><span>{{ label }}</span><strong>{{ value }}</strong></section>
+{% endfor %}
+</div>
+{% endblock %}

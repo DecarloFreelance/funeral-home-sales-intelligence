@@ -1,0 +1,5 @@
+{% extends "base.html" %}{% block title %}Leads · Sales Intelligence{% endblock %}
+{% block content %}<h1>Ranked campaign leads</h1><p class="lede">Campaign leads are kept separate from platform candidates.</p>
+<div class="table-wrap"><table><thead><tr><th>Company</th><th>Domain</th><th>Priority</th><th>Contact quality</th><th>Method</th><th>CRM status</th></tr></thead><tbody>
+{% for item in records %}<tr><td>{{ item.get('business_profile', {}).get('company', item.get('domain', '—')) }}</td><td><a href="{{ url_for('lead_detail', domain=item.get('domain')) }}">{{ item.get('domain', '—') }}</a></td><td>{{ item.get('executive_priority_score', item.get('sales_priority_score', '—')) }}</td><td>{{ item.get('contact_quality_score', item.get('contact_intelligence', {}).get('completeness_score', '—')) }}</td><td>{{ item.get('recommended_contact_method', item.get('best_contact_channel', '—')) }}</td><td>{{ item.get('crm_status', '—') }}</td></tr>{% else %}{% include 'empty.html' %}{% endfor %}
+</tbody></table></div>{% endblock %}

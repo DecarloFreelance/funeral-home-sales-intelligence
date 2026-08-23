@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% block title %}Queues · Sales Intelligence{% endblock %}
+{% block content %}<h1>Discovery queue</h1>
+<p class="lede">{{ records|length }} queued · {{ report.get('successful_domains', 0) }} successful · {{ report.get('failed_domains', [])|length }} failed</p>
+<div class="table-wrap"><table><thead><tr><th>Company</th><th>Domain</th><th>Location</th><th>Sources</th><th>Status</th></tr></thead><tbody>
+{% for item in records %}<tr><td>{{ item.get('company', '—') }}</td><td>{{ item.get('domain', '—') }}</td><td>{{ [item.get('city'), item.get('province')]|select|join(', ') or '—' }}</td><td>{{ item.get('sources', [item.get('source')])|select|join(', ') }}</td><td>{{ item.get('status', 'QUEUED') }}</td></tr>{% else %}{% include 'empty.html' %}{% endfor %}
+</tbody></table></div>{% endblock %}

@@ -1,4 +1,8 @@
 # Funeral Home Leads Intelligence Engine
+
+> **Historical document:** This packaged v34.20 handoff is preserved for
+> reference and does not describe the current repository workflow.
+
 ## Agent Handoff Document
 ## Version: v34.20
 

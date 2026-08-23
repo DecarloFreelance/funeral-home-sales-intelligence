@@ -1,76 +1,24 @@
 #!/usr/bin/env python3
 
+import argparse
 import json
 import re
 from collections import defaultdict
+from pathlib import Path
+
+from feature_detector import FEATURE_PATTERNS, detect_features
 
 
-INPUT = "data/leads.json"
-
-
-SIGNALS = {
-
-    "contact_form": [
-        "contact",
-        "contact us",
-        "get in touch",
-        "send message"
-    ],
-
-    "appointment_booking": [
-        "appointment",
-        "book",
-        "schedule",
-        "consultation"
-    ],
-
-    "online_planner": [
-        "online planner",
-        "plan online",
-        "online arrangement",
-        "arrange online"
-    ],
-
-    "pricing": [
-        "pricing",
-        "price",
-        "cost",
-        "fees",
-        "quote"
-    ],
-
-    "preplanning": [
-        "pre-plan",
-        "preplan",
-        "plan ahead",
-        "advance planning"
-    ],
-
-    "cremation": [
-        "cremation"
-    ],
-
-    "burial": [
-        "burial",
-        "cemetery"
-    ],
-
-    "lead_capture": [
-        "newsletter",
-        "subscribe",
-        "mailing list",
-        "email"
-    ],
-
-    "chat": [
-        "chat",
-        "live chat",
-        "intercom",
-        "drift",
-        "tawk"
-    ]
-}
-
+parser = argparse.ArgumentParser(
+    description="Print conversion-feature evidence from a crawled page dataset."
+)
+parser.add_argument(
+    "--input", type=Path, default=Path("data/generated/campaign/leads.json")
+)
+args = parser.parse_args()
+INPUT = args.input
+if not INPUT.is_file():
+    parser.error(f"crawl input does not exist: {INPUT}")
 
 
 def clean_domain(url):
@@ -91,7 +39,7 @@ def clean_domain(url):
 companies = defaultdict(list)
 
 
-with open(INPUT) as f:
+with INPUT.open(encoding="utf-8") as f:
 
     leads = json.load(f)
 
@@ -125,50 +73,26 @@ for domain,pages in companies.items():
     print("-"*80)
 
 
-    found_any = False
+    scores = detect_features(text)
+    detected = {
+        feature: score for feature, score in scores.items() if score >= 3
+    }
 
-
-    for feature,keywords in SIGNALS.items():
-
-        matches=[]
-
-
-        for keyword in keywords:
-
-            if keyword in text:
-
-                index=text.find(keyword)
-
-                snippet=text[
-                    max(0,index-80):
-                    index+150
-                ]
-
-                matches.append(
-                    snippet.replace(
-                        "\n",
-                        " "
-                    )
+    for feature, score in detected.items():
+        print(f"\n✅ {feature} (score {score})")
+        snippets = []
+        for pattern in FEATURE_PATTERNS.get(feature, {}):
+            match = re.search(pattern, text)
+            if match:
+                snippets.append(
+                    text[max(0, match.start() - 80):match.end() + 150]
+                    .replace("\n", " ")
                 )
+        for snippet in snippets[:2]:
+            print("   ", snippet)
 
 
-        if matches:
-
-            found_any=True
-
-            print(
-                f"\n✅ {feature}"
-            )
-
-            for m in matches[:2]:
-
-                print(
-                    "   ",
-                    m
-                )
-
-
-    if not found_any:
+    if not detected:
 
         print(
             "❌ No conversion signals detected"

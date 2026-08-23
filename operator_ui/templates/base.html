@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Sales Intelligence{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+  <header>
+    <a class="brand" href="{{ url_for('dashboard') }}">Sales Intelligence</a>
+    <nav aria-label="Primary">
+      <a href="{{ url_for('queues') }}">Queues</a>
+      <a href="{{ url_for('imports') }}">Import</a>
+      <a href="{{ url_for('crawl_status') }}">Crawl</a>
+      <a href="{{ url_for('research') }}">Research</a>
+      <a href="{{ url_for('leads') }}">Leads</a>
+      <a href="{{ url_for('candidates') }}">Candidates</a>
+      <a href="{{ url_for('drafts') }}">Drafts</a>
+      <a href="{{ url_for('crm_actions') }}">CRM</a>
+    </nav>
+  </header>
+  <main>
+    {% with messages = get_flashed_messages() %}{% for message in messages %}<p class="notice">{{ message }}</p>{% endfor %}{% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

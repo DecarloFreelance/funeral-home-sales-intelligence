@@ -1,6 +1,7 @@
 rich
 requests
 beautifulsoup4
+Flask
 lxml
 pandas
 python-dotenv

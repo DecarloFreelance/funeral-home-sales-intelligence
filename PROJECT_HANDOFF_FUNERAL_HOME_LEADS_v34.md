@@ -1,4 +1,9 @@
 # Funeral Home Leads Intelligence Platform
+
+> **Historical document:** This v34.20 handoff is preserved for reference and
+> does not describe the current workflow. Use `README.md` and `todo.md` for
+> current operation and status.
+
 ## Project Handoff Document
 ### Current Version: v34.20
 ### Status: Active Development / Paused for Next Phase

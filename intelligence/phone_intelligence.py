@@ -1,5 +1,9 @@
 
 import re
+from typing import Any, Dict, Iterable, List
+
+from validation.contact_validator import validate_phone
+from intelligence.external_verification import VerificationError
 
 
 ALBERTA_CODES = {
@@ -105,3 +109,70 @@ def phone_quality_score(phone):
         "normalized": normalized,
         "reasons": reasons
     }
+
+
+def analyze_phone(phone: str) -> Dict[str, Any]:
+    """Return local phone evidence without claiming carrier reachability."""
+    raw = str(phone or "").strip()
+    normalized = normalize_phone(raw)
+    format_valid = validate_phone(raw) and bool(normalized)
+    area_code = normalized[2:5] if normalized else ""
+    exchange = normalized[5:8] if normalized else ""
+    subscriber = normalized[8:] if normalized else ""
+    risks = []
+
+    if not format_valid:
+        risks.append("invalid_format")
+    if format_valid and exchange[:1] in {"0", "1"}:
+        risks.append("invalid_exchange")
+    if format_valid and len(set(area_code + exchange + subscriber)) <= 2:
+        risks.append("repetitive_digits")
+    if subscriber in {"0000", "1111", "1234"}:
+        risks.append("placeholder_pattern")
+
+    if area_code in ALBERTA_CODES:
+        region = "Alberta"
+        region_confidence = 100
+    elif area_code in CANADA_CODES:
+        region = "Canada"
+        region_confidence = 70
+    elif area_code:
+        region = "NANP outside Canada or unknown"
+        region_confidence = 20
+    else:
+        region = "Unknown"
+        region_confidence = 0
+
+    usable = format_valid and not risks
+    confidence = region_confidence if usable else 0
+    return {
+        "phone": raw,
+        "normalized": normalized,
+        "format_valid": format_valid,
+        "area_code": area_code,
+        "region": region,
+        "reachability": "NOT_CHECKED",
+        "line_type": "UNKNOWN",
+        "carrier": "NOT_CHECKED",
+        "risks": risks,
+        "confidence": confidence,
+        "status": "VALID_FORMAT" if usable else "REVIEW_REQUIRED",
+    }
+
+
+def verify_phones(phones: Iterable[str], provider=None) -> List[Dict[str, Any]]:
+    unique = dict.fromkeys(str(phone).strip() for phone in phones if phone)
+    results = []
+    for phone in unique:
+        result = analyze_phone(phone)
+        if provider is not None and result["format_valid"]:
+            try:
+                result.update(provider.verify(result["normalized"]))
+            except VerificationError:
+                result.update(
+                    reachability="CHECK_FAILED", line_type="UNKNOWN",
+                    carrier="CHECK_FAILED", provider=provider.__class__.__name__,
+                    checked=False,
+                )
+        results.append(result)
+    return results

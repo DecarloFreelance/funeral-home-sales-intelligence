@@ -5,8 +5,8 @@ from pathlib import Path
 from intelligence.lead_intelligence import LeadIntelligence
 
 
-INPUT = Path("data/results.json")
-OUTPUT = Path("data/todd_outreach_campaign.csv")
+INPUT = Path("legacy/reference_campaign/data/results.json")
+OUTPUT = Path("legacy/reference_campaign/data/outreach_campaign.csv")
 
 
 with INPUT.open() as f:

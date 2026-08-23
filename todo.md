@@ -1,394 +1,98 @@
-You have hit the next bottleneck in the pipeline. The scoring engine is actually becoming fairly sophisticated now — the weak point is lead acquisition + entity extraction.
-
-Right now your pipeline looks roughly like:
-
-Crawler
-   ↓
-Website pages
-   ↓
-Feature detector
-   ↓
-Lead scoring
-   ↓
-Sales intelligence
-   ↓
-Outreach package
-
-The missing layer is:
-
-Business Discovery + Contact Intelligence
-
-Your scraper is finding domains, but it is not building a complete business profile.
-
-A good funeral-home lead record should eventually look like:
-
-{
-  "company": "Northern Alberta Funeral Services",
-  "domain": "northernalbertafunerals.com",
-
-  "location": {
-    "address": "123 Main Street",
-    "city": "Edmonton",
-    "province": "AB",
-    "postal_code": "T5X XXX"
-  },
-
-  "contacts": {
-    "phone": [
-      "780-555-5555"
-    ],
-    "email": [
-      "info@example.com"
-    ],
-    "funeral_director": [
-      "John Smith"
-    ],
-    "owner": [
-      "Jane Smith"
-    ]
-  },
-
-  "services": [
-    "funeral services",
-    "cremation",
-    "pre-planning"
-  ],
-
-  "website_analysis": {
-    "pages": 78,
-    "missing_features": [
-      "chat",
-      "online_planner"
-    ]
-  }
-}
-
-Currently you have the bottom half. You need the top half.
-
-Phase 1 — Improve business discovery
-
-Right now you are probably starting with a list of domains.
-
-Instead create a business discovery spider.
-
-Sources:
-
-1. Google/Bing search discovery
-
-Generate queries:
-
-"funeral home" Alberta
-"funeral services" Calgary
-"cremation services" Edmonton
-"funeral director" Alberta
-"pre planning funeral" Alberta
-
-Then extract:
-
-title
-url
-snippet
-phone
-location
-
-Feed those URLs into your crawler.
-
-2. Google Maps style discovery
-
-This is probably the biggest missing source.
-
-Search:
-
-funeral home Calgary AB
-funeral home Edmonton AB
-funeral home Red Deer AB
-
-Extract:
-
-business name
-website
-phone
-address
-reviews
-category
-
-Your current scraper will outperform most lead tools once it has these URLs.
-
-3. Funeral association directories
-
-Very valuable because these already contain decision makers.
-
-Examples:
-
-Alberta Funeral Service Association
-Canadian Funeral Association
-regional directories
-
-These give you:
-
-company
-director
-address
-phone
-website
-Phase 2 — Add manual business ingestion
-
-You should create:
-
-data/manual_leads.csv
-
-Example:
-
-company,website,city,province
-Northern Alberta Funeral Services,northernalbertafunerals.com,Edmonton,AB
-Legacy Funeral Home,legacyfuneralhome.ca,Calgary,AB
-Example Funeral Home,example.com,Red Deer,AB
-
-Then create:
-
-manual_import.py
-
-that converts it into your crawler queue.
-
-Something like:
-
-import csv
-import json
-
-leads=[]
-
-with open("data/manual_leads.csv") as f:
-
-    reader=csv.DictReader(f)
-
-    for row in reader:
-        leads.append({
-            "domain": row["website"],
-            "company": row["company"],
-            "city": row["city"],
-            "province": row["province"]
-        })
-
-
-with open("data/crawl_queue.json","w") as f:
-    json.dump(leads,f,indent=4)
-
-Then your crawler consumes:
-
-crawl_queue.json
-Phase 3 — Add contact extraction
-
-This is the biggest upgrade.
-
-Create:
-
-contact_extractor.py
-
-Run it against every crawled page.
-
-Look for:
-
-Phone numbers
-
-Regex:
-
-\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]\d{3}[-.\s]\d{4}\b
-
-Find:
-
-(403) 555-1234
-403-555-1234
-780 555 1234
-Emails
-
-Regex:
-
-[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}
-Funeral directors
-
-This needs NLP.
-
-Look for patterns:
-
-Funeral Director
-Managing Director
-Owner
-President
-General Manager
-Licensed Funeral Director
-
-Example page text:
-
-John Smith
-Licensed Funeral Director
-Owner
-
-Extract:
-
-{
-"name":"John Smith",
-"title":"Licensed Funeral Director"
-}
-Phase 4 — Crawl the right pages
-
-Most contact data will NOT be on homepage.
-
-Your crawler should automatically visit:
-
-/
-/contact
-/contact-us
-/about
-/team
-/staff
-/funeral-directors
-/our-team
-/location
-/locations
-
-Add a priority queue:
-
-priority_pages = [
-    "contact",
-    "about",
-    "team",
-    "staff",
-    "directors"
-]
-
-These pages have the gold.
-
-Phase 5 — Add schema.org extraction
-
-Many funeral homes already expose structured data.
-
-Search HTML for:
-
-<script type="application/ld+json">
-
-You can extract:
-
-{
-"name":"",
-"telephone":"",
-"address":"",
-"email":""
-}
-
-This will instantly improve your accuracy.
-
-Python:
-
-from bs4 import BeautifulSoup
-import json
-
-
-soup = BeautifulSoup(html,"html.parser")
-
-for script in soup.find_all(
-    "script",
-    type="application/ld+json"
-):
-
-    data=json.loads(script.text)
-
-    print(data)
-Phase 6 — Create a lead completeness score
-
-Add another score:
-
-Contact Intelligence Score
-
-Example:
-
-Data found	Points
-Business name	10
-Website	10
-Phone	20
-Email	20
-Address	15
-Funeral director	25
-
-Maximum:
-
-100
-
-Then your sales priority becomes:
-
-Opportunity Score
-+
-Revenue Score
-+
-Contact Completeness
-Phase 7 — Store the missing data
-
-Your results.json should eventually become:
-
-{
-"domain":"westlockfuneralhome.com",
-
-"contact_intelligence":{
-
-"phone":[
-"780-555-1111"
-],
-
-"email":[
-"info@westlockfuneralhome.com"
-],
-
-"people":[
-{
-"name":"John Doe",
-"title":"Funeral Director"
-}
-]
-
-}
-
-}
-
-Then your outreach generator can say:
-
-Contact:
-John Doe
-Funeral Director
-
-Phone:
-780-555-1111
-
-Suggested opener:
-
-"Hi John, I was reviewing Westlock Funeral Home's online family experience..."
-My recommended next version
-
-I would make the next release:
-
-v35.0 Contact Intelligence Engine
-
-Structure:
-
-funeral_home_leads/
-
-├── discovery/
-│   ├── google_search.py
-│   ├── directory_scraper.py
-│   └── maps_import.py
-
-├── extraction/
-│   ├── email_extractor.py
-│   ├── phone_extractor.py
-│   ├── person_extractor.py
-│   └── schema_extractor.py
-
-├── data/
-│   ├── manual_leads.csv
-│   ├── crawl_queue.json
-│   └── results.json
-
-├── lead_scoring.py
-└── outreach_generator.py
-
-The current engine is already doing the hard commercial reasoning. The next jump in quality comes from feeding it better structured businesses and decision makers.
-
-The first thing I would build is manual_leads.csv + contact_extractor.py, because it gives immediate ROI without needing a whole discovery rewrite.
+# Product Task List
+
+Last reconciled: 2026-08-22
+
+This file tracks current work. Historical v34/v35 recommendations are preserved
+in the handoff and audit documents; they are not active tasks unless listed
+below.
+
+## Completed
+
+- [x] Normalize manual CSV leads into a deduplicated crawl queue.
+- [x] Import search, maps, association, directory, CSV, and JSON exports while
+  retaining source provenance.
+- [x] Add a live Alberta Funeral Service Association directory provider.
+- [x] Crawl home, contact, about, team, staff, director, people, and location
+  pages with same-domain controls and resumable batches.
+- [x] Extract public phone numbers, email addresses, named decision-makers,
+  business names, and postal addresses.
+- [x] Extract schema.org data from supplied and embedded JSON-LD.
+- [x] Calculate contact completeness and contact-quality scores.
+- [x] Preserve structured contact intelligence through scoring and CRM records.
+- [x] Create auditable email and phone validation evidence without claiming
+  external deliverability or reachability checks.
+- [x] Generate unresolved-domain research queues and apply reviewed domain
+  replacements.
+- [x] Separate platform candidates from client campaign leads.
+- [x] Rank platform candidates and generate reviewable outreach drafts without
+  sending email.
+- [x] Validate the current implementation with the automated test suite.
+
+## Next Milestone: Operator Interface
+
+- [x] Define the smallest operator workflow and acceptance criteria:
+  import leads, run or resume discovery, review failures, inspect ranked leads,
+  approve outreach drafts, and update CRM action status. See
+  `audit/OPERATOR_WORKFLOW.md`.
+- [x] Choose the interface delivery model: a local Flask/Jinja web application.
+  See `audit/OPERATOR_INTERFACE_DECISION.md`.
+- [x] Add read-only views for queues, crawl progress, research failures, ranked
+  results, contact evidence, and draft outreach.
+- [x] Add guarded operator actions:
+  - [x] Import preview and confirmation.
+  - [x] Controlled crawl start and resume.
+  - [x] Reviewed research-domain decisions.
+  - [x] Unsent draft approval.
+  - [x] CRM action creation, start, and completion.
+- [x] Add an end-to-end test for the complete local operator workflow.
+
+## Later Integrations
+
+- [x] Add an optional ZeroBounce mailbox-verification adapter. Keep
+  `deliverability` as `NOT_CHECKED` when no external check has run.
+  - [ ] Validate against a live account. Blocked: no API key or billing authority
+    is available in the repository environment.
+- [x] Add an optional Twilio Lookup v2 carrier/line-type/reachability adapter.
+  Keep the existing unknown/not-checked states when no external check has run.
+  - [ ] Validate against a live account. Blocked: no account credentials, paid
+    Lookup authorization, or Canadian line-type approval is available.
+- [ ] Select and approve an external CRM target and synchronization contract,
+  then implement it while retaining the local CRM database as the auditable
+  source of workflow state. User decision required: no target, field mapping,
+  authentication method, or sandbox account is identified. See
+  `audit/CRM_INTEGRATION_DECISION.md`.
+- [x] Add a controlled CANA public member-directory provider beyond AFSA, with
+  selectable Canada and United States coverage.
+- [x] Expand live validation beyond Alberta and document Canada/USA coverage,
+  duplicate handling, retrieval rates, and contact yield. See
+  `audit/CANA_LIVE_DISCOVERY_VALIDATION.md`.
+
+## Data and Release Hygiene
+
+- [x] Align `verify_audit.py` with the production feature detector. Discovered
+  during final pipeline validation: its duplicate keyword table reported signals
+  that `lead_scoring.py` correctly left below threshold.
+- [x] Make `verify_audit.py` usable when generated data is intentionally absent
+  from version control by accepting and validating an explicit input path.
+- [x] Make reviewed resolution multi-file persistence rollback-safe. Discovered
+  during adversarial review: per-file atomic replacement did not protect the
+  ledger, retry queue, summary, and remaining queue as one logical update.
+- [x] Review the current uncommitted migration, especially intentionally removed
+  historical data and the move to `data/seeds`, `data/private`,
+  `data/generated`, and `legacy/reference_campaign`. Evidence is recorded in
+  `audit/DATA_MIGRATION_REVIEW.md`.
+- [x] Confirm generated or private records are excluded from version control.
+- [x] Update stale v34 handoff language or clearly mark those documents as
+  historical.
+- [x] Commit the reconciled implementation as a tested checkpoint. Authorization
+  was granted on 2026-08-22; complete after final validation.
+
+## Current Verification
+
+- Automated tests: 87 passing on 2026-08-22.
+- Live AFSA validation: 35 scored companies from 52 normalized website domains.
+- Platform-candidate dataset: 27 reviewed candidates, including 21 site-verified
+  records and 6 evidence-only records.
+
+See `README.md`, `audit/LIVE_DISCOVERY_VALIDATION.md`, and
+`audit/PRODUCT_DIRECTION.md` for operating instructions and supporting evidence.

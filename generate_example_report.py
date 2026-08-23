@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-with open("data/results.json") as f:
+with open("data/generated/campaign/results.json") as f:
     data = json.load(f)
 
 lead = sorted(
@@ -66,9 +66,9 @@ out.append("## Phone Script\n")
 out.append(phone["opening"])
 
 
-Path(
-"reports/example_output/connelly-mckinley_example_report.md"
-).write_text(
+output_path = Path("reports/example_output/connelly-mckinley_example_report.md")
+output_path.parent.mkdir(parents=True, exist_ok=True)
+output_path.write_text(
     "\n".join(out),
     encoding="utf-8"
 )

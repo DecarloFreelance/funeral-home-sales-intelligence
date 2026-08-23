@@ -7,10 +7,11 @@ from datetime import datetime
 DB = Path("data/crm.sqlite")
 
 
-def connect():
-    DB.parent.mkdir(exist_ok=True)
+def connect(db_path=None):
+    path = Path(db_path) if db_path else DB
+    path.parent.mkdir(parents=True, exist_ok=True)
 
-    return sqlite3.connect(DB)
+    return sqlite3.connect(path)
 
 
 def initialize():
