@@ -1,8 +1,10 @@
 rich
 requests
 beautifulsoup4
+email-validator
 Flask
 lxml
 pandas
+phonenumbers
 python-dotenv
 tqdm

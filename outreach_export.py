@@ -68,6 +68,8 @@ with OUTPUT.open(
 
             "domain": data["company"].get("domain",""),
 
+            "company_name": data["company"].get("name", ""),
+
             "pipeline_stage":
                 data["crm"].get(
                     "pipeline_stage",

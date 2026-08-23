@@ -174,7 +174,7 @@ class LeadIntelligence:
         )
         email_validation = extracted.get(
             "email_validation"
-        ) or validate_emails(cleaned["emails"], domain)
+        ) or validate_emails(cleaned["emails"], domain, check_dns=True)
         phone_verification = extracted.get(
             "phone_verification"
         ) or verify_phones(cleaned["phones"])

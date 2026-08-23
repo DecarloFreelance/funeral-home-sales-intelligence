@@ -12,7 +12,11 @@ class PhoneIntelligenceTests(unittest.TestCase):
         self.assertEqual(result["region"], "Alberta")
         self.assertEqual(result["confidence"], 100)
         self.assertEqual(result["reachability"], "NOT_CHECKED")
-        self.assertEqual(result["line_type"], "UNKNOWN")
+        self.assertEqual(result["line_type"], "FIXED_LINE_OR_MOBILE")
+        self.assertTrue(result["possible"])
+        self.assertTrue(result["metadata_valid"])
+        self.assertEqual(result["country"], "CA")
+        self.assertEqual(result["verification_state"], "METADATA_VALIDATED")
 
     def test_flags_invalid_exchange(self):
         result = analyze_phone("780-155-9876")

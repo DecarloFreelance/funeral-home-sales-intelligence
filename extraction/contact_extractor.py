@@ -183,6 +183,7 @@ def extract_contact_intelligence(
     domain: str = "",
     email_provider=None,
     phone_provider=None,
+    check_email_dns: bool = False,
 ) -> Dict[str, Any]:
     emails: List[str] = []
     phones: List[str] = []
@@ -264,7 +265,9 @@ def extract_contact_intelligence(
                     })
 
     cleaned = clean_contact_data(emails, phones, domain)
-    email_validation = validate_emails(cleaned["emails"], domain, email_provider)
+    email_validation = validate_emails(
+        cleaned["emails"], domain, email_provider, check_dns=check_email_dns,
+    )
     phone_verification = verify_phones(cleaned["phones"], phone_provider)
     unique_people = list({
         (person["name"].lower(), person["title"].lower()): person

@@ -2,6 +2,9 @@
 import re
 from typing import Any, Dict, Iterable, List
 
+import phonenumbers
+from phonenumbers import PhoneNumberFormat, PhoneNumberType
+
 from validation.contact_validator import validate_phone
 from intelligence.external_verification import VerificationError
 
@@ -34,19 +37,13 @@ def normalize_phone(phone):
     if not phone:
         return ""
 
-    digits = re.sub(
-        r"\D",
-        "",
-        phone
-    )
-
-    if len(digits) == 10:
-        return "+1" + digits
-
-    if len(digits) == 11 and digits.startswith("1"):
-        return "+" + digits
-
-    return ""
+    try:
+        parsed = phonenumbers.parse(str(phone), "CA")
+    except phonenumbers.NumberParseException:
+        return ""
+    if not phonenumbers.is_possible_number(parsed):
+        return ""
+    return phonenumbers.format_number(parsed, PhoneNumberFormat.E164)
 
 
 
@@ -115,7 +112,14 @@ def analyze_phone(phone: str) -> Dict[str, Any]:
     """Return local phone evidence without claiming carrier reachability."""
     raw = str(phone or "").strip()
     normalized = normalize_phone(raw)
-    format_valid = validate_phone(raw) and bool(normalized)
+    parsed = None
+    try:
+        parsed = phonenumbers.parse(raw, "CA")
+    except phonenumbers.NumberParseException:
+        pass
+    possible = bool(parsed and phonenumbers.is_possible_number(parsed))
+    metadata_valid = bool(parsed and phonenumbers.is_valid_number(parsed))
+    format_valid = validate_phone(raw) and possible and bool(normalized)
     area_code = normalized[2:5] if normalized else ""
     exchange = normalized[5:8] if normalized else ""
     subscriber = normalized[8:] if normalized else ""
@@ -143,20 +147,37 @@ def analyze_phone(phone: str) -> Dict[str, Any]:
         region = "Unknown"
         region_confidence = 0
 
-    usable = format_valid and not risks
+    number_type = "UNKNOWN"
+    country = ""
+    if parsed:
+        type_value = phonenumbers.number_type(parsed)
+        number_type = next(
+            (name for name, value in vars(PhoneNumberType).items()
+             if name.isupper() and value == type_value),
+            "UNKNOWN",
+        )
+        country = phonenumbers.region_code_for_number(parsed) or ""
+    if possible and not metadata_valid:
+        risks.append("metadata_invalid")
+
+    usable = format_valid and metadata_valid and not risks
     confidence = region_confidence if usable else 0
     return {
         "phone": raw,
         "normalized": normalized,
         "format_valid": format_valid,
+        "possible": possible,
+        "metadata_valid": metadata_valid,
+        "country": country,
         "area_code": area_code,
         "region": region,
         "reachability": "NOT_CHECKED",
-        "line_type": "UNKNOWN",
+        "line_type": number_type,
         "carrier": "NOT_CHECKED",
         "risks": risks,
         "confidence": confidence,
-        "status": "VALID_FORMAT" if usable else "REVIEW_REQUIRED",
+        "status": "METADATA_VALIDATED" if usable else "REVIEW_REQUIRED",
+        "verification_state": "METADATA_VALIDATED" if usable else "DISCOVERED",
     }
 
 
@@ -168,6 +189,8 @@ def verify_phones(phones: Iterable[str], provider=None) -> List[Dict[str, Any]]:
         if provider is not None and result["format_valid"]:
             try:
                 result.update(provider.verify(result["normalized"]))
+                if result.get("checked"):
+                    result["verification_state"] = "EXTERNALLY_VERIFIED"
             except VerificationError:
                 result.update(
                     reachability="CHECK_FAILED", line_type="UNKNOWN",

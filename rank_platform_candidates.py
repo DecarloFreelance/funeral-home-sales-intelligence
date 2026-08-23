@@ -48,7 +48,9 @@ def rank_candidates(queue, pages):
     for candidate in queue:
         domain = candidate["domain"]
         site_pages = by_domain[domain]
-        contacts = extract_contact_intelligence(site_pages, domain)
+        contacts = extract_contact_intelligence(
+            site_pages, domain, check_email_dns=True,
+        )
         usable_emails, contact_issues = _contact_review(contacts)
         fit_score = TYPE_FIT.get(candidate.get("candidate_type"), 15)
         fit_score += MOTION_FIT.get(candidate.get("recommended_motion"), 10)

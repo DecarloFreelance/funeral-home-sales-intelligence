@@ -1,4 +1,8 @@
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
+
+from email_validator import EmailUndeliverableError
 
 from intelligence.email_intelligence import analyze_email, validate_emails
 
@@ -21,7 +25,7 @@ class EmailIntelligenceTests(unittest.TestCase):
         self.assertTrue(result["syntax_valid"])
         self.assertFalse(result["domain_match"])
         self.assertIn("free_email_provider", result["risks"])
-        self.assertEqual(result["status"], "VALID_FORMAT")
+        self.assertEqual(result["status"], "LOCAL_VALID")
         self.assertEqual(result["deliverability"], "NOT_CHECKED")
 
     def test_deduplicates_case_insensitively(self):
@@ -36,6 +40,33 @@ class EmailIntelligenceTests(unittest.TestCase):
 
         self.assertEqual(result["status"], "INVALID")
         self.assertEqual(result["confidence"], 0)
+
+    @patch("intelligence.email_intelligence.validate_email_address")
+    def test_dns_evidence_has_distinct_non_mailbox_state(self, validator):
+        validator.return_value = SimpleNamespace(
+            normalized="Info@Example.ca", mx=[(10, "mail.example.ca")],
+            mx_fallback_type=None,
+        )
+
+        result = validate_emails(["Info@Example.ca"], check_dns=True)[0]
+
+        self.assertEqual(result["email"], "info@example.ca")
+        self.assertTrue(result["dns_valid"])
+        self.assertTrue(result["mx_available"])
+        self.assertEqual(result["dns_status"], "VALID")
+        self.assertEqual(result["verification_state"], "DNS_VALID")
+        self.assertEqual(result["deliverability"], "NOT_CHECKED")
+
+    @patch("intelligence.email_intelligence.validate_email_address")
+    def test_unavailable_mail_domain_is_not_a_mailbox_verdict(self, validator):
+        validator.side_effect = EmailUndeliverableError("domain rejects mail")
+
+        result = validate_emails(["info@example.com"], check_dns=True)[0]
+
+        self.assertEqual(result["dns_status"], "INVALID")
+        self.assertEqual(result["verification_state"], "LOCAL_VALID")
+        self.assertEqual(result["deliverability"], "NOT_CHECKED")
+        self.assertIn("mail_domain_unavailable", result["risks"])
 
 
 if __name__ == "__main__":

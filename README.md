@@ -32,9 +32,8 @@ python -m unittest discover -v
 ```
 
 Automated discovery, public contact extraction, platform-candidate ranking, and
-reviewable outreach generation are implemented. The next product milestones are
-the user interface, optional external verification providers, and CRM
-integrations.
+reviewable outreach generation, the operator interface, progressive local
+verification, and an EspoCRM synchronization boundary are implemented.
 
 Start the local operator interface with:
 
@@ -189,10 +188,12 @@ containing:
 
 - Business names and postal addresses from schema.org data
 - Validated email addresses and North American phone numbers
-- Per-address email validation evidence: syntax, business-domain alignment,
-  role/free-provider classification, risk flags, and confidence
-- Per-number phone evidence: E.164 normalization, NANP format, region,
-  placeholder risks, and explicit carrier/reachability verification state
+- Per-address email validation evidence: normalized syntax, DNS/MX domain
+  acceptance, business-domain alignment, role/free-provider classification,
+  risk flags, and confidence
+- Per-number phone evidence: libphonenumber E.164 normalization, possibility,
+  validity, country/region, number type, placeholder risks, and explicit
+  carrier/reachability verification state
 - Role-matched owners, presidents, managers, and funeral directors
 - Source URLs and extraction method for each identified person
 - A 0–100 contact completeness score
@@ -207,6 +208,32 @@ implicitly: callers must construct and pass a provider with credentials. Failed
 checks are recorded as `CHECK_FAILED`; omitted checks retain `NOT_CHECKED` and
 `UNKNOWN`. Twilio data packages may incur charges, and Canadian line-type lookup
 may require provider approval.
+
+The confidence states are deliberately progressive: `DISCOVERED`, `LOCAL_VALID`,
+`DNS_VALID` or `METADATA_VALIDATED`, and finally `EXTERNALLY_VERIFIED` when an
+explicit paid provider succeeds. DNS/MX evidence proves only that a mail domain
+accepts mail; it does not prove that an individual mailbox exists. Phone
+metadata does not prove that a line is active or identify its current carrier.
+
+## EspoCRM Synchronization
+
+The local SQLite CRM remains the auditable workflow source of truth. EspoCRM is
+the first external target behind the `CRMBackend` boundary. Configure a
+least-privilege EspoCRM API user with Account read/create/edit access, keep its
+key outside the repository, and synchronize one lead or all leads:
+
+```bash
+export ESPOCRM_URL="https://crm.internal.example"
+export ESPOCRM_API_KEY="..."
+python espocrm_sync.py --domain example.ca
+python espocrm_sync.py --all
+```
+
+The adapter authenticates with `X-Api-Key`, searches by canonical website before
+creating, retains remote IDs locally for subsequent updates, uses bounded
+retries, and records every success or failure without modifying local lead
+state. A live self-hosted instance is optional for development; automated tests
+use deterministic fake sessions and backends and never make API calls.
 
 ## Platform-Candidate Workflow
 
@@ -243,6 +270,9 @@ v35:
 - Automated business discovery (implemented for AFSA and file adapters)
 - Contact enrichment (implemented for public site and directory data)
 - Funeral director identification (implemented conservatively)
-- Email validation (format and quality evidence implemented; mailbox checks pending)
-- Phone verification (format and region evidence implemented; carrier checks pending)
-- Expanded CRM integrations
+- Email validation (local syntax and DNS/MX evidence implemented; optional
+  mailbox verification remains available through ZeroBounce)
+- Phone verification (local metadata validation implemented; optional live
+  Lookup remains available through Twilio)
+- EspoCRM synchronization (implemented; additional backends can use the same
+  boundary)

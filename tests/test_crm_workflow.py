@@ -48,6 +48,17 @@ class CrmWorkflowTests(unittest.TestCase):
         self.assertIn("started_at", columns)
         self.assertIn("completed_at", columns)
 
+    def test_initialize_migrates_company_name_for_existing_database(self):
+        database.DB.unlink()
+        with sqlite3.connect(database.DB) as conn:
+            conn.execute("CREATE TABLE leads (domain TEXT PRIMARY KEY)")
+
+        initialize()
+
+        with sqlite3.connect(database.DB) as conn:
+            columns = {row[1] for row in conn.execute("PRAGMA table_info(leads)")}
+        self.assertIn("company_name", columns)
+
     def test_create_action_reuses_active_action(self):
         first_id = create_action(
             "example.com", "email", "A1 - Immediate Outreach"

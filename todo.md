@@ -48,19 +48,30 @@ below.
 
 ## Later Integrations
 
+- [x] Add local email syntax, normalization, and DNS/MX validation with explicit
+  `LOCAL_VALID` and `DNS_VALID` confidence states. DNS evidence must not claim
+  that an individual mailbox exists.
+- [x] Add local phone parsing, E.164 normalization, validity, region, and number
+  type metadata with an explicit `METADATA_VALIDATED` state. Metadata must not
+  claim carrier reachability.
 - [x] Add an optional ZeroBounce mailbox-verification adapter. Keep
   `deliverability` as `NOT_CHECKED` when no external check has run.
-  - [ ] Validate against a live account. Blocked: no API key or billing authority
-    is available in the repository environment.
+  - [ ] Validate against a live account. Deferred optional enhancement: no API
+    key or billing authority is available in the repository environment.
 - [x] Add an optional Twilio Lookup v2 carrier/line-type/reachability adapter.
   Keep the existing unknown/not-checked states when no external check has run.
-  - [ ] Validate against a live account. Blocked: no account credentials, paid
-    Lookup authorization, or Canadian line-type approval is available.
-- [ ] Select and approve an external CRM target and synchronization contract,
-  then implement it while retaining the local CRM database as the auditable
-  source of workflow state. User decision required: no target, field mapping,
-  authentication method, or sandbox account is identified. See
-  `audit/CRM_INTEGRATION_DECISION.md`.
+  - [ ] Validate against a live account. Deferred optional enhancement: no
+    account credentials, paid Lookup authorization, or Canadian line-type
+    approval is available.
+- [x] Select EspoCRM as the initial external CRM target. Decision supplied on
+  2026-08-22; retain the local CRM database as the auditable source of workflow
+  state. See `audit/CRM_INTEGRATION_DECISION.md`.
+- [x] Implement an idempotent EspoCRM REST adapter with explicit field mapping,
+  bounded retries, safe secret handling, and locally audited sync outcomes.
+- [x] Add deterministic fake-adapter tests for EspoCRM synchronization.
+  - [ ] Validate against a live self-hosted instance. Blocked: no running
+    EspoCRM instance or least-privilege API-user credentials are available in
+    the repository environment; no implicit transmission is permitted.
 - [x] Add a controlled CANA public member-directory provider beyond AFSA, with
   selectable Canada and United States coverage.
 - [x] Expand live validation beyond Alberta and document Canada/USA coverage,
@@ -86,10 +97,14 @@ below.
   historical.
 - [x] Commit the reconciled implementation as a tested checkpoint. Authorization
   was granted on 2026-08-22; complete after final validation.
+- [x] Commit progressive local verification and EspoCRM integration as a
+  separately validated checkpoint.
 
 ## Current Verification
 
-- Automated tests: 87 passing on 2026-08-22.
+- Automated tests: 97 passing on 2026-08-22.
+- Controlled DNS validation: MX-positive and Null-MX/negative domain behavior
+  confirmed without claiming mailbox deliverability.
 - Live AFSA validation: 35 scored companies from 52 normalized website domains.
 - Platform-candidate dataset: 27 reviewed candidates, including 21 site-verified
   records and 6 evidence-only records.

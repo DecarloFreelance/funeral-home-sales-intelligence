@@ -242,7 +242,8 @@ for domain,data in companies.items():
 
     contact_intelligence = extract_contact_intelligence(
         data["documents"],
-        domain
+        domain,
+        check_email_dns=True,
     )
 
     emails_found = contact_intelligence["emails"]

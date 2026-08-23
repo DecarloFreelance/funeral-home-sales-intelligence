@@ -29,6 +29,8 @@ def initialize():
 
         domain TEXT PRIMARY KEY,
 
+        company_name TEXT,
+
         pipeline_stage TEXT,
         crm_status TEXT,
 
@@ -49,6 +51,10 @@ def initialize():
     )
     """)
 
+    columns = {row[1] for row in cur.execute("PRAGMA table_info(leads)")}
+    if "company_name" not in columns:
+        cur.execute("ALTER TABLE leads ADD COLUMN company_name TEXT")
+
     conn.commit()
     conn.close()
 
@@ -65,6 +71,7 @@ def upsert_lead(data):
     INSERT INTO leads (
 
         domain,
+        company_name,
         pipeline_stage,
         crm_status,
         priority_score,
@@ -78,11 +85,12 @@ def upsert_lead(data):
 
     )
 
-    VALUES (?,?,?,?,?,?,?,?,?,?,?)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
 
     ON CONFLICT(domain)
     DO UPDATE SET
 
+        company_name=excluded.company_name,
         pipeline_stage=excluded.pipeline_stage,
         crm_status=excluded.crm_status,
         priority_score=excluded.priority_score,
@@ -98,6 +106,7 @@ def upsert_lead(data):
 
     (
         data["domain"],
+        data.get("company_name", ""),
         data["pipeline_stage"],
         data["crm_status"],
         data["priority_score"],
