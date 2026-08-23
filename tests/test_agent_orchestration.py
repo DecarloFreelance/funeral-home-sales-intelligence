@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 import tempfile
 import threading
@@ -162,8 +163,38 @@ class AgentOrchestrationTests(unittest.TestCase):
 
             run(*paths)
             review = json.loads(paths[5].read_text())
-            self.assertEqual(review[0]["findings"][0]["code"], "CONFLICTING_FACTS")
+            self.assertEqual(review[0]["findings"][0]["code"], "ORGANIZATION_WEBSITE_MISMATCH")
             self.assertFalse(review[0]["crm_sync_safe"])
+
+    def test_quality_cache_invalidates_once_when_fact_crosses_freshness_horizon(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state, audit = root / "state.json", root / "audit.json"
+            fact = {
+                "id": "fact-1", "field": "services.cremation", "value": True,
+                "source": "page_text", "source_url": "https://example.ca/",
+                "source_type": "website", "observed_at": "2025-01-01T00:00:00Z",
+                "stale_after": "2025-06-01T00:00:00Z", "detector": "fixture",
+                "detector_version": "1", "confidence": 0.8,
+                "verification_state": "EXTRACTED", "evidence": "Cremation", "derived": False,
+            }
+            before = lambda: datetime(2025, 5, 1, tzinfo=timezone.utc)
+            after = lambda: datetime(2025, 7, 1, tzinfo=timezone.utc)
+            context = {"domain": "example.ca", "record": {
+                "domain": "example.ca", "enrichment": {"facts": [fact]},
+            }}
+            early = AgentOrchestrator(state, audit, [QualityControlAgent(before)])
+            early.process(context)
+            early.process(context)
+            late = AgentOrchestrator(state, audit, [QualityControlAgent(after)])
+            output = late.process(context)
+            late.process(context)
+            self.assertIn("STALE_ENRICHMENT", {
+                item["code"] for item in output["quality_control"]["findings"]
+            })
+            outcomes = [item["outcome"] for item in json.loads(audit.read_text())]
+            self.assertEqual(outcomes.count("COMPLETED"), 2)
+            self.assertEqual(outcomes.count("SKIPPED"), 2)
 
 
 if __name__ == "__main__":

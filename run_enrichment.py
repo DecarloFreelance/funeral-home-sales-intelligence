@@ -6,7 +6,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from automation import AgentOrchestrator, EnrichmentAgent, QualityControlAgent
-from enrichment.quality import evaluate_dataset_quality
+from enrichment.quality import evaluate_dataset_quality, readiness_from_findings
 
 
 def _domain(page):
@@ -37,18 +37,16 @@ def _run_locked(pages_path: Path, results_path: Path, output_path: Path, state_p
         quality["findings"] = sorted(combined.values(), key=lambda item: item["code"])
         quality["finding_count"] = len(quality["findings"])
         quality["status"] = "NEEDS_REVIEW" if any(item["requires_review"] for item in quality["findings"]) else "PASSED"
+        quality.update(readiness_from_findings(quality["findings"]))
         output["quality_control"] = quality
         if quality.get("status") == "NEEDS_REVIEW":
-            blocking_codes = {"CONFLICTING_FACTS", "POSSIBLE_DUPLICATE_ORGANIZATION"}
             review.append({
                 "domain": domain,
                 "status": "NEEDS_REVIEW",
                 "findings": quality.get("findings", []),
                 "recommended_next_research": [item["recommended_action"] for item in quality.get("findings", [])],
-                "crm_sync_safe": not any(
-                    item.get("severity") == "HIGH" or item.get("code") in blocking_codes
-                    for item in quality.get("findings", [])
-                ),
+                "crm_sync_safe": quality["crm_sync_safe"],
+                "outreach_ready": quality["outreach_ready"],
             })
     AgentOrchestrator._atomic_json(output_path, enriched)
     AgentOrchestrator._atomic_json(review_path, review)

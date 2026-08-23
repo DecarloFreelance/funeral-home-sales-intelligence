@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import datetime, timezone
+from difflib import SequenceMatcher
+import re
 from typing import Any, Dict, Iterable, List
 from urllib.parse import urlsplit
 
@@ -10,7 +12,12 @@ from enrichment.evidence import CONFIDENCE_STATES, utc_now, iso
 
 
 AGENT = "quality_control"
-VERSION = "1.0.0"
+VERSION = "1.2.0"
+CRM_BLOCKING_CODES = {
+    "CONFLICTING_FACTS",
+    "POSSIBLE_DUPLICATE_ORGANIZATION",
+    "ORGANIZATION_WEBSITE_MISMATCH",
+}
 
 
 def _finding(entity_id: str, code: str, severity: str, message: str, evidence: Any, action: str) -> Dict[str, Any]:
@@ -28,6 +35,25 @@ def _finding(entity_id: str, code: str, severity: str, message: str, evidence: A
 
 def _email_domain(email: str) -> str:
     return email.rpartition("@")[2].lower().rstrip(".")
+
+
+def _normalized_name(value: Any) -> str:
+    return " ".join(re.findall(r"[a-z0-9]+", str(value or "").casefold()))
+
+
+def readiness_from_findings(findings: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
+    findings = list(findings)
+    crm_blockers = [
+        item for item in findings
+        if item.get("severity") == "HIGH" or item.get("code") in CRM_BLOCKING_CODES
+    ]
+    outreach_blockers = [item for item in findings if item.get("requires_review")]
+    return {
+        "crm_sync_safe": not crm_blockers,
+        "outreach_ready": not outreach_blockers,
+        "crm_blocking_reasons": [item["code"] for item in crm_blockers],
+        "outreach_blocking_reasons": [item["code"] for item in outreach_blockers],
+    }
 
 
 def evaluate_quality(record: Dict[str, Any], *, evaluated_at=None) -> Dict[str, Any]:
@@ -75,6 +101,25 @@ def evaluate_quality(record: Dict[str, Any], *, evaluated_at=None) -> Dict[str, 
             f"Sources disagree about {field}.",
             [item.get("id") for item in facts if item.get("field") == field],
             "Research the competing sources; preserve all candidates until resolved."))
+
+    canonical_name = (record.get("business_profile") or {}).get("company")
+    observed_names = [
+        item for item in facts
+        if item.get("field") == "organization.business_name" and item.get("source") == "schema.org"
+    ]
+    canonical_normalized = _normalized_name(canonical_name)
+    if canonical_normalized and observed_names:
+        similarities = [
+            (SequenceMatcher(None, canonical_normalized, _normalized_name(item.get("value"))).ratio(), item)
+            for item in observed_names if _normalized_name(item.get("value"))
+        ]
+        best_similarity, best_fact = max(similarities, default=(1.0, {}), key=lambda pair: pair[0])
+        if best_similarity < 0.65 and record.get("prospect_type") != "Funeral Home Prospect":
+            findings.append(_finding(entity_id, "ORGANIZATION_WEBSITE_MISMATCH", "HIGH",
+                "The discovered organization name is not supported by the fetched website identity.",
+                {"discovered_name": canonical_name, "closest_observed_name": best_fact.get("value"),
+                 "similarity": round(best_similarity, 2), "source_url": best_fact.get("source_url")},
+                "Resolve the website/entity mapping before scoring, CRM synchronization, or outreach."))
 
     contacts = record.get("contact_intelligence") or record.get("contacts") or {}
     email_items = contacts.get("email_validation") or []
@@ -130,6 +175,7 @@ def evaluate_quality(record: Dict[str, Any], *, evaluated_at=None) -> Dict[str, 
         "status": "NEEDS_REVIEW" if any(item["requires_review"] for item in ordered) else "PASSED",
         "findings": ordered,
         "finding_count": len(ordered),
+        **readiness_from_findings(ordered),
     }
 
 

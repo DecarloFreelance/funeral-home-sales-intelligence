@@ -46,6 +46,12 @@ Changeable facts carry a `stale_after` timestamp. Quality control creates a
 review finding after that horizon; it does not treat old data as current or
 automatically recrawl the source.
 
+New crawler records include `crawl.observedAt`; page-derived facts retain that
+source observation rather than using the later enrichment-run time. The quality
+agent includes the set of crossed freshness horizons in its input fingerprint,
+so it reruns once when facts become stale while enrichment remains cached until
+the crawl evidence itself changes.
+
 ## Recovery, caching, and boundaries
 
 Agent tasks are keyed by domain and agent name. A versioned fingerprint of the
@@ -64,3 +70,8 @@ Quality findings never silently mutate ambiguous business/contact attribution.
 High-severity findings make CRM synchronization unsafe in the review artifact.
 Outreach approval and sending boundaries are unchanged; the system still cannot
 send email, SMS, calls, forms, or campaigns.
+
+`generate_gap_metrics.py` publishes current and deduplicated historical JSON
+snapshots for field/contact coverage, verification states, conflicts, staleness,
+quality findings, readiness, and agent outcomes. It reports thresholded
+regressions but never treats increased coverage alone as proof of correctness.

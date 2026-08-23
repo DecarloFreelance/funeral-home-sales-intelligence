@@ -1,11 +1,14 @@
 import json
 import time
 from collections import deque
+from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import requests
 from bs4 import BeautifulSoup
+
+from discovery.network_safety import public_web_url, resolve_addresses
 
 
 PRIORITY_LINK_TERMS = (
@@ -96,15 +99,41 @@ class PriorityPageCrawler:
         max_pages_per_lead=12,
         max_attempts_per_lead=12,
         delay=0,
+        host_resolver=resolve_addresses,
     ):
         self.session = session or requests.Session()
         self.timeout = timeout
         self.max_pages_per_lead = max_pages_per_lead
         self.max_attempts_per_lead = max_attempts_per_lead
         self.delay = delay
+        self.host_resolver = host_resolver
+        self._host_safety = {}
         self.last_report = {}
         self.last_lead_report = {}
         self.session.headers.update({"User-Agent": DEFAULT_USER_AGENT})
+
+    def _public_target(self, url):
+        host = (urlsplit(url).hostname or "").lower()
+        if host not in self._host_safety:
+            self._host_safety[host] = public_web_url(url, self.host_resolver)
+        return self._host_safety[host]
+
+    def _get_public(self, url, max_redirects=5):
+        """Follow redirects only after authorizing each destination."""
+        current = url
+        for redirect_count in range(max_redirects + 1):
+            if not self._public_target(current):
+                return None, current, "UNSAFE_REDIRECT_TARGET"
+            response = self.session.get(current, timeout=self.timeout, allow_redirects=False)
+            location = response.headers.get("location")
+            if response.status_code not in {301, 302, 303, 307, 308} or not location:
+                return response, _canonical_page_url(response.url or current), None
+            current = _canonical_page_url(urljoin(current, location))
+            if not current:
+                raise requests.TooManyRedirects("Malformed redirect target")
+            if redirect_count == max_redirects:
+                raise requests.TooManyRedirects("Redirect limit exceeded")
+        raise requests.TooManyRedirects("Redirect limit exceeded")
 
     def crawl_lead(self, lead: Dict[str, Any]) -> List[Dict[str, Any]]:
         domain = str(lead.get("domain", "")).lower().strip()
@@ -141,11 +170,26 @@ class PriorityPageCrawler:
             visited.add(url)
             attempts += 1
 
+            if not self._public_target(url):
+                outcome["attempts"].append({
+                    "url": url,
+                    "outcome": "UNSAFE_TARGET",
+                    "detail": "Target is not a resolvable public network address",
+                })
+                continue
+
             if self.delay and visited != {url}:
                 time.sleep(self.delay)
 
             try:
-                response = self.session.get(url, timeout=self.timeout)
+                response, final_url, safety_error = self._get_public(url)
+                if safety_error:
+                    outcome["attempts"].append({
+                        "url": url,
+                        "outcome": safety_error,
+                        "final_url": final_url,
+                    })
+                    continue
                 response.raise_for_status()
             except requests.RequestException as error:
                 status_code = getattr(getattr(error, "response", None), "status_code", None)
@@ -157,7 +201,14 @@ class PriorityPageCrawler:
                 })
                 continue
 
-            final_url = _canonical_page_url(response.url)
+            final_url = _canonical_page_url(final_url)
+            if not self._public_target(final_url):
+                outcome["attempts"].append({
+                    "url": url,
+                    "outcome": "UNSAFE_REDIRECT_TARGET",
+                    "final_url": final_url,
+                })
+                continue
             content_type = response.headers.get("content-type", "")
             if (
                 url == homepage
@@ -201,6 +252,7 @@ class PriorityPageCrawler:
                     "httpStatusCode": response.status_code,
                     "depth": 0 if url == homepage else 1,
                     "contentType": content_type,
+                    "observedAt": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
                 },
                 "metadata": _metadata(BeautifulSoup(response.text, "html.parser")),
                 "text": text,

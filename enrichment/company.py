@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+import html as html_lib
 import re
+from datetime import datetime
 from typing import Any, Dict, Iterable, Iterator, List
 from urllib.parse import urljoin, urlsplit
 
 from bs4 import BeautifulSoup
 
 from enrichment.evidence import fact, reconcile_facts, utc_now
+from technology_detector import detect_technology
 
 
 DETECTOR = "public_business_enrichment"
-VERSION = "1.1.1"
+VERSION = "1.4.1"
 SOCIAL_HOSTS = {
     "facebook.com": "facebook",
     "instagram.com": "instagram",
@@ -38,6 +41,12 @@ ROLE_CATEGORIES = {
     "managing director": ("MANAGER", 0.9),
     "funeral director": ("FUNERAL_DIRECTOR", 0.75),
 }
+PARENT_PATTERNS = (
+    r"\b(?:a\s+division\s+of|division\s+of)\s+"
+    r"([A-Z][A-Za-z0-9&'’., ()-]{2,100}?(?:Ltd\.?|Limited|Inc\.?|Corporation|Corp\.?|ULC))(?=[.\n]|$)",
+    r"\b([A-Z][A-Za-z0-9&'’., ()-]{2,100}?(?:Ltd\.?|Limited|Inc\.?|Corporation|Corp\.?|ULC))"
+    r"\s+operating\s+as\b",
+)
 
 
 def _nodes(value: Any) -> Iterator[Dict[str, Any]]:
@@ -77,11 +86,21 @@ def enrich_company(
     contacts = contacts or {}
     facts: List[Dict[str, Any]] = []
 
+    def page_observation(page):
+        value = (page.get("crawl") or {}).get("observedAt")
+        try:
+            return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        except (TypeError, ValueError):
+            return observed_at
+
+    observation_by_url = {str(page.get("url") or ""): page_observation(page) for page in pages}
+    current_observed_at = page_observation(pages[0]) if pages else observed_at
+
     def add(field, value, source, source_url, source_type, confidence, state, evidence, derived=False, days=180):
         if value not in (None, "", [], {}):
             facts.append(fact(
                 domain, field, value, source=source, source_url=source_url,
-                source_type=source_type, observed_at=observed_at, detector=DETECTOR,
+                source_type=source_type, observed_at=current_observed_at, detector=DETECTOR,
                 version=VERSION, confidence=confidence, verification_state=state,
                 evidence=evidence, derived=derived, freshness_days=days,
             ))
@@ -111,6 +130,7 @@ def enrich_company(
                 0.72, "DISCOVERED", ", ".join(address.values()), days=120)
 
     for page in pages:
+        current_observed_at = page_observation(page)
         page_url = str(page.get("url") or "")
         text = str(page.get("text") or page.get("markdown") or "")
         metadata = page.get("metadata") or {}
@@ -127,7 +147,7 @@ def enrich_company(
             if not types.intersection({"organization", "localbusiness", "funeralhome", "corporation"}):
                 continue
             mappings = {
-                "name": "organization.canonical_name",
+                "name": "organization.business_name",
                 "legalName": "organization.legal_name",
                 "alternateName": "organization.business_name",
                 "foundingDate": "organization.founding_year",
@@ -137,6 +157,8 @@ def enrich_company(
                 for value in _values(node.get(source_field)):
                     if isinstance(value, dict):
                         value = value.get("name") or value.get("@id")
+                    if isinstance(value, str) and source_field in {"name", "legalName", "alternateName"}:
+                        value = re.sub(r"\s+", " ", html_lib.unescape(value)).strip()
                     add(target_field, value, "schema.org", page_url, "structured_data",
                         0.82, "EXTRACTED", f"JSON-LD {source_field}: {value}")
             for same_as in _values(node.get("sameAs")):
@@ -161,17 +183,28 @@ def enrich_company(
                 if re.search(r"\b(?:careers?|jobs?|employment|join our team)\b", f"{label} {path}"):
                     add("business.careers_page", href, "html_link", page_url, "website",
                         0.8, "EXTRACTED", f"Careers link: {href}", days=45)
+            for technology, detection in detect_technology(html).items():
+                add("technology.platform", technology, "html_signature", page_url,
+                    "website", detection["confidence"], "EXTRACTED",
+                    f"Public HTML signature: {detection['marker']}", days=90)
 
         for field, pattern in SERVICE_PATTERNS.items():
             match = re.search(pattern, text, re.I)
             if match:
                 add(field, True, "page_text", page_url, "website", 0.78,
                     "EXTRACTED", _snippet(text, match), days=90)
+        for pattern in PARENT_PATTERNS:
+            match = re.search(pattern, text, re.I)
+            if match:
+                parent = re.sub(r"\s+", " ", match.group(1)).strip(" ,.")
+                add("organization.parent_organization", parent, "page_text", page_url,
+                    "website", 0.9, "EXTRACTED", _snippet(text, match), days=120)
 
     for person in contacts.get("people") or []:
         if not isinstance(person, dict) or not person.get("name"):
             continue
         source_url = str(person.get("source_url") or "")
+        current_observed_at = observation_by_url.get(source_url, observed_at)
         title = str(person.get("title") or "")
         add("contact.person", {"name": person["name"], "title": title},
             person.get("source", "contact_extractor"), source_url, "website", 0.76,
@@ -189,6 +222,7 @@ def enrich_company(
     for item in contacts.get("email_sources") or []:
         value = str(item.get("value") or "").lower()
         validation = email_validation.get(value, {})
+        current_observed_at = observation_by_url.get(str(item.get("source_url") or ""), observed_at)
         state = validation.get("verification_state") or "EXTRACTED"
         if state not in {"LOCAL_VALID", "DNS_VALID", "EXTERNALLY_VERIFIED"}:
             state = "EXTRACTED"
@@ -200,6 +234,7 @@ def enrich_company(
     for item in contacts.get("phone_sources") or []:
         value = str(item.get("value") or "")
         validation = phone_validation.get(value, {})
+        current_observed_at = observation_by_url.get(str(item.get("source_url") or ""), observed_at)
         state = validation.get("verification_state") or "EXTRACTED"
         if state not in {"METADATA_VALIDATED", "LOCALLY_VALIDATED", "EXTERNALLY_VERIFIED"}:
             state = "EXTRACTED"
@@ -210,6 +245,7 @@ def enrich_company(
 
     for address in contacts.get("addresses") or []:
         if isinstance(address, dict):
+            current_observed_at = observation_by_url.get(str(address.get("source_url") or ""), observed_at)
             value = {key: item for key, item in address.items() if key not in {"source_url", "formatted"}}
             add("organization.location", value or address.get("formatted"), "contact_extractor",
                 address.get("source_url", ""), "structured_data", 0.8, "EXTRACTED",
@@ -219,7 +255,7 @@ def enrich_company(
     return {
         "schema_version": 1,
         "entity_id": domain,
-        "generated_at": reconciled[0]["observed_at"] if reconciled else observed_at.isoformat(),
+        "generated_at": observed_at.isoformat(),
         "detector": DETECTOR,
         "detector_version": VERSION,
         "facts": reconciled,

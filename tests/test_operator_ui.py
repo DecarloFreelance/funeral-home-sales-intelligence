@@ -56,6 +56,7 @@ class OperatorUiTests(unittest.TestCase):
         self.assertIn(b"Example &lt;Home&gt;", listing.data)
         detail = self.client.get("/leads/example.com")
         self.assertIn(b"Jane Smith", detail.data)
+        self.assertIn(b"CRM sync:</strong> not checked", detail.data)
         self.assertEqual(self.client.get("/leads/not-found.example").status_code, 404)
 
     def test_enrichment_and_quality_uncertainty_are_visible(self):
@@ -70,7 +71,8 @@ class OperatorUiTests(unittest.TestCase):
             "quality_control": {"status": "NEEDS_REVIEW", "findings": [{
                 "severity": "MEDIUM", "code": "CONFLICTING_FACTS",
                 "message": "Sources disagree.", "recommended_action": "Research both sources.",
-            }]},
+            }], "crm_sync_safe": False, "outreach_ready": False,
+                "crm_blocking_reasons": ["CONFLICTING_FACTS"]},
         }])
         self.write_json("generated/enrichment/review_queue.json", [{
             "domain": "example.com", "status": "NEEDS_REVIEW", "crm_sync_safe": False,
@@ -81,6 +83,9 @@ class OperatorUiTests(unittest.TestCase):
         detail = self.client.get("/leads/example.com")
         self.assertIn(b"INFERRED", detail.data)
         self.assertIn(b"Derived from observed title", detail.data)
+        self.assertIn(b"CRM sync:</strong> blocked", detail.data)
+        listing = self.client.get("/leads")
+        self.assertIn(b"Blocked by quality", listing.data)
         review = self.client.get("/quality")
         self.assertIn(b"CONFLICTING_FACTS", review.data)
         self.assertIn(b"CRM sync safe: no", review.data)

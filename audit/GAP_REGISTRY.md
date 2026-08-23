@@ -49,7 +49,9 @@ and rejected suspicions so they are not repeatedly rediscovered.
 - Acceptance: false canonical conflicts disappear; deterministic material name
   mismatch remains review-blocking; branch/trading values and provenance remain;
   real-data comparison and regression fixtures pass.
-- Status: ACTIONABLE
+- Status: VALIDATED — schema names remain sourced business-name candidates;
+  real-data canonical conflicts fell 13 to 0 while `martinbros.com` remains a
+  high-severity, CRM-blocking website-identity mismatch.
 
 ## GAP-2026-003 — Quality cache cannot notice facts becoming stale
 
@@ -72,7 +74,8 @@ and rejected suspicions so they are not repeatedly rediscovered.
 - Acceptance: crawler timestamps are retained; page facts use them; a simulated
   horizon crossing reruns quality only and emits a stale finding; enrichment does
   not repeatedly rerun against unchanged old pages.
-- Status: ACTIONABLE
+- Status: VALIDATED — crawls now timestamp observations and quality fingerprints
+  transition once at stale horizons without rerunning unchanged enrichment.
 
 ## GAP-2026-004 — Record readiness can contradict blocking quality findings
 
@@ -90,7 +93,8 @@ and rejected suspicions so they are not repeatedly rediscovered.
 - Actionability: ACTIONABLE
 - Acceptance: one shared policy drives quality output, review queue, and operator
   display; blocking identity/provenance findings fail closed; tests cover it.
-- Status: ACTIONABLE
+- Status: VALIDATED — a shared fail-closed policy now supplies CRM/outreach safety
+  and blocker reasons to records, review artifacts, and operator views.
 
 ## GAP-2026-005 — No reproducible gap/coverage metrics snapshot
 
@@ -110,7 +114,8 @@ and rejected suspicions so they are not repeatedly rediscovered.
 - Actionability: ACTIONABLE
 - Acceptance: bounded local command, JSON snapshot, prior-snapshot comparison,
   deterministic tests, documented invocation, and real-data baseline.
-- Status: ACTIONABLE
+- Status: VALIDATED — `generate_gap_metrics.py` produces current/deduplicated
+  history snapshots and thresholded regression findings; real baseline captured.
 
 ## GAP-2026-006 — Existing technology detector is an empty implementation
 
@@ -130,7 +135,59 @@ and rejected suspicions so they are not repeatedly rediscovered.
 - Acceptance: evidence-backed markers from real fixtures become enrichment facts;
   malformed/ambiguous text does not create unsupported signals; real-data impact
   is measured.
-- Status: ACTIONABLE
+- Status: VALIDATED — conservative signatures produced 119 facts across 31/35
+  organizations without interpreting absence as a negative signal.
+
+## GAP-2026-010 — Imported crawl targets can reach local/private services
+
+- Discovered: 2026-08-23
+- Category: security / SSRF
+- Severity: CRITICAL
+- Subsystem: discovery ingestion and controlled crawler
+- Evidence: `normalize_website("http://127.0.0.1:8080")`, RFC1918 targets, and
+  `169.254.169.254` all produce accepted queue URLs. The crawler requests them
+  without an address-scope check.
+- Affected examples: any imported/manual source controlled by untrusted content;
+  cloud metadata, loopback, and LAN services reachable from the host.
+- Expected: non-public hostnames, IP literals, and domains resolving to any
+  non-global address fail closed before a request; redirect targets are checked
+  again; public targets continue to work.
+- Observed: URL syntax and same-domain rules do not enforce network scope.
+- Root cause: crawl URL canonicalization is not a network authorization boundary.
+- Confidence: HIGH
+- Actionability: ACTIONABLE
+- Acceptance: static ingestion rejection, resolved-address enforcement before
+  request and after redirects, no request for unsafe targets, deterministic
+  resolver fixtures, and existing public crawl behavior unchanged.
+- Status: VALIDATED — ingestion rejects non-public/literal targets and the crawler
+  validates resolved addresses before requests; redirects are followed manually
+  only after validating each destination, and unsafe test targets receive no
+  request.
+
+## GAP-2026-011 — Explicit public parent/operating relationships are discarded
+
+- Discovered: 2026-08-23 (fresh post-remediation pass)
+- Category: entity resolution / extraction
+- Severity: MEDIUM
+- Subsystem: organization enrichment
+- Evidence: Beaverlodge's first-party staff page says it is “A Division of Swan
+  City Funeral Services Ltd.”; Oliver's first-party footer says “Swan City Funeral
+  Service LTD. operating as Oliver’s Funeral Home & Crematorium.” Both currently
+  have no `organization.parent_organization` fact. The same pages independently
+  support their two shared staff names.
+- Expected: explicit division/operating-as legal phrases create sourced parent
+  facts; shared contacts alone never infer ownership.
+- Observed: parent relationship coverage is 0/35 despite direct page evidence.
+- Root cause: enrichment consumes schema parent relationships but not the legal
+  relationship phrases present in fetched page text.
+- Confidence: HIGH
+- Actionability: ACTIONABLE
+- Acceptance: both real records identify Swan City with page provenance;
+  unrelated prose and shared-person records do not create parent facts; repeat
+  enrichment remains idempotent.
+- Status: VALIDATED — bounded first-party legal phrases now produce sourced
+  parent facts for Beaverlodge, Oliver's, and Dignity Memorial; a negative
+  shared-staff fixture proves that co-occurrence alone creates no relationship.
 
 ## Triaged suspicions not promoted to tasks
 
@@ -166,3 +223,16 @@ and rejected suspicions so they are not repeatedly rediscovered.
 - Status: NOT_A_DEFECT
 - Reason: absence of public evidence is not an implementation gap. Re-evaluate
   only when a concrete missed page/source pattern is captured.
+
+### GAP-2026-012 — Empty legacy revenue/exporter stubs are active pipeline gaps
+
+- Category: architecture / test coverage
+- Evidence: `revenue.py` and `exporter.py` contain empty placeholder functions,
+  but repository-wide reference search finds no imports or callers; maintained
+  scoring, enrichment, metrics, and export workflows use other modules and
+  commands.
+- Confidence that this is a defect: LOW
+- Status: NOT_A_DEFECT
+- Reason: unreachable historical placeholders do not affect a documented or
+  observed workflow. Implementing them would invent a parallel interface rather
+  than remediate repository behavior.

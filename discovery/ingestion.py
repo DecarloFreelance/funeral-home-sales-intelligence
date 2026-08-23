@@ -3,6 +3,8 @@ import re
 from typing import Dict, Iterable, List
 from urllib.parse import urlsplit, urlunsplit
 
+from discovery.network_safety import static_public_hostname
+
 
 PRIORITY_PATHS = (
     "/contact",
@@ -35,6 +37,8 @@ def normalize_website(value: str) -> str:
     if host.startswith("www."):
         host = host[4:]
     if "." not in host:
+        return ""
+    if not static_public_hostname(host):
         return ""
 
     try:

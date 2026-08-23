@@ -22,6 +22,11 @@ class DiscoveryIngestionTests(unittest.TestCase):
         )
         self.assertEqual(normalize_website("mailto:info@example.com"), "")
         self.assertEqual(normalize_website("fostersgardenchapelcom"), "")
+        for unsafe in (
+            "http://127.0.0.1:8080", "http://169.254.169.254/latest/meta-data",
+            "http://10.0.0.1", "http://service.local/", "http://localhost/",
+        ):
+            self.assertEqual(normalize_website(unsafe), "", unsafe)
 
     def test_queue_deduplicates_domains_and_merges_sources(self):
         queue = build_crawl_queue([

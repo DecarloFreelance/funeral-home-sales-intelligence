@@ -124,33 +124,53 @@ resolution rule was narrowed to singleton identity fields and regression-tested.
 
 Evidence and triage details are preserved in `audit/GAP_REGISTRY.md`.
 
+- [x] **GAP-2026-010 (CRITICAL): prevent SSRF through imported crawl targets.**
+  Ingestion currently accepts loopback, link-local metadata, and private IP URLs,
+  and the crawler does not validate resolved address scope. Reject non-public
+  hostnames/IP literals, validate public DNS addresses before requests and after
+  redirects, prove unsafe targets receive zero requests, and retain public crawl
+  behavior with deterministic resolver tests.
 - [x] **GAP-2026-001 (HIGH): fail closed on blocked or failed agent dependencies.**
   Evidence: the orchestrator returns partially modified records after an agent
   exception and continues past retry-exhausted upstream work. Fix the orchestration
   layer so publication aborts, previous atomic outputs survive, dependent agents
   do not run, and bounded retry/recovery tests prove the behavior on disk.
-- [ ] **GAP-2026-002 (HIGH): separate observed schema names from canonical identity.**
+- [x] **GAP-2026-002 (HIGH): separate observed schema names from canonical identity.**
   Evidence: 13/35 real records report false canonical conflicts from branch,
   staff-section, or legal-variant names, while `martinbros.com` is a genuine site
   identity mismatch. Preserve schema names as sourced candidates and add a
   deterministic mismatch finding that retains the true defect. Add entity/name
   fixtures and verify the real review delta without forced resolution.
-- [ ] **GAP-2026-003 (MEDIUM): make freshness transitions observable through the
+- [x] **GAP-2026-003 (MEDIUM): make freshness transitions observable through the
   agent cache.** Add crawl observation timestamps, use them for page facts, and
   expire only quality-cache validity at fact horizons. Tests must prove stale
   detection after unchanged-input skips without repeatedly re-enriching old pages.
-- [ ] **GAP-2026-004 (MEDIUM): unify quality-based CRM/outreach readiness.** Six
+- [x] **GAP-2026-004 (MEDIUM): unify quality-based CRM/outreach readiness.** Six
   identity-conflicted records currently say `Ready For Outreach`. Add one
   fail-closed safety policy used by quality results, review artifacts, and the
   operator views, with regression tests for blocking and non-blocking findings.
-- [ ] **GAP-2026-005 (LOW): add reproducible coverage/gap metrics and regression
+- [x] **GAP-2026-005 (LOW): add reproducible coverage/gap metrics and regression
   comparison.** Generate machine-readable field/contact/quality/staleness/agent
   metrics from local artifacts, compare with a prior snapshot using explicit
   thresholds, test it deterministically, and document the command.
-- [ ] **GAP-2026-006 (LOW): implement the existing technology detector from
+- [x] **GAP-2026-006 (LOW): implement the existing technology detector from
   observed HTML markers.** Add conservative, provenance-retaining enrichment for
   real WordPress/Elementor/Gravity Forms/FuneralTech/GTM patterns, with negative
   fixtures and a measured production-data result.
+- [x] **GAP-2026-011 (MEDIUM): retain explicit public parent/operating
+  relationships.** Beaverlodge and Oliver's first-party pages explicitly name
+  Swan City Funeral Services Ltd., but parent coverage is 0/35. Extract only
+  bounded legal phrases with page provenance; do not infer ownership from shared
+  contacts. Add positive/negative fixtures and verify both real records.
+
+Gap-cycle evidence: production enrichment increased from 1,480 to 1,610 facts:
+119 positive technology signatures and 11 explicit first-party parent-company
+observations, with no loss of organization or contact coverage. Review records
+fell from 19 to 15; false canonical conflicts
+fell from 13 to 0, while one genuine website-identity mismatch and all 22
+contact-domain attribution findings remain visible. The repeat run skipped 70/70
+tasks, metrics reported no regression, 34 Accounts are CRM-safe, and 20 records
+are outreach-ready under the shared quality policy.
 
 ## Data and Release Hygiene
 
@@ -178,9 +198,9 @@ Evidence and triage details are preserved in `audit/GAP_REGISTRY.md`.
 
 ## Current Verification
 
-- Automated tests: 110 passing on 2026-08-23.
-- Local enrichment validation: 35 organizations, 1,480 unique facts across 22
-  fields, 19 explicit review records, and a 70-of-70 unchanged-task skip on the
+- Automated tests: 125 passing on 2026-08-23.
+- Local enrichment validation: 35 organizations, 1,610 unique facts across 24
+  fields, 15 explicit review records, and a 70-of-70 unchanged-task skip on the
   second run. No uncontrolled enrichment network requests were made.
 - Controlled DNS validation: MX-positive and Null-MX/negative domain behavior
   confirmed without claiming mailbox deliverability.

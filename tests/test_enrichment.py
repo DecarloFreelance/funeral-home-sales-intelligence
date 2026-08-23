@@ -12,7 +12,7 @@ class EnrichmentTests(unittest.TestCase):
         pages = [{
             "url": "https://example.ca/about",
             "text": "Cremation, burial and pre-planning. Jane Smith Owner.",
-            "html": '<a href="https://facebook.com/example">Facebook</a><a href="/careers">Careers</a>',
+            "html": '<a href="https://facebook.com/example">Facebook</a><a href="/careers">Careers</a><script src="/wp-content/app.js"></script>',
             "metadata": {"jsonLd": [{
                 "@type": "FuneralHome", "name": "Example Funeral Home",
                 "foundingDate": "1985", "sameAs": "https://instagram.com/example",
@@ -32,6 +32,7 @@ class EnrichmentTests(unittest.TestCase):
         self.assertIn("services.cremation", fields)
         self.assertIn("business.careers_page", fields)
         self.assertIn("organization.social_profile", fields)
+        self.assertIn("technology.platform", fields)
         email = next(item for item in result["facts"] if item["field"] == "contact.public_email")
         phone = next(item for item in result["facts"] if item["field"] == "contact.public_phone")
         self.assertEqual(email["verification_state"], "DNS_VALID")
@@ -51,15 +52,16 @@ class EnrichmentTests(unittest.TestCase):
         ]
         first = enrich_company("example.ca", pages, {}, {}, observed_at=NOW)
         later = enrich_company("example.ca", pages, {}, {}, observed_at=datetime(2027, 1, 1, tzinfo=timezone.utc))
-        alpha = [item for item in first["facts"] if item["field"] == "organization.canonical_name"]
+        alpha = [item for item in first["facts"] if item["field"] == "organization.business_name"]
         self.assertEqual({item["verification_state"] for item in alpha}, {"CORROBORATED"})
         self.assertEqual({item["id"] for item in first["facts"]}, {item["id"] for item in later["facts"]})
 
-        conflict = enrich_company("example.ca", pages, {"company": "Beta"}, {}, observed_at=NOW)
-        self.assertIn("organization.canonical_name", conflict["conflicted_fields"])
-        names = [item for item in conflict["facts"] if item["field"] == "organization.canonical_name"]
-        self.assertEqual({item["value"] for item in names}, {"Alpha", "Beta"})
-        self.assertEqual({item["verification_state"] for item in names}, {"CONFLICTED"})
+        candidates = enrich_company("example.ca", pages, {"company": "Beta"}, {}, observed_at=NOW)
+        self.assertNotIn("organization.canonical_name", candidates["conflicted_fields"])
+        canonical = [item for item in candidates["facts"] if item["field"] == "organization.canonical_name"]
+        observed = [item for item in candidates["facts"] if item["field"] == "organization.business_name"]
+        self.assertEqual([item["value"] for item in canonical], ["Beta"])
+        self.assertEqual({item["value"] for item in observed}, {"Alpha"})
 
     def test_multi_value_fields_are_not_misclassified_as_conflicts(self):
         pages = [{
@@ -83,6 +85,37 @@ class EnrichmentTests(unittest.TestCase):
         result = enrich_company("example.ca", [page], {}, {}, observed_at=NOW)
         profiles = [item["value"] for item in result["facts"] if item["field"] == "organization.social_profile"]
         self.assertEqual(profiles, ["https://www.linkedin.com/company/example"])
+
+    def test_page_facts_retain_crawl_observation_time(self):
+        page = {
+            "url": "https://example.ca/", "text": "Cremation services", "html": "",
+            "metadata": {}, "crawl": {"observedAt": "2025-03-04T05:06:07Z"},
+        }
+        result = enrich_company("example.ca", [page], {}, {}, observed_at=NOW)
+        service = next(item for item in result["facts"] if item["field"] == "services.cremation")
+        self.assertEqual(service["observed_at"], "2025-03-04T05:06:07Z")
+        self.assertEqual(result["generated_at"], "2026-08-23T12:00:00+00:00")
+
+    def test_extracts_explicit_parent_relationship_without_inferring_from_staff(self):
+        pages = [
+            {"url": "https://one.ca/staff", "text": "One Funeral Home — A Division of Swan City Funeral Services Ltd.", "html": "", "metadata": {}},
+            {"url": "https://one.ca/footer", "text": "Swan City Funeral Service LTD. operating as One Funeral Home", "html": "", "metadata": {}},
+            {"url": "https://one.ca/team", "text": "Chris Clements Funeral Director", "html": "", "metadata": {}},
+            {"url": "https://one.ca/network", "text": "Dignity Memorial is a division of Service Corporation International (Canada), ULC.", "html": "", "metadata": {}},
+        ]
+        result = enrich_company("one.ca", pages, {}, {}, observed_at=NOW)
+        parents = [item for item in result["facts"] if item["field"] == "organization.parent_organization"]
+        self.assertEqual({item["value"].casefold() for item in parents}, {
+            "swan city funeral services ltd", "swan city funeral service ltd",
+            "service corporation international (canada), ulc",
+        })
+        self.assertTrue(all(item["source_url"].startswith("https://one.ca/") for item in parents))
+
+        unrelated = enrich_company("two.ca", [{
+            "url": "https://two.ca/team", "text": "Chris Clements Funeral Director",
+            "html": "", "metadata": {},
+        }], {}, {}, observed_at=NOW)
+        self.assertFalse(any(item["field"] == "organization.parent_organization" for item in unrelated["facts"]))
 
 
 if __name__ == "__main__":

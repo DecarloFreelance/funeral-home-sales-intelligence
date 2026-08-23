@@ -50,6 +50,20 @@ shows direct versus derived facts, source evidence, confidence/conflicts,
 freshness, and recommended research actions. See
 `audit/ENRICHMENT_AUTOMATION.md` for contracts and recovery behavior.
 
+Generate a repeatable coverage, quality, freshness, readiness, and agent-run
+snapshot after enrichment with:
+
+```bash
+python generate_gap_metrics.py
+```
+
+Identical snapshots are not duplicated in history. Material organization/fact or
+contact-coverage drops, review/conflict increases, and agent failures are listed
+under `regressions` for investigation. Public technology indicators are detected
+only from positive fetched-HTML signatures; their absence is never represented
+as a weakness. Imported crawl targets and redirects must resolve exclusively to
+public network addresses before the crawler will request them.
+
 Automated discovery, public contact extraction, platform-candidate ranking, and
 reviewable outreach generation, the operator interface, progressive local
 verification, and an EspoCRM synchronization boundary are implemented.

@@ -28,6 +28,8 @@ class EnrichmentQualityTests(unittest.TestCase):
         self.assertIn("EMAIL_DOMAIN_MISMATCH", codes)
         self.assertIn("DNS_CLAIMED_DELIVERABLE", codes)
         self.assertIn("METADATA_CLAIMED_REACHABLE", codes)
+        self.assertTrue(quality["crm_sync_safe"] is False)
+        self.assertTrue(quality["outreach_ready"] is False)
         self.assertEqual(repr(record), original)
 
     def test_reports_conflict_and_inference_without_provenance(self):
@@ -66,6 +68,37 @@ class EnrichmentQualityTests(unittest.TestCase):
         findings = evaluate_dataset_quality(records)
         codes = {item["code"] for item in findings["one.ca"]}
         self.assertEqual(codes, {"POSSIBLE_DUPLICATE_ORGANIZATION", "SHARED_ADDRESS_REVIEW"})
+
+    def test_detects_material_website_identity_mismatch_but_not_name_variant(self):
+        def record(discovered, observed, prospect_type="Funeral Industry Prospect"):
+            return {
+                "domain": "example.ca", "prospect_type": prospect_type,
+                "business_profile": {"company": discovered},
+                "enrichment": {"facts": [{
+                    "field": "organization.business_name", "value": observed,
+                    "source": "schema.org", "source_url": "https://example.ca/",
+                }]},
+            }
+        mismatch = evaluate_quality(record(
+            "Martin Bros. Funeral Chapels", "Martin Bros. Distributing Co. Inc."
+        ))
+        self.assertIn("ORGANIZATION_WEBSITE_MISMATCH", {item["code"] for item in mismatch["findings"]})
+        variant = evaluate_quality(record(
+            "Connelly-McKinley Ltd", "Connelly-McKinley Downtown"
+        ))
+        self.assertNotIn("ORGANIZATION_WEBSITE_MISMATCH", {item["code"] for item in variant["findings"]})
+
+    def test_non_identity_attribution_review_blocks_outreach_but_not_account_sync(self):
+        quality = evaluate_quality({
+            "domain": "example.ca",
+            "contact_intelligence": {"email_validation": [{
+                "email": "office@other.ca", "verification_state": "LOCAL_VALID",
+            }]},
+            "enrichment": {"facts": []},
+        })
+        self.assertTrue(quality["crm_sync_safe"])
+        self.assertFalse(quality["outreach_ready"])
+        self.assertEqual(quality["outreach_blocking_reasons"], ["EMAIL_DOMAIN_MISMATCH"])
 
 
 if __name__ == "__main__":

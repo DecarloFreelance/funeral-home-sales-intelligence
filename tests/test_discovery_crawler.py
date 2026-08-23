@@ -5,6 +5,9 @@ import requests
 from discovery.crawler import PriorityPageCrawler
 
 
+PUBLIC_RESOLVER = lambda hostname: ["93.184.216.34"]
+
+
 class FakeResponse:
 
     def __init__(self, url, text="", status=200, content_type="text/html"):
@@ -27,7 +30,9 @@ class FakeSession:
         self.headers = {}
         self.requested = []
 
-    def get(self, url, timeout):
+    def get(self, url, timeout, allow_redirects=False):
+        if allow_redirects:
+            raise AssertionError("Crawler must authorize redirects itself")
         self.requested.append((url, timeout))
         response = self.responses.get(url)
         if response is None:
@@ -58,7 +63,7 @@ class PriorityPageCrawlerTests(unittest.TestCase):
                 "<html><body>Call (780) 555-1234</body></html>",
             ),
         })
-        crawler = PriorityPageCrawler(session=session, timeout=3, max_pages_per_lead=5)
+        crawler = PriorityPageCrawler(session=session, timeout=3, max_pages_per_lead=5, host_resolver=PUBLIC_RESOLVER)
 
         records = crawler.crawl_lead({
             "company": "Example Funeral Home",
@@ -80,6 +85,7 @@ class PriorityPageCrawlerTests(unittest.TestCase):
         self.assertEqual(records[1]["discovery"]["source"], "manual")
         self.assertEqual(records[0]["discovery"]["email"], "directory@example.com")
         self.assertEqual(records[0]["discovery"]["locations"][0]["city"], "Edmonton")
+        self.assertRegex(records[0]["crawl"]["observedAt"], r"^\d{4}-\d{2}-\d{2}T.*Z$")
 
     def test_skips_failures_non_html_and_cross_domain_redirects(self):
         session = FakeSession({
@@ -93,7 +99,7 @@ class PriorityPageCrawlerTests(unittest.TestCase):
                 "https://example.com/about", status=500
             ),
         })
-        crawler = PriorityPageCrawler(session=session)
+        crawler = PriorityPageCrawler(session=session, host_resolver=PUBLIC_RESOLVER)
 
         records = crawler.crawl_lead({
             "domain": "example.com",
@@ -118,7 +124,7 @@ class PriorityPageCrawlerTests(unittest.TestCase):
 
     def test_rejects_invalid_or_mismatched_queue_record(self):
         session = FakeSession({})
-        crawler = PriorityPageCrawler(session=session)
+        crawler = PriorityPageCrawler(session=session, host_resolver=PUBLIC_RESOLVER)
 
         self.assertEqual(crawler.crawl_lead({"domain": "example.com"}), [])
         self.assertEqual(crawler.crawl_lead({
@@ -132,7 +138,7 @@ class PriorityPageCrawlerTests(unittest.TestCase):
         session = FakeSession({
             homepage: FakeResponse(homepage, "<html><body>Home</body></html>"),
         })
-        crawler = PriorityPageCrawler(session=session)
+        crawler = PriorityPageCrawler(session=session, host_resolver=PUBLIC_RESOLVER)
 
         crawler.crawl_queue([
             {"domain": "example.com", "url": homepage},
@@ -148,7 +154,7 @@ class PriorityPageCrawlerTests(unittest.TestCase):
         session = FakeSession({
             homepage: FakeResponse(homepage, "<html><body>Home</body></html>"),
         })
-        crawler = PriorityPageCrawler(session=session)
+        crawler = PriorityPageCrawler(session=session, host_resolver=PUBLIC_RESOLVER)
         progress = []
 
         crawler.crawl_queue(
@@ -169,7 +175,7 @@ class PriorityPageCrawlerTests(unittest.TestCase):
                 "<html><body>Contact page</body></html>",
             ),
         })
-        crawler = PriorityPageCrawler(session=session)
+        crawler = PriorityPageCrawler(session=session, host_resolver=PUBLIC_RESOLVER)
 
         records = crawler.crawl_lead({
             "domain": "example.com",
@@ -178,6 +184,32 @@ class PriorityPageCrawlerTests(unittest.TestCase):
 
         self.assertEqual(len(records), 2)
         self.assertEqual(records[0]["url"], "https://www.example.ca/en.html")
+
+    def test_rejects_private_resolution_before_request(self):
+        homepage = "https://internal.example/"
+        session = FakeSession({homepage: FakeResponse(homepage, "<html>secret</html>")})
+        crawler = PriorityPageCrawler(
+            session=session, host_resolver=lambda hostname: ["127.0.0.1", "169.254.169.254"],
+        )
+
+        self.assertEqual(crawler.crawl_lead({"domain": "internal.example", "url": homepage}), [])
+        self.assertEqual(session.requested, [])
+        self.assertEqual(crawler.last_lead_report["attempts"][0]["outcome"], "UNSAFE_TARGET")
+
+    def test_rejects_redirect_that_resolves_private(self):
+        homepage = "https://example.com/"
+        redirected = "http://127.0.0.1/admin"
+        response = FakeResponse(homepage, status=302)
+        response.headers["location"] = redirected
+        session = FakeSession({homepage: response})
+        crawler = PriorityPageCrawler(
+            session=session,
+            host_resolver=PUBLIC_RESOLVER,
+        )
+
+        self.assertEqual(crawler.crawl_lead({"domain": "example.com", "url": homepage}), [])
+        self.assertEqual(session.requested, [(homepage, 15)])
+        self.assertEqual(crawler.last_lead_report["attempts"][0]["outcome"], "UNSAFE_REDIRECT_TARGET")
 
 
 if __name__ == "__main__":
