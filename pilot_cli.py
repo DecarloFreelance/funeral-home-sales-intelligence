@@ -5,7 +5,7 @@ import argparse
 import json
 from pathlib import Path
 
-from pilot import PilotStore, build_pilot_cohort
+from pilot import PRESEND_CHECKS, PilotStore, build_first_prospect_package, build_pilot_cohort, write_package
 
 
 def _json(path: Path, expected):
@@ -25,9 +25,22 @@ def main(argv=None):
     generate.add_argument("--results", type=Path, default=Path("data/generated/scale/enriched_results.json"))
     generate.add_argument("--commercial", type=Path, default=Path("data/generated/scale/commercial_readiness.json"))
     generate.add_argument("--limit", type=int, default=10)
+    package = sub.add_parser("package")
+    package.add_argument("identifier")
+    package.add_argument("--results", type=Path, default=Path("data/generated/scale/enriched_results.json"))
+    package.add_argument("--pages", type=Path, default=Path("data/generated/scale/pages.json"))
+    package.add_argument("--research", type=Path, default=Path("data/generated/scale/research_resolution_results.json"))
+    package.add_argument("--output", type=Path, default=root / "first_prospect.json")
     listing = sub.add_parser("list"); listing.add_argument("--state")
-    for name in ("show", "audit", "history"):
+    for name in ("show", "audit", "history", "presend"):
         target = sub.add_parser(name); target.add_argument("identifier")
+    presend_review = sub.add_parser("presend-review")
+    presend_review.add_argument("identifier")
+    presend_review.add_argument("status", choices=["PUBLICATION_EVIDENCE_PRESENT", "DO_NOT_CONTACT", "INSUFFICIENT_EVIDENCE"])
+    presend_review.add_argument("--actor", required=True)
+    presend_review.add_argument("--business-relevance", default="")
+    presend_review.add_argument("--note", default="")
+    presend_review.add_argument("--check", action="append", choices=sorted(PRESEND_CHECKS), default=[])
     review = sub.add_parser("review"); review.add_argument("identifier"); review.add_argument("--actor", required=True); review.add_argument("--note", default="")
     approve = sub.add_parser("approve"); approve.add_argument("identifier"); approve.add_argument("--actor", required=True); approve.add_argument("--note", default=""); approve.add_argument("--results", type=Path, default=Path("data/generated/scale/enriched_results.json"))
     defer = sub.add_parser("defer"); defer.add_argument("identifier"); defer.add_argument("--actor", required=True); defer.add_argument("--note", default="")
@@ -42,6 +55,11 @@ def main(argv=None):
         cohort = build_pilot_cohort(_json(args.results, list), _json(args.commercial, dict), limit=args.limit)
         changed = store.save_cohort(cohort)
         output = {"created_or_updated": changed, "cohort_id": cohort["cohort_id"], "prospects": len(cohort["prospects"]), "outreach_sent": False}
+    elif args.command == "package":
+        package = build_first_prospect_package(
+            store, args.identifier, _json(args.results, list), _json(args.pages, list), _json(args.research, list),
+        )
+        output = {"created_or_updated": write_package(args.output, package), "package_id": package["package_id"], "output": str(args.output), "status": package["presend_review"]["status"], "outreach_sent": False}
     elif args.command == "list":
         output = store.effective()
         if args.state:
@@ -53,6 +71,14 @@ def main(argv=None):
         output = store._prospect(args.identifier)["audit_package"]
     elif args.command == "history":
         output = store.history(args.identifier)
+    elif args.command == "presend":
+        output = store.presend_review(args.identifier)
+    elif args.command == "presend-review":
+        event, created = store.record_presend_review(
+            args.identifier, args.status, args.actor,
+            business_relevance=args.business_relevance, note=args.note, checks=args.check,
+        )
+        output = {"created": created, "review": event, "outreach_authorized": False}
     elif args.command == "review":
         event, created = store.transition(args.identifier, "MANUAL_REVIEW", args.actor, note=args.note); output = {"created": created, "event": event}
     elif args.command == "approve":

@@ -476,3 +476,27 @@ and rejected suspicions so they are not repeatedly rediscovered.
   audit/evidence artifacts and ten non-sendable previews. Repeat generation is
   byte-stable. No approval/contact/outcome was fabricated, and all source
   intelligence metrics remain unchanged.
+
+### GAP-2026-029 — Retained page contradicts pilot non-detection and approval lacks publication review
+
+- Discovered: 2026-08-24
+- Category: commercial claim integrity / pre-send safety
+- Severity: HIGH
+- Evidence: the retained Foothills homepage visibly includes a first-party
+  `Pre-Arrangements Form` link, while the generated pilot called online
+  arrangements undetected. The approval gate rechecked readiness and fact IDs
+  but did not preserve a human determination about the selected address's exact
+  publication, no-CEM statement, message relevance, sender identification, or
+  unsubscribe readiness.
+- Root cause: commercial negative generation considered extracted fact presence
+  but not contradictory retained page content; contact approval had no separate
+  organization-bound pre-send evidence disposition.
+- Acceptance: contrary retained page evidence suppresses the non-detection;
+  public/DNS-valid email alone cannot approve; pre-send review defaults closed,
+  retains source/time/relevance/checks/actor, rejects foreign or stale evidence,
+  and blocks `DO_NOT_CONTACT` or insufficient evidence; produce a non-sendable,
+  evidence-linked first-prospect package; no CRM/network/contact side effect.
+- Status: VALIDATED — Foothills is packaged around a review of its observed
+  existing pre-arrangement pathway, not an absence claim. Its pre-send state is
+  `REVIEW_REQUIRED`; the pilot state remains `CANDIDATE`; append-only history is
+  empty; no approval, draft-prepared, contacted, CRM, or send event exists.

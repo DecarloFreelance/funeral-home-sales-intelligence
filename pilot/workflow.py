@@ -42,6 +42,23 @@ STATES = {
     "CONTACTED", "REPLIED", "MEETING", "PROPOSAL", "WON", "LOST",
     "DEFERRED", "DISQUALIFIED",
 }
+PRESEND_STATUSES = {
+    "REVIEW_REQUIRED", "PUBLICATION_EVIDENCE_PRESENT", "DO_NOT_CONTACT",
+    "INSUFFICIENT_EVIDENCE",
+}
+PRESEND_CHECKS = {
+    "organization_identity_confirmed",
+    "website_identity_confirmed",
+    "email_attribution_confirmed",
+    "source_still_current",
+    "primary_observation_confirmed",
+    "no_conflicting_first_party_evidence",
+    "business_relevance_confirmed",
+    "no_prohibition_observed",
+    "sender_identification_ready",
+    "unsubscribe_mechanism_ready",
+    "claims_evidence_checked",
+}
 TRANSITIONS = {
     "CANDIDATE": {"MANUAL_REVIEW", "DEFERRED", "DISQUALIFIED"},
     "MANUAL_REVIEW": {"APPROVED_FOR_CONTACT", "DEFERRED", "DISQUALIFIED"},
@@ -82,7 +99,9 @@ def _now() -> str:
 
 
 def _host(value: Any) -> str:
-    return (urlsplit(str(value or "")).hostname or "").lower().removeprefix("www.")
+    raw = str(value or "").strip()
+    parsed = urlsplit(raw if "://" in raw else f"//{raw}")
+    return (parsed.hostname or "").lower().removeprefix("www.")
 
 
 def _facts(record: Dict[str, Any], field: str) -> List[Dict[str, Any]]:
@@ -242,9 +261,20 @@ def _customer_audit(record: Dict[str, Any], candidate: Dict[str, Any]) -> Dict[s
 
 
 def _draft_preview(name: str, audit: Dict[str, Any], contact_id: str) -> Dict[str, Any]:
+    observed = next((
+        item for category in ("online_arrangements", "preplanning")
+        for item in audit["customer_safe_audit"].get("observations") or []
+        if item.get("category") == category and item.get("observation_type") == "OBSERVED"
+    ), None)
     opportunity = next(iter(audit["customer_safe_audit"].get("opportunities") or []), None)
-    if not opportunity:
+    support = observed or opportunity
+    if not support:
         raise ValueError("No customer-safe opportunity supports a pilot draft preview")
+    personalized = (
+        f"I noticed that your public website provides {observed['category'].replace('_', ' ')} information. "
+        "I prepared a short, cited review of that visitor pathway with a few practical checks for clarity and completion."
+        if observed else f"{opportunity['statement']} I prepared a short, cited review of the relevant public pages."
+    )
     return {
         "status": "PREVIEW_ONLY_PENDING_MANUAL_REVIEW_AND_APPROVAL",
         "sendable": False,
@@ -252,12 +282,11 @@ def _draft_preview(name: str, audit: Dict[str, Any], contact_id: str) -> Dict[st
         "subject": f"A short digital presence audit for {name}",
         "body": (
             f"Hello {name} team,\n\n"
-            "I reviewed your public website and prepared a short digital presence audit. "
-            f"{opportunity['statement']} "
+            f"I reviewed your public website. {personalized} "
             "If useful, I would be happy to share the cited observations and practical recommendations for your review.\n\n"
             "Would you be open to taking a look?\n\nBest,\nAlex"
         ),
-        "supporting_evidence_ids": opportunity["evidence_ids"],
+        "supporting_evidence_ids": support["evidence_ids"],
         "audit_id": audit["audit_id"],
         "outreach_sent": False,
     }
@@ -417,6 +446,79 @@ class PilotStore:
                 state = event["to_state"]
         return state
 
+    def presend_review(self, identifier: str) -> Dict[str, Any]:
+        prospect = self._prospect(identifier)
+        event = next((
+            value for value in reversed(self.history(prospect["pilot_id"]))
+            if value.get("event_type") == "PRESEND_REVIEW"
+        ), None)
+        if event:
+            return event
+        contact = prospect["selected_contact"]
+        evidence = contact.get("evidence") or {}
+        return {
+            "schema_version": 1,
+            "event_type": "PRESEND_REVIEW_DEFAULT",
+            "pilot_id": prospect["pilot_id"],
+            "organization_id": prospect["organization_id"],
+            "contact_id": contact.get("contact_id"),
+            "email_address": contact.get("value") if contact.get("channel") == "EMAIL" else None,
+            "source_url": evidence.get("source_url"),
+            "evidence_id": evidence.get("evidence_id"),
+            "observed_at": evidence.get("observed_at"),
+            "status": "REVIEW_REQUIRED",
+            "publication_associated_with_organization": None,
+            "statement_against_unsolicited_messages": "UNKNOWN",
+            "business_relevance": "",
+            "checks": {name: False for name in sorted(PRESEND_CHECKS)},
+            "operator": None,
+            "review_timestamp": None,
+            "notes": "Public availability and DNS validation do not establish consent or approval.",
+            "outreach_authorized": False,
+        }
+
+    def record_presend_review(self, identifier: str, status: str, actor: str, *,
+                              business_relevance="", note="", checks=()):
+        prospect = self._prospect(identifier)
+        contact = prospect["selected_contact"]
+        evidence = contact.get("evidence") or {}
+        status = status.upper()
+        if status not in PRESEND_STATUSES:
+            raise ValueError("Unsupported pre-send review status")
+        if contact.get("channel") != "EMAIL":
+            raise ValueError("Pre-send email review requires a selected public email")
+        if not actor.strip():
+            raise ValueError("Actor is required")
+        source_host = _host(evidence.get("source_url"))
+        if source_host != _host(prospect["organization_id"]):
+            raise ValueError("Publication evidence must belong to the same organization")
+        selected_checks = {str(value) for value in checks}
+        unknown = selected_checks - PRESEND_CHECKS
+        if unknown:
+            raise ValueError(f"Unsupported pre-send checks: {', '.join(sorted(unknown))}")
+        check_map = {name: name in selected_checks for name in sorted(PRESEND_CHECKS)}
+        if status == "PUBLICATION_EVIDENCE_PRESENT":
+            if not business_relevance.strip():
+                raise ValueError("Publication evidence requires an auditable business-relevance note")
+            if not all(check_map.values()):
+                raise ValueError("Publication evidence requires every pre-send check")
+        event = {
+            "schema_version": 1, "event_type": "PRESEND_REVIEW",
+            "pilot_id": prospect["pilot_id"], "organization_id": prospect["organization_id"],
+            "contact_id": contact["contact_id"], "email_address": contact["value"],
+            "source_url": evidence.get("source_url"), "evidence_id": evidence.get("evidence_id"),
+            "observed_at": evidence.get("observed_at"), "status": status,
+            "publication_associated_with_organization": status == "PUBLICATION_EVIDENCE_PRESENT",
+            "statement_against_unsolicited_messages": (
+                "NOT_OBSERVED" if status == "PUBLICATION_EVIDENCE_PRESENT" else "UNKNOWN"
+            ),
+            "business_relevance": business_relevance.strip(), "checks": check_map,
+            "operator": actor.strip(), "review_timestamp": _now(), "notes": note,
+            "outreach_authorized": False,
+        }
+        event["event_id"] = _stable({key: value for key, value in event.items() if key != "review_timestamp"})
+        return self._append(event)
+
     def effective(self) -> List[Dict[str, Any]]:
         return [{**item, "current_state": self.state(item["pilot_id"])} for item in self.cohort().get("prospects", [])]
 
@@ -466,6 +568,9 @@ class PilotStore:
 
     def approve(self, identifier: str, actor: str, records: Iterable[Dict[str, Any]], *, note=""):
         prospect = self._prospect(identifier)
+        presend = self.presend_review(prospect["pilot_id"])
+        if presend.get("status") != "PUBLICATION_EVIDENCE_PRESENT" or not all((presend.get("checks") or {}).values()):
+            raise ValueError("Approval requires completed organization-bound pre-send evidence review")
         record = next((value for value in records if value.get("domain") == prospect["organization_id"]), None)
         if not record or not approved_for_commercial_use(record, outreach=True):
             raise ValueError("Current CRM/outreach readiness does not permit approval")
@@ -477,6 +582,16 @@ class PilotStore:
         }
         if not required_fact_ids.issubset(current_fact_ids):
             raise ValueError("Current evidence no longer supports the selected audit package")
+        contact_evidence = prospect["selected_contact"].get("evidence") or {}
+        current_contact = next((
+            fact for fact in (record.get("enrichment") or {}).get("facts") or []
+            if fact.get("id") == presend.get("evidence_id")
+        ), None)
+        if not current_contact or any(
+            presend.get(key) != current_contact.get(key)
+            for key in ("source_url", "observed_at")
+        ) or contact_evidence.get("evidence_id") != presend.get("evidence_id"):
+            raise ValueError("Pre-send publication evidence is stale or no longer selected")
         return self.transition(
             prospect["pilot_id"], "APPROVED_FOR_CONTACT", actor,
             note=note, _approval_checked=True,

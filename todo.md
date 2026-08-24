@@ -289,6 +289,19 @@ is not required for the controlled pilot path and is not an active task.
   `CANDIDATE`; zero approvals, drafts, contacts, CRM writes, network requests, or
   sends were fabricated. See `audit/FIRST_REVENUE_PILOT.md`.
 
+- [x] **GAP-2026-029 (HIGH): prevent unsupported first-contact claims and require
+  pre-send publication review.** Foothills' retained first-party homepage links
+  a `Pre-Arrangements Form`, but the commercial shortlist treated online
+  arrangements as a bounded non-detection; approval also treated current
+  readiness and fact freshness as sufficient without an auditable human review
+  of publication, business relevance, no-CEM language, sender identification,
+  and unsubscribe readiness. Detect contrary retained page evidence before
+  producing non-detections; add organization-bound append-only pre-send review,
+  stale-evidence approval checks, an internal first-prospect package, CLI/tests,
+  and operator guidance. **VALIDATED:** Foothills' unsupported negative is
+  removed, its package remains `REVIEW_REQUIRED`, and no approval, contact, CRM
+  write, or send was recorded. See `audit/FIRST_REVENUE_PILOT.md`.
+
 ## Data and Release Hygiene
 
 - [x] Align `verify_audit.py` with the production feature detector. Discovered

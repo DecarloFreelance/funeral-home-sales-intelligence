@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
 from urllib.parse import urlsplit
@@ -24,6 +25,12 @@ POSITIVE_FIELDS = {
     "digital.livestream": "livestream or webcast capability",
     "business.careers_page": "careers information",
     "organization.social_profile": "public social profile",
+}
+PAGE_CAPABILITY_PATTERNS = {
+    "digital.online_arrangements": r"\b(?:(?:online|virtual)\s+(?:funeral\s+)?arrangements?|pre[ -]?arrangements?\s+form)\b",
+    "digital.livestream": r"\b(?:live[ -]?stream|webcast)\b",
+    "business.careers_page": r"\b(?:careers?|jobs?|employment|join our team)\b",
+    "organization.social_profile": r"\b(?:facebook|instagram|linkedin|youtube|twitter|x\.com)\b",
 }
 
 
@@ -53,6 +60,19 @@ def _safe(record: Dict[str, Any]) -> bool:
     return approved_for_commercial_use(record, outreach=True)
 
 
+def _page_detects(field: str, pages: Iterable[Dict[str, Any]]) -> bool:
+    """Prevent a bounded-scan negative when retained page evidence says otherwise."""
+    pattern = PAGE_CAPABILITY_PATTERNS[field]
+    for page in pages:
+        material = " ".join((
+            str(page.get("text") or page.get("markdown") or ""),
+            str(page.get("html") or ""),
+        ))
+        if re.search(pattern, material, re.I):
+            return True
+    return False
+
+
 def build_shortlist(records: Iterable[Dict[str, Any]], pages: Iterable[Dict[str, Any]], *, limit=25) -> List[Dict[str, Any]]:
     pages_by_domain: Dict[str, List[Dict[str, Any]]] = {}
     for page in pages:
@@ -67,13 +87,14 @@ def build_shortlist(records: Iterable[Dict[str, Any]], pages: Iterable[Dict[str,
         phone = _facts(record, "contact.public_phone")
         people = _facts(record, "contact.person")
         roles = _facts(record, "contact.role_category")
-        scanned_pages = sorted({str(page.get("url") or "") for page in pages_by_domain.get(domain, []) if page.get("url")})
+        owned_pages = pages_by_domain.get(domain, [])
+        scanned_pages = sorted({str(page.get("url") or "") for page in owned_pages if page.get("url")})
         if not website or not scanned_pages or not (email or phone):
             continue
 
         opportunities = []
         for field, label in POSITIVE_FIELDS.items():
-            if not _facts(record, field):
+            if not _facts(record, field) and not _page_detects(field, owned_pages):
                 opportunities.append({
                     "field": field,
                     "interpretation": f"Our bounded scan did not detect {label}.",

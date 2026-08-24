@@ -33,6 +33,8 @@ python pilot_cli.py generate
 python pilot_cli.py list
 python pilot_cli.py show PILOT_OR_DOMAIN
 python pilot_cli.py audit PILOT_OR_DOMAIN
+python pilot_cli.py presend PILOT_OR_DOMAIN
+python pilot_cli.py package PILOT_OR_DOMAIN
 ```
 
 Every new record begins in `CANDIDATE`. Generation creates a non-sendable draft
@@ -41,6 +43,19 @@ and explicitly progress it:
 
 ```bash
 python pilot_cli.py review DOMAIN --actor OPERATOR --note "Sources inspected"
+python pilot_cli.py presend-review DOMAIN PUBLICATION_EVIDENCE_PRESENT \
+  --actor OPERATOR --business-relevance "Explain why this message relates to the published business role" \
+  --check organization_identity_confirmed \
+  --check website_identity_confirmed \
+  --check email_attribution_confirmed \
+  --check source_still_current \
+  --check primary_observation_confirmed \
+  --check no_conflicting_first_party_evidence \
+  --check business_relevance_confirmed \
+  --check no_prohibition_observed \
+  --check sender_identification_ready \
+  --check unsubscribe_mechanism_ready \
+  --check claims_evidence_checked
 python pilot_cli.py approve DOMAIN --actor OPERATOR --note "Claims and contact approved"
 python pilot_cli.py draft DOMAIN --actor OPERATOR
 ```
@@ -51,7 +66,23 @@ outside this repository:
 
 Approval re-reads the current enriched results, requires current CRM/outreach
 readiness, and confirms that every fact referenced by the selected audit still
-exists. A stale cohort cannot bypass a later quality or evidence change.
+exists. It also requires a current, organization-bound pre-send evidence review.
+The review starts `REVIEW_REQUIRED`; a public or DNS-valid address never implies
+consent or approval. `DO_NOT_CONTACT`, `INSUFFICIENT_EVIDENCE`, incomplete checks,
+foreign publication evidence, and stale evidence all fail closed. Decisions are
+append-only events and do not authorize or send outreach. A stale cohort cannot
+bypass a later quality or evidence change.
+
+This is an evidence aid, not a legal-compliance determination. CRTC guidance on
+conspicuous publication requires a case-specific record of where and when the
+address was obtained, absence of an accompanying no-CEM statement, and relevance
+to the recipient's business role. Commercial messages also require sender/contact
+identification and a working unsubscribe mechanism. The operator must review the
+current source and message before approval:
+
+- https://crtc.gc.ca/eng/com500/guide.htm
+- https://crtc.gc.ca/eng/com500/faq500.htm
+- https://laws-lois.justice.gc.ca/eng/acts/E-1.6/section-10.html
 
 ```bash
 python pilot_cli.py transition DOMAIN CONTACTED --actor OPERATOR \
@@ -91,7 +122,9 @@ The strongest five for the first manual source review are the first five above.
 Their leading customer-safe observations are:
 
 - Foothills: verified website; observed pre-planning, obituary, and cremation
-  information; online arrangements were not detected in the bounded scan.
+  information. The retained homepage also links a `Pre-Arrangements Form`, so
+  online arrangements must **not** be described as absent or undetected. Its
+  first-prospect angle is a human review of that existing pathway.
 - Gregory's: verified website; observed social link, online-arrangement language,
   and pre-planning information; livestream information was not detected.
 - Fernhill: verified website and WordPress-consistent public indicators; online
