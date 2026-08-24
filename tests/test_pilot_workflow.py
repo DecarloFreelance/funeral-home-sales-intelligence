@@ -489,6 +489,13 @@ def test_external_send_reconciliation_records_contact_without_backfilled_gates(t
     assert event["activity_references"] == ["manual-email:test-1"]
     assert store.state(identifier) == "CONTACTED"
 
+    stats = store.stats()
+    assert stats["current_states"] == {"CONTACTED": 1}
+    assert stats["contacted"] == 1
+    assert stats["approved"] == 0
+    assert stats["drafted"] == 0
+    assert stats["rates_percent"]["contact_to_reply"] == 0.0
+
     history = store.history(identifier)
     transitions = [
         value for value in history
@@ -500,6 +507,51 @@ def test_external_send_reconciliation_records_contact_without_backfilled_gates(t
         value.get("to_state") in {"APPROVED_FOR_CONTACT", "CONTACT_PREPARED"}
         for value in transitions
     )
+
+
+def test_reconciled_external_send_supports_reply_metrics_and_contact_denominator(tmp_path):
+    records_and_pages = [_record("external.ca"), _record("normal.ca")]
+    records = [value[0] for value in records_and_pages]
+    pages = [value[1] for value in records_and_pages]
+    store = PilotStore(tmp_path / "cohort.json", tmp_path / "events.json")
+    store.save_cohort(_cohort(records, pages))
+    identifiers = {
+        item["organization_id"]: item["pilot_id"]
+        for item in store.cohort()["prospects"]
+    }
+
+    external = identifiers["external.ca"]
+    store.transition(external, "MANUAL_REVIEW", "operator")
+    store.record_external_send(
+        external,
+        "operator",
+        recipient="office@external.ca",
+        subject="A small detail",
+        activity_references=["manual-email:external-1"],
+    )
+    assert store.state(external) == "CONTACTED"
+    store.transition(external, "REPLIED", "operator", reply_sentiment="POSITIVE")
+
+    normal = identifiers["normal.ca"]
+    normal_record = next(record for record in records if record["domain"] == "normal.ca")
+    store.transition(normal, "MANUAL_REVIEW", "operator")
+    _complete_presend(store, normal)
+    store.approve(normal, "operator", [normal_record])
+    store.prepare_draft(normal, "operator")
+    store.transition(
+        normal,
+        "CONTACTED",
+        "operator",
+        activity_references=["manual-email:normal-1"],
+    )
+
+    stats = store.stats()
+    assert stats["current_states"] == {"CONTACTED": 1, "REPLIED": 1}
+    assert stats["contacted"] == 2
+    assert stats["replies"] == stats["positive_replies"] == 1
+    assert stats["rates_percent"]["contact_to_reply"] == 50.0
+    assert stats["rates_percent"]["contact_to_positive_reply"] == 50.0
+    assert stats["approved"] == stats["drafted"] == 1
 
 
 def test_external_send_reconciliation_is_idempotent(tmp_path):

@@ -361,7 +361,18 @@ is not required for the controlled pilot path and is not an active task.
 
 ## Current Verification
 
-- Automated tests: 217 passing plus 2 subtests on 2026-08-24.
+- [x] **GAP-2026-033 (HIGH): include reconciled external sends in pilot
+  lifecycle aggregation.** Evidence: the live per-prospect reducer reports the
+  externally reconciled Foothills send as `CONTACTED`, while aggregate stats
+  report two contacted prospects and retain one current `MANUAL_REVIEW` state.
+  Make stats share the canonical lifecycle-event interpretation, count only the
+  reached `CONTACTED` state for reconciliation, preserve approval/draft reach,
+  and prove subsequent replies, funnel denominators, normal transitions, and
+  duplicate rejection remain correct. **VALIDATED:** live stats now report 3
+  contacted prospects with current states of 3 `CONTACTED` and 7 `CANDIDATE`;
+  approval and draft reach remain 2, and the focused and full suites pass.
+
+- Automated tests: 218 passing plus 2 subtests on 2026-08-24.
 - Production-scale validation: 211 organizations and 4,648 enrichment facts;
   form intelligence separately inventories 1,898 page-level forms across 152
   organizations without changing the 122 CRM-safe or 112 outreach-ready records.

@@ -385,6 +385,12 @@ def _rates(numerator: int, denominator: int) -> float | None:
     return round(numerator / denominator * 100, 1) if denominator else None
 
 
+def _lifecycle_state(event: Dict[str, Any]) -> str | None:
+    if event.get("event_type") in {"STATE_TRANSITION", "EXTERNAL_SEND_RECONCILIATION"}:
+        return event["to_state"]
+    return None
+
+
 def build_stats(cohort: Dict[str, Any], events: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
     events = list(events)
     states = {item["pilot_id"]: item.get("initial_state", "CANDIDATE") for item in cohort.get("prospects") or []}
@@ -404,8 +410,8 @@ def build_stats(cohort: Dict[str, Any], events: Iterable[Dict[str, Any]]) -> Dic
         identifier = event.get("pilot_id")
         if identifier not in states:
             continue
-        if event.get("event_type") == "STATE_TRANSITION":
-            state = event.get("to_state")
+        state = _lifecycle_state(event)
+        if state is not None:
             states[identifier] = state
             reached.setdefault(state, set()).add(identifier)
             if state == "REPLIED" and event.get("reply_sentiment"):
@@ -487,8 +493,9 @@ class PilotStore:
         prospect = self._prospect(identifier)
         state = prospect.get("initial_state", "CANDIDATE")
         for event in self.history(prospect["pilot_id"]):
-            if event.get("event_type") in {"STATE_TRANSITION", "EXTERNAL_SEND_RECONCILIATION"}:
-                state = event["to_state"]
+            event_state = _lifecycle_state(event)
+            if event_state is not None:
+                state = event_state
         return state
 
     def presend_review(self, identifier: str) -> Dict[str, Any]:
