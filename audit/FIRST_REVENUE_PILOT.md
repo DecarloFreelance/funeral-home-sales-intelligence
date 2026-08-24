@@ -139,6 +139,11 @@ confidence/qualification, contact evidence, an internal rationale, warnings, and
 a non-sendable draft preview under ignored `data/generated/pilot/cohort.json`.
 No prospect is approved merely by appearing in this list.
 
+Foothills' later human/source review is documented in
+`audit/FORM_INTELLIGENCE.md`. It records the detailed first-party intake form as
+an observation and a human-review hypothesis only; it creates no automatic
+privacy, legal, security, usability, conversion, quality, or readiness finding.
+
 ## Outcomes and experiment interpretation
 
 `pilot stats` reports cohort/review/approval/draft/contact/reply/meeting/proposal/

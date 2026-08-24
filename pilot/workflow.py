@@ -519,6 +519,29 @@ class PilotStore:
         event["event_id"] = _stable({key: value for key, value in event.items() if key != "review_timestamp"})
         return self._append(event)
 
+    def annotate(self, identifier: str, observation_type: str, actor: str, *,
+                 source_urls=(), observations=(), note=""):
+        """Append a human observation without changing findings, readiness, or state."""
+        prospect = self._prospect(identifier)
+        sources = sorted({str(value) for value in source_urls if str(value).strip()})
+        values = sorted({str(value) for value in observations if str(value).strip()})
+        if not actor.strip() or not observation_type.strip() or not sources or not values:
+            raise ValueError("Annotation requires actor, type, sources, and observations")
+        if any(_host(url) != _host(prospect["organization_id"]) for url in sources):
+            raise ValueError("Annotation source must belong to the same organization")
+        event = {
+            "schema_version": 1, "event_type": "HUMAN_OBSERVATION",
+            "pilot_id": prospect["pilot_id"], "organization_id": prospect["organization_id"],
+            "observation_type": observation_type.strip().upper(), "actor": actor.strip(),
+            "timestamp": _now(), "source_urls": sources, "observations": values,
+            "verification_state": "MANUALLY_OBSERVED", "confidence": "HUMAN_SOURCE_REVIEW",
+            "interpretation_status": "REVIEW_REQUIRED", "note": note,
+            "safety": {"quality_defect_created": False, "readiness_changed": False,
+                       "approval_created": False, "contacted_created": False},
+        }
+        event["event_id"] = _stable({key: value for key, value in event.items() if key != "timestamp"})
+        return self._append(event)
+
     def effective(self) -> List[Dict[str, Any]]:
         return [{**item, "current_state": self.state(item["pilot_id"])} for item in self.cohort().get("prospects", [])]
 

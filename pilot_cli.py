@@ -30,6 +30,7 @@ def main(argv=None):
     package.add_argument("--results", type=Path, default=Path("data/generated/scale/enriched_results.json"))
     package.add_argument("--pages", type=Path, default=Path("data/generated/scale/pages.json"))
     package.add_argument("--research", type=Path, default=Path("data/generated/scale/research_resolution_results.json"))
+    package.add_argument("--forms", type=Path, default=Path("data/generated/forms/form_intelligence.json"))
     package.add_argument("--output", type=Path, default=root / "first_prospect.json")
     listing = sub.add_parser("list"); listing.add_argument("--state")
     for name in ("show", "audit", "history", "presend"):
@@ -41,6 +42,10 @@ def main(argv=None):
     presend_review.add_argument("--business-relevance", default="")
     presend_review.add_argument("--note", default="")
     presend_review.add_argument("--check", action="append", choices=sorted(PRESEND_CHECKS), default=[])
+    annotate = sub.add_parser("annotate")
+    annotate.add_argument("identifier"); annotate.add_argument("observation_type")
+    annotate.add_argument("--actor", required=True); annotate.add_argument("--source", action="append", required=True)
+    annotate.add_argument("--observation", action="append", required=True); annotate.add_argument("--note", default="")
     review = sub.add_parser("review"); review.add_argument("identifier"); review.add_argument("--actor", required=True); review.add_argument("--note", default="")
     approve = sub.add_parser("approve"); approve.add_argument("identifier"); approve.add_argument("--actor", required=True); approve.add_argument("--note", default=""); approve.add_argument("--results", type=Path, default=Path("data/generated/scale/enriched_results.json"))
     defer = sub.add_parser("defer"); defer.add_argument("identifier"); defer.add_argument("--actor", required=True); defer.add_argument("--note", default="")
@@ -58,6 +63,7 @@ def main(argv=None):
     elif args.command == "package":
         package = build_first_prospect_package(
             store, args.identifier, _json(args.results, list), _json(args.pages, list), _json(args.research, list),
+            _json(args.forms, dict) if args.forms.is_file() else None,
         )
         output = {"created_or_updated": write_package(args.output, package), "package_id": package["package_id"], "output": str(args.output), "status": package["presend_review"]["status"], "outreach_sent": False}
     elif args.command == "list":
@@ -79,6 +85,10 @@ def main(argv=None):
             business_relevance=args.business_relevance, note=args.note, checks=args.check,
         )
         output = {"created": created, "review": event, "outreach_authorized": False}
+    elif args.command == "annotate":
+        event, created = store.annotate(args.identifier, args.observation_type, args.actor,
+            source_urls=args.source, observations=args.observation, note=args.note)
+        output = {"created": created, "annotation": event, "state_changed": False, "outreach_sent": False}
     elif args.command == "review":
         event, created = store.transition(args.identifier, "MANUAL_REVIEW", args.actor, note=args.note); output = {"created": created, "event": event}
     elif args.command == "approve":

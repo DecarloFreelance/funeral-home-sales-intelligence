@@ -500,3 +500,22 @@ and rejected suspicions so they are not repeatedly rediscovered.
   existing pre-arrangement pathway, not an absence claim. Its pre-send state is
   `REVIEW_REQUIRED`; the pilot state remains `CANDIDATE`; append-only history is
   empty; no approval, draft-prepared, contacted, CRM, or send event exists.
+
+### GAP-2026-030 — Public form schemas are not represented safely
+
+- Discovered: 2026-08-24
+- Category: observational enrichment / commercial review
+- Severity: MEDIUM
+- Evidence: human review of Foothills found a detailed public pre-arrangement
+  form and explicit minimum-information wording. Existing enrichment retained
+  only general online-arrangement presence and could not represent form controls,
+  requirement semantics, or neutral field categories without prose inference.
+- Root cause: no reusable form-schema analyzer existed below presentation.
+- Acceptance: deterministic first-party form discovery; stable organization/page/
+  form/field identity; no values or submission; neutral versioned semantics;
+  HTML/text/unspecified requirement distinction; limited privacy context;
+  human-review-only candidates; no readiness/scoring/quality effect; Foothills
+  annotation and corrected package; CLI/tests/dataset metrics and documentation.
+- Status: VALIDATED — the analyzer inventories retained forms without fetching
+  actions or submitting data. Foothills' detailed intake is observed and remains
+  `REVIEW_REQUIRED`; no defect, approval, contact, CRM write, or outreach exists.

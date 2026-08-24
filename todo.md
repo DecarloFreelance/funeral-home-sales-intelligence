@@ -302,6 +302,18 @@ is not required for the controlled pilot path and is not an active task.
   removed, its package remains `REVIEW_REQUIRED`, and no approval, contact, CRM
   write, or send was recorded. See `audit/FIRST_REVENUE_PILOT.md`.
 
+- [x] **GAP-2026-030 (MEDIUM): represent public form schemas without speculative
+  conclusions.** Foothills' first-party intake form exposed commercially useful
+  requirement and field-schema observations that the retained enrichment model
+  could not represent, while form length or sensitive-looking labels must not
+  become automatic defects. Add a non-submitting, organization-bound, versioned
+  form analyzer; neutral semantics and requirement states; privacy-context
+  observations; human-review-only candidates; CLI, dataset metrics, append-only
+  human pilot annotation, regression tests, and documentation. **VALIDATED:**
+  the retained 211-record run produces deterministic form intelligence without
+  changing facts, identity, quality, CRM/outreach readiness, approval, contact,
+  CRM, or outreach state. See `audit/FORM_INTELLIGENCE.md`.
+
 ## Data and Release Hygiene
 
 - [x] Align `verify_audit.py` with the production feature detector. Discovered
@@ -328,7 +340,10 @@ is not required for the controlled pilot path and is not an active task.
 
 ## Current Verification
 
-- Automated tests: 175 passing plus 2 subtests on 2026-08-24.
+- Automated tests: 194 passing plus 2 subtests on 2026-08-24.
+- Production-scale validation: 211 organizations and 4,648 enrichment facts;
+  form intelligence separately inventories 1,898 page-level forms across 152
+  organizations without changing the 122 CRM-safe or 112 outreach-ready records.
 - Local enrichment validation: 35 organizations, 1,610 unique facts across 24
   fields, 15 explicit review records, and a 70-of-70 unchanged-task skip on the
   second run. No uncontrolled enrichment network requests were made.

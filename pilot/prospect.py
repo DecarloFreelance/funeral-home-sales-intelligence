@@ -43,7 +43,7 @@ def _fact_refs(facts: Iterable[Dict[str, Any]], organization_id: str) -> List[Di
 
 def build_first_prospect_package(store: PilotStore, identifier: str,
                                  records: Iterable[Dict[str, Any]], pages: Iterable[Dict[str, Any]],
-                                 research: Iterable[Dict[str, Any]] = ()) -> Dict[str, Any]:
+                                 research: Iterable[Dict[str, Any]] = (), forms: Dict[str, Any] | None = None) -> Dict[str, Any]:
     prospect = store._prospect(identifier)
     organization_id = prospect["organization_id"]
     record = next((item for item in records if item.get("domain") == organization_id), None)
@@ -97,6 +97,9 @@ def build_first_prospect_package(store: PilotStore, identifier: str,
                 "relationship": "UNRESOLVED_REDIRECT_TO_CURRENT_WEBSITE",
                 "reason": "A separate discovery record redirects to this website; no parent/branch reassignment is inferred.",
             })
+    organization_forms = [item for item in (forms or {}).get("forms", []) if item.get("organization_id") == organization_id]
+    detailed_form = next((item for item in organization_forms if item.get("form_type") == "DETAILED_INTAKE_FORM"), None)
+    human_observations = [item for item in store.history(identifier) if item.get("event_type") == "HUMAN_OBSERVATION"]
 
     support_ids = [preplanning[0]["id"], form_ref["evidence_id"]]
     organization_name = "Foothills Memorial Chapel"
@@ -156,6 +159,13 @@ def build_first_prospect_package(store: PilotStore, identifier: str,
             "consent_or_approval_inference": "NONE",
         },
         "presend_review": {**store.presend_review(identifier), "operator_checklist": checklist},
+        "human_observations": human_observations,
+        "form_intelligence": {
+            "forms": organization_forms,
+            "detailed_intake_form": detailed_form,
+            "interpretation_status": "REVIEW_REQUIRED",
+            "automatic_defect_created": False,
+        },
         "customer_safe_mini_audit": {
             "title": "Foothills Memorial Chapel — Digital Presence Snapshot",
             "what_we_reviewed": page_urls,
@@ -181,9 +191,9 @@ def build_first_prospect_package(store: PilotStore, identifier: str,
         },
         "internal_evidence_appendix": evidence_by_id,
         "commercial_angle": {
-            "primary": "Human review and improvement of the existing pre-arrangement visitor pathway.",
-            "bounded_wording": "We observed pre-planning information and a linked pre-arrangements form; we have not yet tested the form or concluded that the pathway has a defect.",
-            "human_validation_before_use": ["Open and complete a non-submitting walkthrough of the current form on desktop and mobile.", "Confirm the link, labels, and current organization identity remain unchanged."],
+            "primary": "Human review of the existing pre-arrangement intake pathway's requirement clarity, privacy communication, and completion experience.",
+            "bounded_wording": "We observed pre-planning information and a detailed linked pre-arrangements form. A human review may be worthwhile to confirm whether the minimum requested information and the broader information a visitor may choose to provide are clearly distinguished across desktop and mobile. No usability, privacy, legal, security, or conversion defect has been established.",
+            "human_validation_before_use": ["Complete a non-submitting desktop/mobile walkthrough.", "Confirm required/optional wording and privacy context in the current rendered experience.", "Confirm the link, labels, and organization identity remain unchanged."],
         },
         "offer": {
             "entry": "Free mini audit / findings conversation.",

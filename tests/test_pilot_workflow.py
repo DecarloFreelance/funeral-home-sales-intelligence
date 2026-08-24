@@ -318,3 +318,24 @@ def test_prearrangements_form_prevents_false_online_arrangement_negative():
     package = build_commercial([record], [page])
     fields = {item["field"] for item in package["shortlist"][0]["observed_opportunities"]}
     assert "digital.online_arrangements" not in fields
+
+
+def test_human_form_observation_is_append_only_bound_and_does_not_change_state(tmp_path):
+    store = PilotStore(tmp_path / "cohort.json", tmp_path / "events.json")
+    store.save_cohort(_cohort())
+    identifier = store.effective()[0]["pilot_id"]
+    event, created = store.annotate(identifier, "FORM_SOURCE_REVIEW", "human-operator",
+        source_urls=["https://example.ca/preplan", "https://example.ca/form"],
+        observations=["Detailed public form observed", "No defect established"],
+        note="Interpretation remains review required")
+    repeated, repeated_created = store.annotate(identifier, "FORM_SOURCE_REVIEW", "human-operator",
+        source_urls=["https://example.ca/form", "https://example.ca/preplan"],
+        observations=["No defect established", "Detailed public form observed"],
+        note="Interpretation remains review required")
+    assert created is True and repeated_created is False and repeated == event
+    assert store.state(identifier) == "CANDIDATE"
+    assert event["interpretation_status"] == "REVIEW_REQUIRED"
+    assert not any(event["safety"].values())
+    with pytest.raises(ValueError, match="same organization"):
+        store.annotate(identifier, "FORM_SOURCE_REVIEW", "human-operator",
+            source_urls=["https://sibling.example/form"], observations=["Foreign form"])
