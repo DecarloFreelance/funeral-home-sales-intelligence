@@ -5,6 +5,7 @@ from pathlib import Path
 from intelligence.lead_intelligence import LeadIntelligence
 from crm.database import initialize, upsert_lead
 from crm.action_queue import initialize_queue, create_action
+from enrichment.quality import approved_for_commercial_use
 
 
 INPUT = Path("data/generated/campaign/results.json")
@@ -19,10 +20,14 @@ initialize()
 initialize_queue()
 
 
-leads = [
-    LeadIntelligence.from_result(lead)
-    for lead in raw_leads
+# CRM/action state is a downstream safety boundary.  Missing or ambiguous
+# quality state must never be interpreted as approval.
+eligible_raw_leads = [
+    lead for lead in raw_leads
+    if approved_for_commercial_use(lead, outreach=True)
 ]
+
+leads = [LeadIntelligence.from_result(lead) for lead in eligible_raw_leads]
 
 
 fields = [
@@ -122,7 +127,10 @@ with OUTPUT.open(
                 data["crm"].get(
                     "follow_up_date",
                     ""
-                )
+                ),
+
+            "crm_sync_safe": True,
+            "outreach_ready": True,
         }
 
 

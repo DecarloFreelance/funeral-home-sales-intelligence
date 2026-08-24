@@ -47,6 +47,9 @@ def initialize():
         next_action TEXT,
         follow_up_date TEXT,
 
+        crm_sync_safe INTEGER NOT NULL DEFAULT 0,
+        outreach_ready INTEGER NOT NULL DEFAULT 0,
+
         updated_at TEXT
     )
     """)
@@ -54,6 +57,10 @@ def initialize():
     columns = {row[1] for row in cur.execute("PRAGMA table_info(leads)")}
     if "company_name" not in columns:
         cur.execute("ALTER TABLE leads ADD COLUMN company_name TEXT")
+    if "crm_sync_safe" not in columns:
+        cur.execute("ALTER TABLE leads ADD COLUMN crm_sync_safe INTEGER NOT NULL DEFAULT 0")
+    if "outreach_ready" not in columns:
+        cur.execute("ALTER TABLE leads ADD COLUMN outreach_ready INTEGER NOT NULL DEFAULT 0")
 
     conn.commit()
     conn.close()
@@ -81,11 +88,13 @@ def upsert_lead(data):
         primary_phone,
         next_action,
         follow_up_date,
+        crm_sync_safe,
+        outreach_ready,
         updated_at
 
     )
 
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
 
     ON CONFLICT(domain)
     DO UPDATE SET
@@ -100,6 +109,8 @@ def upsert_lead(data):
         primary_phone=excluded.primary_phone,
         next_action=excluded.next_action,
         follow_up_date=excluded.follow_up_date,
+        crm_sync_safe=excluded.crm_sync_safe,
+        outreach_ready=excluded.outreach_ready,
         updated_at=excluded.updated_at
 
     """,
@@ -116,6 +127,8 @@ def upsert_lead(data):
         data["primary_phone"],
         data["next_action"],
         data["follow_up_date"],
+        int(data.get("crm_sync_safe") is True),
+        int(data.get("outreach_ready") is True),
         datetime.utcnow().isoformat()
     ))
 

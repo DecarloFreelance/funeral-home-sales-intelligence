@@ -255,6 +255,26 @@ byte-identical. Before operator decisions, 131 remain unresolved, 102 block CRM,
 and all 131 block outreach. No generated decision, entity merge, page/contact
 movement, or readiness change was fabricated during validation.
 
+## Agent health and commercial readiness (2026-08-24)
+
+- [x] **GAP-2026-027 (CRITICAL): enforce current quality approval at every CRM
+  and action boundary.** Architecture tracing found that the reachable legacy
+  `outreach_export.py` command could write all scored records to SQLite without
+  reading `quality_control`, while SQLite and `espocrm_sync.py` had no durable
+  readiness gate. Persist explicit fail-closed `crm_sync_safe` and
+  `outreach_ready` flags; filter exports; reject unsafe individual/bulk Espo
+  sync; prevent an existing unsafe action from starting; migrate missing flags
+  to false; add transactional and missing-state regressions. **VALIDATED:** the
+  targeted CRM/agent contract suite passes, absent state is rejected, and the
+  211-record production metrics remain unchanged. See
+  `audit/AGENT_HEALTH_COMMERCIAL_READINESS.md`.
+
+Audit conclusion: all canonical record agents are active and their durable
+outputs are consumed. The evidence-backed internal presentation produced 25
+safe shortlist records and five audit prototypes without CRM writes or outreach.
+Legacy revenue/opportunity prose remains explicitly internal-only; replacing it
+is not required for the controlled pilot path and is not an active task.
+
 ## Data and Release Hygiene
 
 - [x] Align `verify_audit.py` with the production feature detector. Discovered

@@ -69,6 +69,8 @@ def main():
                     "primary_phone": "",
                     "next_action": "Validate EspoCRM adapter",
                     "follow_up_date": "",
+                    "crm_sync_safe": True,
+                    "outreach_ready": True,
                 })
                 first_id = sync_lead(domain, backend)
                 second_id = sync_lead(domain, backend)

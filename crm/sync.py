@@ -49,12 +49,14 @@ def sync_lead(domain, backend, db_path=None, backend_name="espocrm"):
     with connect(db_path) as conn:
         row = conn.execute(
             """SELECT domain, company_name, priority_score, priority_level, primary_email,
-                      primary_phone, pipeline_stage, crm_status
+                      primary_phone, pipeline_stage, crm_status, crm_sync_safe
                FROM leads WHERE domain=?""",
             (domain,),
         ).fetchone()
         if not row:
             raise ValueError(f"Unknown local CRM lead: {domain}")
+        if row[8] != 1:
+            raise ValueError(f"Local CRM lead is not quality-approved for synchronization: {domain}")
         mapped = conn.execute(
             """SELECT remote_id FROM external_crm_records
                WHERE backend=? AND domain=?""",
@@ -63,7 +65,7 @@ def sync_lead(domain, backend, db_path=None, backend_name="espocrm"):
         remote_id = mapped[0] if mapped else None
 
     try:
-        remote_id = backend.upsert_account(domain, _account_payload(row), remote_id)
+        remote_id = backend.upsert_account(domain, _account_payload(row[:8]), remote_id)
     except Exception as error:
         with connect(db_path) as conn:
             conn.execute(

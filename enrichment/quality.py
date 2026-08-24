@@ -57,6 +57,14 @@ def readiness_from_findings(findings: Iterable[Dict[str, Any]]) -> Dict[str, Any
     }
 
 
+def approved_for_commercial_use(record: Dict[str, Any], *, outreach=False) -> bool:
+    """Require explicit current quality approval; absent state fails closed."""
+    quality = record.get("quality_control") or {}
+    if quality.get("crm_sync_safe") is not True:
+        return False
+    return quality.get("outreach_ready") is True if outreach else True
+
+
 def evaluate_quality(record: Dict[str, Any], *, evaluated_at=None) -> Dict[str, Any]:
     """Report ambiguity and invariant violations; never mutate canonical data."""
     evaluated_at = evaluated_at or utc_now()

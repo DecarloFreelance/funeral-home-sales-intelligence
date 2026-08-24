@@ -23,7 +23,9 @@ def main():
 
     if args.all:
         with connect(args.db) as conn:
-            domains = [row[0] for row in conn.execute("SELECT domain FROM leads ORDER BY domain")]
+            domains = [row[0] for row in conn.execute(
+                "SELECT domain FROM leads WHERE crm_sync_safe=1 ORDER BY domain"
+            )]
     else:
         domains = [args.domain]
 

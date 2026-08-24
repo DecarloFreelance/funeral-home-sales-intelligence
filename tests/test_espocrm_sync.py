@@ -131,7 +131,15 @@ class EspoCRMSyncTests(unittest.TestCase):
             "contact_method": "email", "primary_email": "info@example.ca",
             "primary_phone": "+14035551234", "next_action": "Review",
             "follow_up_date": "2026-08-23",
+            "crm_sync_safe": True, "outreach_ready": True,
         })
+
+    def test_sync_rejects_lead_without_explicit_quality_approval(self):
+        with sqlite3.connect(database.DB) as conn:
+            conn.execute("UPDATE leads SET crm_sync_safe=0 WHERE domain='example.ca'")
+
+        with self.assertRaisesRegex(ValueError, "not quality-approved"):
+            sync_lead("example.ca", FakeBackend())
 
     def tearDown(self):
         database.DB = self.original_db

@@ -58,6 +58,13 @@ def start_action(action_id, db_path=None):
         if not action:
             return None
         domain, action_type, priority = action
+        readiness = cur.execute(
+            "SELECT outreach_ready FROM leads WHERE domain=?",
+            (domain,),
+        ).fetchone()
+        if not readiness or readiness[0] != 1:
+            conn.rollback()
+            return None
         cur.execute(
             """UPDATE action_queue SET status='IN_PROGRESS', started_at=?
                WHERE id=? AND status='OPEN'""",

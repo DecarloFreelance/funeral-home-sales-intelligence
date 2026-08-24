@@ -106,6 +106,21 @@ only from positive fetched-HTML signatures; their absence is never represented
 as a weakness. Imported crawl targets and redirects must resolve exclusively to
 public network addresses before the crawler will request them.
 
+Generate a deterministic, internal-only first-pilot shortlist and carefully
+worded audit prototypes from the current evidence store with:
+
+```bash
+python commercial_readiness.py
+```
+
+The command reads enriched results and organization-owned pages, requires both
+explicit CRM and outreach safety approval, and writes only beneath ignored
+`data/generated/`. It neither synchronizes CRM nor sends outreach. Legacy
+revenue scores, absolute missing-feature claims, and generated sales prose are
+excluded from customer-facing observations. See
+`audit/AGENT_HEALTH_COMMERCIAL_READINESS.md` for the complete runtime/health and
+commercial-signal audit.
+
 Automated discovery, public contact extraction, platform-candidate ranking, and
 reviewable outreach generation, the operator interface, progressive local
 verification, and an EspoCRM synchronization boundary are implemented.

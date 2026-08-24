@@ -36,6 +36,8 @@ class CrmWorkflowTests(unittest.TestCase):
             "primary_phone": "780-555-1234",
             "next_action": "Send email outreach",
             "follow_up_date": "2026-08-23",
+            "crm_sync_safe": True,
+            "outreach_ready": True,
         })
 
     def test_initialize_queue_applies_execution_columns(self):
@@ -58,6 +60,8 @@ class CrmWorkflowTests(unittest.TestCase):
         with sqlite3.connect(database.DB) as conn:
             columns = {row[1] for row in conn.execute("PRAGMA table_info(leads)")}
         self.assertIn("company_name", columns)
+        self.assertIn("crm_sync_safe", columns)
+        self.assertIn("outreach_ready", columns)
 
     def test_create_action_reuses_active_action(self):
         first_id = create_action(
@@ -130,6 +134,19 @@ class CrmWorkflowTests(unittest.TestCase):
 
         self.assertEqual(status, "OPEN")
         self.assertEqual(events, 0)
+
+    def test_action_cannot_start_without_explicit_outreach_readiness(self):
+        self.add_lead("blocked.example")
+        with sqlite3.connect(database.DB) as conn:
+            conn.execute("UPDATE leads SET outreach_ready=0 WHERE domain='blocked.example'")
+        action_id = create_action("blocked.example", "email", "A1 - Immediate Outreach")
+
+        self.assertIsNone(start_action(action_id))
+
+        with sqlite3.connect(database.DB) as conn:
+            self.assertEqual(conn.execute(
+                "SELECT status FROM action_queue WHERE id=?", (action_id,)
+            ).fetchone()[0], "OPEN")
 
 
 class LeadIntelligenceTests(unittest.TestCase):

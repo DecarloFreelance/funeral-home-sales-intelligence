@@ -165,7 +165,8 @@ class OperatorWorkflowEndToEndTests(unittest.TestCase):
             connection.executescript("""
                 CREATE TABLE leads (
                     domain TEXT PRIMARY KEY, pipeline_stage TEXT, attempts INTEGER,
-                    next_action TEXT, follow_up_date TEXT
+                    next_action TEXT, follow_up_date TEXT,
+                    crm_sync_safe INTEGER NOT NULL, outreach_ready INTEGER NOT NULL
                 );
                 CREATE TABLE action_queue (
                     id INTEGER PRIMARY KEY AUTOINCREMENT, domain TEXT,
@@ -176,7 +177,7 @@ class OperatorWorkflowEndToEndTests(unittest.TestCase):
                     id INTEGER PRIMARY KEY AUTOINCREMENT, domain TEXT,
                     event_type TEXT, notes TEXT, created_at TEXT
                 );
-                INSERT INTO leads VALUES ('example.com', 'NEW', 0, '', '');
+                INSERT INTO leads VALUES ('example.com', 'NEW', 0, '', '', 1, 1);
             """)
 
 

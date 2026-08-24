@@ -437,3 +437,22 @@ and rejected suspicions so they are not repeatedly rediscovered.
   decisions, all 131 remain unresolved, 102 block CRM safety, and 131 block
   outreach. Focused tests cover history, idempotency, CLI behavior, sibling
   isolation, non-merging duplicate confirmation, and explicit eligibility.
+
+### GAP-2026-027 — Legacy CRM export bypasses quality readiness
+
+- Discovered: 2026-08-24
+- Category: security / commercial workflow integrity
+- Severity: CRITICAL
+- Evidence: `outreach_export.py` converted every legacy score record into a
+  SQLite lead/action without inspecting `quality_control`; the `leads` table did
+  not persist current approval, and both individual and bulk Espo sync selected
+  rows without an eligibility predicate.
+- Root cause: CRM/action workflow predated the shared enrichment quality policy,
+  and the later policy was not propagated across the storage boundary.
+- Acceptance: absent readiness fails closed; migration preserves rows but marks
+  them unsafe; only explicitly CRM-safe records sync; only explicitly
+  outreach-ready actions start; failures remain transactional; regression tests.
+- Status: VALIDATED — SQLite persists both approvals, legacy export requires
+  both, action start requires outreach approval, Espo sync requires CRM approval,
+  and `--all` selects only approved rows. The production cohort metrics are
+  unchanged and no external write was made.

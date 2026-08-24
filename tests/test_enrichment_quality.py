@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime, timezone
 
-from enrichment.quality import evaluate_dataset_quality, evaluate_quality
+from enrichment.quality import approved_for_commercial_use, evaluate_dataset_quality, evaluate_quality
 
 
 class EnrichmentQualityTests(unittest.TestCase):
@@ -123,6 +123,13 @@ class EnrichmentQualityTests(unittest.TestCase):
         self.assertTrue(quality["crm_sync_safe"])
         self.assertFalse(quality["outreach_ready"])
         self.assertEqual(quality["outreach_blocking_reasons"], ["EMAIL_DOMAIN_MISMATCH"])
+
+    def test_commercial_approval_requires_explicit_quality_state(self):
+        self.assertFalse(approved_for_commercial_use({}))
+        self.assertFalse(approved_for_commercial_use({"quality_control": {"crm_sync_safe": True}}, outreach=True))
+        self.assertTrue(approved_for_commercial_use({"quality_control": {
+            "crm_sync_safe": True, "outreach_ready": True,
+        }}, outreach=True))
 
 
 if __name__ == "__main__":
