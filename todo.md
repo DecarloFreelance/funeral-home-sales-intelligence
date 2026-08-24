@@ -361,6 +361,22 @@ is not required for the controlled pilot path and is not an active task.
 
 ## Current Verification
 
+- [x] **GAP-2026-035 (HIGH): generate organization-bound pathway-review angles
+  from current first-party evidence.** Evidence: the nominally generic first
+  prospect-package constructor hard-codes Foothills identity/copy and requires a
+  Foothills-specific `Pre-Arrangements Form` page label. Gregory's current
+  enrichment instead contains resolvable first-party preplanning and online-
+  arrangements facts, while its form-intelligence inventory has no record.
+  Generalize package identity/copy and produce a cautious
+  `PREARRANGEMENT_PATHWAY_REVIEW` interpretation from those facts without
+  asserting any defect. Preserve same-organization selection, evidence and
+  identity fingerprints, stale/missing-evidence failure, and all lifecycle/send
+  controls; prove Gregory generation and Mission View/Foothills regressions.
+  **VALIDATED:** the supported CLI package command generated Gregory's
+  organization-bound review angle from two current corroborated enrichment
+  facts while retaining an empty Gregory form inventory; 221 tests and 2
+  subtests pass, and no angle-selection or lifecycle event was recorded.
+
 - [x] **GAP-2026-034 (HIGH): derive effective prepared-draft presentation from
   pilot history.** Evidence: live `pilot show` reports Cornerstone as
   `CONTACT_PREPARED` while retaining the cohort's blocked generic preview,

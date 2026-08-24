@@ -150,6 +150,25 @@ def test_expired_selected_fact_is_not_reused_as_current_evidence(tmp_path):
     assert any("evidence is stale" in value for value in result["limitations"])
 
 
+def test_prearrangement_pathway_review_is_bounded_when_fact_evidence_resolves(tmp_path):
+    store, record = _store(tmp_path)
+    fact = record["enrichment"]["facts"][0]
+    angle = {
+        **_angle(),
+        "angle_type": "PREARRANGEMENT_PATHWAY_REVIEW",
+        "evidence_ids": [fact["id"]],
+        "customer_safe_observation": "The public website provides a pre-planning pathway.",
+        "proposed_improvement": "Perform a non-submitting review and scope only evidence-supported pathway improvements.",
+    }
+    store.select_angle("example.ca", angle, "operator", [record], {"forms": []})
+    result = evaluate_with_orchestrator(
+        store, "example.ca", [record], {"forms": []}, [_page()],
+        tmp_path / "state.json", tmp_path / "audit.json",
+    )
+    assert result["scope"] == "NARROW"
+    assert result["advisory_outcome"] == "READY_FOR_DISCOVERY"
+
+
 def test_provider_positive_unknown_direct_and_conflicting_classification(tmp_path):
     store, record = _store(tmp_path)
     form = _form()

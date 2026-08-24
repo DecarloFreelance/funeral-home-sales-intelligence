@@ -57,25 +57,30 @@ def build_first_prospect_package(store: PilotStore, identifier: str,
         raise ValueError("Cross-organization page evidence is not permitted")
 
     preplanning = _facts(record, "services.preplanning")
+    online_arrangements = _facts(record, "digital.online_arrangements")
     obituaries = _facts(record, "services.obituaries")
     cremation = _facts(record, "services.cremation")
     websites = _facts(record, "organization.website")
     contacts = _facts(record, "contact.public_email")
-    form_page = next((page for page in owned_pages if re.search(r"\bpre[ -]?arrangements?\s+form\b", str(page.get("text") or page.get("markdown") or ""), re.I)), None)
-    if not all((websites, preplanning, obituaries, cremation, contacts, form_page)):
-        raise ValueError("Current evidence does not support the Foothills first-prospect package")
+    pathway_page = next((page for page in owned_pages if re.search(
+        r"\b(?:online\s+arrangements?|pre[ -]?arrangements?)(?:\s+form)?\b",
+        str(page.get("text") or page.get("markdown") or ""), re.I,
+    )), None)
+    if not all((websites, preplanning, online_arrangements, obituaries, cremation, contacts, pathway_page)):
+        raise ValueError("Current evidence does not support a pre-arrangement pathway package")
     form_ref = {
-        "evidence_id": _page_id(organization_id, form_page["url"]),
-        "organization_id": organization_id, "source_url": form_page["url"],
-        "page_title": (form_page.get("metadata") or {}).get("title"),
+        "evidence_id": _page_id(organization_id, pathway_page["url"]),
+        "organization_id": organization_id, "source_url": pathway_page["url"],
+        "page_title": (pathway_page.get("metadata") or {}).get("title"),
         "detector": "first_prospect_page_review", "detector_version": "1.0.0",
         "confidence": 0.95, "verification_state": "DIRECTLY_OBSERVED",
         "observed_at": preplanning[0].get("observed_at"),
-        "semantic_value": "A first-party navigation link labelled Pre-Arrangements Form was retained in the bounded scan.",
-        "limitation": "The linked form was not submitted and its completion experience was not tested.",
+        "semantic_value": "A first-party online-arrangements pathway was retained in the bounded scan.",
+        "limitation": "The pathway was not submitted and its completion experience was not tested.",
     }
     evidence = [
         *_fact_refs(websites, organization_id), *_fact_refs(preplanning, organization_id),
+        *_fact_refs(online_arrangements, organization_id),
         *_fact_refs(obituaries, organization_id), *_fact_refs(cremation, organization_id),
         *_fact_refs(contacts, organization_id), form_ref,
     ]
@@ -101,15 +106,16 @@ def build_first_prospect_package(store: PilotStore, identifier: str,
     detailed_form = next((item for item in organization_forms if item.get("form_type") == "DETAILED_INTAKE_FORM"), None)
     human_observations = [item for item in store.history(identifier) if item.get("event_type") == "HUMAN_OBSERVATION"]
 
-    support_ids = [preplanning[0]["id"], form_ref["evidence_id"]]
-    organization_name = "Foothills Memorial Chapel"
+    support_ids = [preplanning[0]["id"], online_arrangements[0]["id"]]
+    organization_name = str((record.get("business_profile") or {}).get("company") or organization_id)
+    short_name = re.sub(r"\s+(?:Funeral Home(?: Inc\.)?|Memorial Chapel)\.?$", "", organization_name, flags=re.I)
     drafts = [
         {
             "variant": "DIRECT_BUSINESSLIKE", "recommended": True,
             "subject": "A short review of your pre-arrangement pathway",
             "body": (
-                "Hello Foothills Memorial Chapel team,\n\n"
-                "I reviewed your public website and noticed that it provides pre-planning information and a linked pre-arrangements form. "
+                f"Hello {organization_name} team,\n\n"
+                "I reviewed your public website and noticed that it provides pre-planning information and an online-arrangements pathway. "
                 "I put together a short, cited review of that visitor pathway with a few practical checks for clarity and completion. "
                 "Would it be useful if I sent the findings over?\n\n"
                 "Best,\n[FULL NAME]\n[BUSINESS NAME]\n[MAILING ADDRESS]\n[PHONE / EMAIL]\n\n"
@@ -119,10 +125,10 @@ def build_first_prospect_package(store: PilotStore, identifier: str,
         },
         {
             "variant": "CONSULTATIVE_HELPFUL", "recommended": False,
-            "subject": "A practical website observation for Foothills",
+            "subject": f"A practical website observation for {short_name}",
             "body": (
-                "Hello Foothills Memorial Chapel team,\n\n"
-                "While reviewing your public site, I saw the pre-planning resources and pre-arrangements form you make available to families. "
+                f"Hello {organization_name} team,\n\n"
+                "While reviewing your public site, I saw the pre-planning resources and online-arrangements pathway you make available to families. "
                 "I prepared a concise outside review of that pathway—what is already working and a few practical points worth checking. "
                 "I would be glad to share it if that would be useful.\n\n"
                 "Best,\n[FULL NAME] | [BUSINESS NAME]\n[MAILING ADDRESS] | [PHONE / EMAIL]\n"
@@ -132,9 +138,9 @@ def build_first_prospect_package(store: PilotStore, identifier: str,
         },
         {
             "variant": "VERY_SHORT", "recommended": False,
-            "subject": "Foothills website review",
+            "subject": f"{short_name} website review",
             "body": (
-                "Hello Foothills Memorial Chapel team— I reviewed the public pre-planning and pre-arrangements pathway on your website and made a short list of practical observations. "
+                f"Hello {organization_name} team— I reviewed the public pre-planning and online-arrangements pathway on your website and made a short list of practical observations. "
                 "May I send it over?\n\n[FULL NAME], [BUSINESS NAME], [MAILING ADDRESS], [PHONE / EMAIL]\n"
                 "Reply unsubscribe to opt out."
             ),
@@ -167,11 +173,11 @@ def build_first_prospect_package(store: PilotStore, identifier: str,
             "automatic_defect_created": False,
         },
         "customer_safe_mini_audit": {
-            "title": "Foothills Memorial Chapel — Digital Presence Snapshot",
+            "title": f"{organization_name} — Digital Presence Snapshot",
             "what_we_reviewed": page_urls,
             "positive_observations": [
                 {"classification": "OBSERVED", "statement": "We observed public information about pre-planning, obituaries, and cremation services.", "evidence_ids": [preplanning[0]["id"], obituaries[0]["id"], cremation[0]["id"]]},
-                {"classification": "OBSERVED", "statement": "We observed a clearly linked pre-arrangements form in the retained first-party website navigation.", "evidence_ids": [form_ref["evidence_id"]]},
+                {"classification": "OBSERVED", "statement": "We observed an online-arrangements pathway on the retained first-party website.", "evidence_ids": [online_arrangements[0]["id"]]},
             ],
             "primary_opportunity": {
                 "classification": "INTERPRETATION",
@@ -181,7 +187,7 @@ def build_first_prospect_package(store: PilotStore, identifier: str,
             },
             "recommended_action": {
                 "classification": "RECOMMENDED_ACTION",
-                "statement": "Review the existing pre-arrangement pathway, then scope only evidence-supported navigation, call-to-action, form, or content changes.",
+                "statement": "Perform a non-submitting desktop/mobile review of the existing pathway, then scope only evidence-supported navigation, call-to-action, content, or completion-clarity improvements.",
                 "evidence_ids": support_ids,
             },
             "unsafe_or_internal": [
@@ -191,9 +197,9 @@ def build_first_prospect_package(store: PilotStore, identifier: str,
         },
         "internal_evidence_appendix": evidence_by_id,
         "commercial_angle": {
-            "primary": "Human review of the existing pre-arrangement intake pathway's requirement clarity, privacy communication, and completion experience.",
-            "bounded_wording": "We observed pre-planning information and a detailed linked pre-arrangements form. A human review may be worthwhile to confirm whether the minimum requested information and the broader information a visitor may choose to provide are clearly distinguished across desktop and mobile. No usability, privacy, legal, security, or conversion defect has been established.",
-            "human_validation_before_use": ["Complete a non-submitting desktop/mobile walkthrough.", "Confirm required/optional wording and privacy context in the current rendered experience.", "Confirm the link, labels, and organization identity remain unchanged."],
+            "primary": "Human review of the existing online pre-arrangement pathway.",
+            "bounded_wording": "We observed pre-planning information and an online-arrangements pathway. A non-submitting human review may be worthwhile to assess navigation, call-to-action, content, and completion clarity across desktop and mobile. No form, usability, accessibility, privacy, legal, security, or conversion defect has been established.",
+            "human_validation_before_use": ["Complete a non-submitting desktop/mobile walkthrough.", "Scope only observations supported by the current rendered experience.", "Confirm the link, labels, and organization identity remain unchanged."],
         },
         "offer": {
             "entry": "Free mini audit / findings conversation.",
@@ -207,6 +213,17 @@ def build_first_prospect_package(store: PilotStore, identifier: str,
             "managed_scope_after_project_only": ["Periodic site monitoring", "Evidence-backed digital-presence reviews", "Approved content/technical maintenance", "Monthly prioritized recommendations"],
         },
         "drafts": drafts,
+        "selected_angles": [{
+            "angle_id": f"{organization_id}-prearrangement-pathway-review-v1",
+            "organization_id": organization_id,
+            "angle_type": "PREARRANGEMENT_PATHWAY_REVIEW",
+            "evidence_ids": support_ids,
+            "customer_safe_observation": f"{short_name} public website provides pre-planning information and an online-arrangements pathway.",
+            "proposed_improvement": "Perform a non-submitting desktop/mobile review of the existing pathway and scope only evidence-supported navigation, call-to-action, content, or completion-clarity improvements.",
+            "safety_classification": "CUSTOMER_SAFE_WITH_WORDING",
+            "source_identity": {"generator": "first_prospect_package", "pilot_cohort": "FIRST_REVENUE_PILOT_2026_08"},
+            "draft_preview": {"subject": drafts[0]["subject"], "body": drafts[0]["body"]},
+        }],
         "response_paths": {
             "sure_send_it": "Thanks—I’ll send the one-page snapshot with the cited observations. If any point is useful, would a 15-minute call be worthwhile to discuss the existing pre-arrangement pathway?",
             "what_do_you_charge": "The initial snapshot is free. If the review identifies changes you want implemented, the pilot Fix Sprint is typically CAD $750–$1,500, with a final quote only after we agree on scope and access.",
