@@ -154,6 +154,14 @@ confidence/qualification, contact evidence, an internal rationale, warnings, and
 a non-sendable draft preview under ignored `data/generated/pilot/cohort.json`.
 No prospect is approved merely by appearing in this list.
 
+For prospects with an explicitly selected commercial angle, the operator may
+run `.venv/bin/python pilot_cli.py feasibility DOMAIN`. The resulting
+`ImplementationFeasibilityAgent` advisory is internal-only: it reports positive
+provider/CMS signals, unknown access, bounded work units, discovery questions,
+verification criteria, and re-scope triggers. It appends no pilot event and has
+no authority over review, pre-send, approval, drafts, contact, CRM, pricing, or
+customer systems. See `audit/IMPLEMENTATION_FEASIBILITY.md`.
+
 Foothills' later human/source review is documented in
 `audit/FORM_INTELLIGENCE.md`. It records the detailed first-party intake form as
 an observation and a human-review hypothesis only; it creates no automatic

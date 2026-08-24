@@ -141,6 +141,19 @@ history and becomes the sole draft source for that prospect. It is revalidated
 against current organization-bound evidence at approval and preparation; an
 invalid selection fails closed and never falls back to generic copy.
 
+Inspect a selected angle's internal implementation feasibility without changing
+pilot state or creating customer-facing output:
+
+```bash
+.venv/bin/python pilot_cli.py feasibility DOMAIN
+```
+
+The deterministic advisory distinguishes likely hosted-provider control,
+explicitly evidenced direct-edit control, and unknown access; scopes only
+bounded work; supplies discovery questions, acceptance checks, and re-scope
+triggers; and remains internal-only. CMS detection alone never establishes edit
+authority. See `audit/IMPLEMENTATION_FEASIBILITY.md`.
+
 Automated discovery, public contact extraction, platform-candidate ranking, and
 reviewable outreach generation, the operator interface, progressive local
 verification, and an EspoCRM synchronization boundary are implemented.

@@ -5,7 +5,10 @@ import argparse
 import json
 from pathlib import Path
 
-from pilot import PRESEND_CHECKS, PilotStore, build_first_prospect_package, build_pilot_cohort, write_package
+from pilot import (
+    PRESEND_CHECKS, PilotStore, build_first_prospect_package, build_pilot_cohort,
+    evaluate_with_orchestrator, write_package,
+)
 
 
 def _json(path: Path, expected):
@@ -36,6 +39,13 @@ def main(argv=None):
     for name in ("show", "audit", "history", "presend"):
         target = sub.add_parser(name); target.add_argument("identifier")
     angle = sub.add_parser("angle"); angle.add_argument("identifier")
+    feasibility = sub.add_parser("feasibility")
+    feasibility.add_argument("identifier")
+    feasibility.add_argument("--results", type=Path, default=Path("data/generated/scale/enriched_results.json"))
+    feasibility.add_argument("--forms", type=Path, default=Path("data/generated/forms/form_intelligence.json"))
+    feasibility.add_argument("--pages", type=Path, default=Path("data/generated/scale/pages.json"))
+    feasibility.add_argument("--state", type=Path, default=root / "feasibility_agent_state.json")
+    feasibility.add_argument("--audit", type=Path, default=root / "feasibility_agent_audit.json")
     angle_select = sub.add_parser("angle-select")
     angle_select.add_argument("identifier"); angle_select.add_argument("--actor", required=True)
     angle_select.add_argument("--package", type=Path, required=True)
@@ -94,6 +104,16 @@ def main(argv=None):
         output = store.presend_review(args.identifier)
     elif args.command == "angle":
         output = store.selected_angle(args.identifier) or {"status": "NO_SELECTED_COMMERCIAL_ANGLE"}
+    elif args.command == "feasibility":
+        advisory = evaluate_with_orchestrator(
+            store, args.identifier, _json(args.results, list), _json(args.forms, dict),
+            _json(args.pages, list), args.state, args.audit,
+        )
+        output = advisory or {
+            "status": "NO_FEASIBILITY_ADVISORY",
+            "reason": "COMMERCIAL_ANGLE_SELECTED is required.",
+            "internal_only": True,
+        }
     elif args.command == "angle-select":
         package = _json(args.package, dict)
         organization_id = store._prospect(args.identifier)["organization_id"]

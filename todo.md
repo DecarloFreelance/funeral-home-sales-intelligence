@@ -277,6 +277,17 @@ is not required for the controlled pilot path and is not an active task.
 
 ## Manually controlled first revenue pilot (2026-08-24)
 
+- [x] **GAP-2026-032 (MEDIUM): add bounded implementation-feasibility advice for
+  selected commercial angles.** Reuse `COMMERCIAL_ANGLE_SELECTED`, current
+  organization/evidence fingerprints, retained first-party pages, form facts,
+  positive technology/provider markers, and the durable agent orchestrator.
+  Classify provider/direct/unknown access, bounded scope, discovery questions,
+  verification, and re-scope triggers without changing identity, readiness,
+  pilot state, CRM, outreach, pricing, or customer systems. **VALIDATED:** real
+  dry runs flag Mission View and Foothills for provider confirmation and retain
+  Fernhill as unknown-access; repeated unchanged work skips idempotently. See
+  `audit/IMPLEMENTATION_FEASIBILITY.md`.
+
 - [x] **GAP-2026-028 (HIGH): bridge verified intelligence to an auditable human
   revenue experiment.** The commercial package could rank prospects but had no
   customer-safe content schema, guarded approval-before-draft lifecycle,
@@ -350,7 +361,7 @@ is not required for the controlled pilot path and is not an active task.
 
 ## Current Verification
 
-- Automated tests: 194 passing plus 2 subtests on 2026-08-24.
+- Automated tests: 217 passing plus 2 subtests on 2026-08-24.
 - Production-scale validation: 211 organizations and 4,648 enrichment facts;
   form intelligence separately inventories 1,898 page-level forms across 152
   organizations without changing the 122 CRM-safe or 112 outreach-ready records.

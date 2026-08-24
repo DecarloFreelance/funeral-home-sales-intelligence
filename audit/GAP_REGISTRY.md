@@ -4,6 +4,28 @@ This registry records evidence examined by the continuous gap-discovery loop.
 `todo.md` remains the actionable work queue; this file preserves triage evidence
 and rejected suspicions so they are not repeatedly rediscovered.
 
+## GAP-2026-032 — Selected commercial angles lack implementation feasibility guidance
+
+- Discovered: 2026-08-24
+- Category: commercial workflow / scope safety
+- Severity: MEDIUM
+- Subsystem: durable agents and controlled pilot
+- Evidence: selected, evidence-bound form angles existed for Mission View,
+  Foothills, and Fernhill, but the operator had no durable determination of
+  provider dependency, access uncertainty, bounded work units, acceptance
+  checks, or re-scope triggers. WordPress detection alone could not responsibly
+  establish direct edit authority; retained Mission View and Foothills pages
+  positively identify CFS/Tribute hosted infrastructure.
+- Expected: a deterministic internal-only advisory evaluates exactly one current
+  selected angle, fails closed on invalid identity/evidence, preserves unknown
+  access, and uses existing durable task state without changing pilot, CRM,
+  readiness, outreach, or customer systems.
+- Status: VALIDATED — `ImplementationFeasibilityAgent` reuses the existing
+  orchestrator and selected-angle fingerprints. Real retained evidence classifies
+  Mission View and Foothills as provider-confirmation-required and Fernhill as
+  narrow but unknown-access/ready-for-discovery. It supplies bounded discovery,
+  verification, and re-scope guidance and remains internal-only.
+
 ## GAP-2026-001 — Partial agent output can be published after failure
 
 - Discovered: 2026-08-23
