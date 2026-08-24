@@ -58,6 +58,23 @@ def _complete_presend(store, identifier, *, actor="operator"):
     )
 
 
+def _selected_angle(record, *, organization_id="example.ca", evidence_ids=None):
+    facts = (record.get("enrichment") or {}).get("facts") or []
+    evidence_ids = evidence_ids or [facts[0]["id"]]
+    return {
+        "angle_id": "homepage-form-labels", "organization_id": organization_id,
+        "angle_type": "FORM_CLARITY_FIX", "evidence_ids": evidence_ids,
+        "customer_safe_observation": "The homepage form identifies its fields with placeholder text rather than persistent labels.",
+        "proposed_improvement": "Add persistent associated labels and verify the result.",
+        "safety_classification": "CUSTOMER_SAFE_OBSERVATION",
+        "source_identity": {"package_id": "evaluation-1"},
+        "draft_preview": {
+            "subject": "A small issue on the homepage enquiry form",
+            "body": "Hello team,\n\nI reviewed the public homepage form. Its fields are identified with placeholder text rather than persistent field labels. Would it be useful if I sent the one-page summary?\n\n[SENDER IDENTIFICATION]\n\nReply ‘unsubscribe’ and I will stop.",
+        },
+    }
+
+
 def test_only_explicitly_safe_records_enter_pilot_and_missing_state_fails_closed():
     safe, safe_page = _record("safe.ca")
     blocked, blocked_page = _record("blocked.ca", safe=False)
@@ -139,6 +156,111 @@ def test_draft_requires_approval_is_evidence_supported_and_never_sends(tmp_path)
     assert event["draft"]["outreach_sent"] is False
     assert set(event["draft"]["supporting_evidence_ids"]).issubset(appendix)
     assert "revenue" not in event["draft"]["body"].lower()
+
+
+def test_selected_angle_is_canonical_preview_then_prepared_unsent(tmp_path):
+    record, _ = _record()
+    store = PilotStore(tmp_path / "cohort.json", tmp_path / "events.json")
+    store.save_cohort(_cohort([record], [_page()]))
+    identifier = store.effective()[0]["pilot_id"]
+    selected, created = store.select_angle(identifier, _selected_angle(record), "operator", [record], {"forms": []})
+    assert created is True
+    assert selected["draft_preview"]["status"] == "PREVIEW_ONLY_NOT_PREPARED"
+    assert store.state(identifier) == "CANDIDATE"
+    assert not any(event.get("draft", {}).get("status") == "PREPARED_UNSENT" for event in store.history(identifier))
+    store.transition(identifier, "MANUAL_REVIEW", "operator")
+    _complete_presend(store, identifier)
+    store.approve(identifier, "operator", [record], forms={"forms": []})
+    event, created = store.prepare_draft(identifier, "operator", records=[record], forms={"forms": []})
+    assert created is True and event["draft"]["status"] == "PREPARED_UNSENT"
+    assert event["draft"]["subject"] == "A small issue on the homepage enquiry form"
+    assert "placeholder text rather than persistent field labels" in event["draft"]["body"]
+    assert event["draft"]["supporting_evidence_ids"] == selected["evidence_ids"]
+    assert event["draft"]["outreach_sent"] is False and event["draft"]["sendable"] is False
+    rendered = json.dumps(event["draft"]).lower()
+    assert all(term not in rendered for term in ("internal score", "lost revenue", "compliance", "conversion loss"))
+
+
+def test_selected_angle_fails_closed_without_fallback_on_foreign_missing_stale_or_identity_evidence(tmp_path):
+    record, _ = _record()
+    store = PilotStore(tmp_path / "cohort.json", tmp_path / "events.json")
+    store.save_cohort(_cohort([record], [_page()]))
+    identifier = store.effective()[0]["pilot_id"]
+    foreign = _selected_angle(record, organization_id="foreign.ca")
+    with pytest.raises(ValueError, match="another organization"):
+        store.select_angle(identifier, foreign, "operator", [record], {"forms": []})
+    missing = _selected_angle(record, evidence_ids=["missing"])
+    with pytest.raises(ValueError, match="evidence is missing"):
+        store.select_angle(identifier, missing, "operator", [record], {"forms": []})
+    store.select_angle(identifier, _selected_angle(record), "operator", [record], {"forms": []})
+    store.transition(identifier, "MANUAL_REVIEW", "operator")
+    _complete_presend(store, identifier)
+    changed = json.loads(json.dumps(record))
+    changed["enrichment"]["facts"][0]["value"] = "materially changed"
+    with pytest.raises(ValueError, match="stale or materially changed"):
+        store.approve(identifier, "operator", [changed], forms={"forms": []})
+    renamed = json.loads(json.dumps(record))
+    renamed["business_profile"]["company"] = "Different Organization"
+    with pytest.raises(ValueError, match="organization identity changed"):
+        store.approve(identifier, "operator", [renamed], forms={"forms": []})
+    assert store.state(identifier) == "MANUAL_REVIEW"
+
+
+def test_selected_angle_rejects_foreign_form_and_unsafe_content(tmp_path):
+    record, _ = _record()
+    store = PilotStore(tmp_path / "cohort.json", tmp_path / "events.json")
+    store.save_cohort(_cohort([record], [_page()]))
+    identifier = store.effective()[0]["pilot_id"]
+    angle = _selected_angle(record, evidence_ids=["form-observation"])
+    forms = {"forms": [{"observation_id": "form-observation", "organization_id": "sibling.ca"}]}
+    with pytest.raises(ValueError, match="another organization"):
+        store.select_angle(identifier, angle, "operator", [record], forms)
+    unsafe = _selected_angle(record)
+    unsafe["draft_preview"]["body"] = "This form causes conversion loss."
+    with pytest.raises(ValueError, match="unsupported customer claim"):
+        store.select_angle(identifier, unsafe, "operator", [record], {"forms": []})
+
+
+def test_selected_angle_form_evidence_is_idempotent_and_stale_changes_fail_closed(tmp_path):
+    record, _ = _record()
+    fact_ids = [fact["id"] for fact in record["enrichment"]["facts"][:2]]
+    form = {"observation_id": "form-observation", "organization_id": "example.ca", "visible_field_count": 4}
+    forms = {"forms": [form]}
+    angle = _selected_angle(record, evidence_ids=[*fact_ids, "form-observation"])
+    store = PilotStore(tmp_path / "cohort.json", tmp_path / "events.json")
+    store.save_cohort(_cohort([record], [_page()]))
+    identifier = store.effective()[0]["pilot_id"]
+    selected, created = store.select_angle(identifier, angle, "operator", [record], forms)
+    repeated, repeated_created = store.select_angle(identifier, angle, "operator", [record], forms)
+    assert created is True and repeated_created is False and repeated == selected
+    changed_forms = {"forms": [{**form, "visible_field_count": 5}]}
+    with pytest.raises(ValueError, match="stale or materially changed"):
+        store.validate_selected_angle(identifier, [record], changed_forms)
+    with pytest.raises(ValueError, match="evidence is missing"):
+        store.validate_selected_angle(identifier, [record], {"forms": []})
+
+
+def test_selected_angle_does_not_bypass_do_not_contact_and_generic_remains_supported(tmp_path):
+    record, _ = _record()
+    store = PilotStore(tmp_path / "cohort.json", tmp_path / "events.json")
+    store.save_cohort(_cohort([record], [_page()]))
+    identifier = store.effective()[0]["pilot_id"]
+    store.select_angle(identifier, _selected_angle(record), "operator", [record], {"forms": []})
+    store.transition(identifier, "MANUAL_REVIEW", "operator")
+    _complete_presend(store, identifier)
+    store.approve(identifier, "operator", [record], forms={"forms": []})
+    store.record_presend_review(identifier, "DO_NOT_CONTACT", "operator")
+    with pytest.raises(ValueError, match="pre-send"):
+        store.prepare_draft(identifier, "operator", records=[record], forms={"forms": []})
+
+    generic = PilotStore(tmp_path / "generic.json", tmp_path / "generic-events.json")
+    generic.save_cohort(_cohort([record], [_page()]))
+    generic_id = generic.effective()[0]["pilot_id"]
+    generic.transition(generic_id, "MANUAL_REVIEW", "operator")
+    _complete_presend(generic, generic_id)
+    generic.approve(generic_id, "operator", [record])
+    event, _ = generic.prepare_draft(generic_id, "operator")
+    assert event["draft"]["status"] == "PREPARED_UNSENT"
 
 
 def test_offer_assignment_and_manual_funnel_metrics(tmp_path):

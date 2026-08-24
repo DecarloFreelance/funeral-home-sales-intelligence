@@ -519,3 +519,22 @@ and rejected suspicions so they are not repeatedly rediscovered.
 - Status: VALIDATED — the analyzer inventories retained forms without fetching
   actions or submitting data. Foothills' detailed intake is observed and remains
   `REVIEW_REQUIRED`; no defect, approval, contact, CRM write, or outreach exists.
+
+### GAP-2026-031 — Selected commercial evidence is disconnected from guarded drafts
+
+- Discovered: 2026-08-24
+- Category: commercial claim integrity / workflow integration
+- Severity: HIGH
+- Evidence: Fernhill's `easiest_1000_evaluation.json` bound the confirmed form
+  observation and public manager/contact facts to specific copy, but
+  `pilot_cli.py draft` could only consume the older generic cohort preview.
+- Root cause: the pilot event model had no durable selected-angle representation;
+  generated evaluations and guarded preparation were independent consumers.
+- Acceptance: append-only, idempotent selection; organization-bound evidence and
+  identity fingerprints; inspectable non-sendable preview; revalidation at
+  approval and preparation; no generic fallback for an invalid selection;
+  unchanged safe generic behavior when no selection exists; no send capability.
+- Status: VALIDATED — Fernhill's selected angle binds form observation
+  `d0f9e86543afdba591b12281`, manager fact `467218648ae4738abc1dc944`,
+  and publication fact `8a6ecd759e6e46d4af87f5b2`. It remains a candidate
+  with a `REVIEW_REQUIRED` pre-send state and no prepared draft or contact event.

@@ -59,6 +59,11 @@ PRESEND_CHECKS = {
     "unsubscribe_mechanism_ready",
     "claims_evidence_checked",
 }
+ANGLE_SAFETY_CLASSES = {"CUSTOMER_SAFE_OBSERVATION", "CUSTOMER_SAFE_WITH_WORDING"}
+UNSAFE_DRAFT_PHRASES = {
+    "lost revenue", "losing families", "privacy violation", "non-compliant",
+    "illegal", "guaranteed", "conversion loss",
+}
 TRANSITIONS = {
     "CANDIDATE": {"MANUAL_REVIEW", "DEFERRED", "DISQUALIFIED"},
     "MANUAL_REVIEW": {"APPROVED_FOR_CONTACT", "DEFERRED", "DISQUALIFIED"},
@@ -106,6 +111,46 @@ def _host(value: Any) -> str:
 
 def _facts(record: Dict[str, Any], field: str) -> List[Dict[str, Any]]:
     return [fact for fact in (record.get("enrichment") or {}).get("facts") or [] if fact.get("field") == field]
+
+
+def _record_identity(record: Dict[str, Any]) -> str:
+    profile = record.get("business_profile") or {}
+    websites = sorted(str(fact.get("value") or "") for fact in _facts(record, "organization.website"))
+    return _stable(record.get("domain"), profile.get("company"), websites)
+
+
+def _angle_evidence(record: Dict[str, Any], forms: Dict[str, Any], evidence_ids: Iterable[str]) -> Dict[str, Any]:
+    organization_id = str(record.get("domain") or "")
+    facts = {str(fact.get("id")): fact for fact in (record.get("enrichment") or {}).get("facts") or [] if fact.get("id")}
+    observations = {str(item.get("observation_id")): item for item in (forms or {}).get("forms") or [] if item.get("observation_id")}
+    resolved = {}
+    for evidence_id in sorted({str(value) for value in evidence_ids if str(value)}):
+        value = facts.get(evidence_id) or observations.get(evidence_id)
+        if value is None:
+            raise ValueError(f"Selected commercial-angle evidence is missing: {evidence_id}")
+        if str(value.get("organization_id") or organization_id) != organization_id:
+            raise ValueError("Selected commercial-angle evidence belongs to another organization")
+        resolved[evidence_id] = value
+    return resolved
+
+
+def _angle_fingerprint(record: Dict[str, Any], forms: Dict[str, Any], evidence_ids: Iterable[str]) -> str:
+    return _stable(_angle_evidence(record, forms, evidence_ids))
+
+
+def _validate_angle_content(angle: Dict[str, Any]) -> None:
+    if angle.get("safety_classification") not in ANGLE_SAFETY_CLASSES:
+        raise ValueError("Selected commercial angle is not customer-safe")
+    draft = angle.get("draft_preview") or {}
+    if not draft.get("subject") or not draft.get("body"):
+        raise ValueError("Selected commercial angle requires a subject and body")
+    rendered = " ".join(str(angle.get(key) or "") for key in ("customer_safe_observation", "proposed_improvement"))
+    rendered += " " + str(draft.get("subject")) + " " + str(draft.get("body"))
+    lowered = rendered.lower()
+    if any(phrase in lowered for phrase in UNSAFE_DRAFT_PHRASES):
+        raise ValueError("Selected commercial angle contains an unsupported customer claim")
+    if any(str(value) in rendered for value in angle.get("evidence_ids") or []):
+        raise ValueError("Customer-facing angle text must not expose internal evidence IDs")
 
 
 def _evidence(fact: Dict[str, Any]) -> Dict[str, Any]:
@@ -477,6 +522,64 @@ class PilotStore:
             "outreach_authorized": False,
         }
 
+    def selected_angle(self, identifier: str) -> Dict[str, Any] | None:
+        prospect = self._prospect(identifier)
+        return next((value for value in reversed(self.history(prospect["pilot_id"]))
+                     if value.get("event_type") == "COMMERCIAL_ANGLE_SELECTED"), None)
+
+    def select_angle(self, identifier: str, angle: Dict[str, Any], actor: str,
+                     records: Iterable[Dict[str, Any]], forms: Dict[str, Any]):
+        prospect = self._prospect(identifier)
+        if not actor.strip():
+            raise ValueError("Actor is required")
+        if str(angle.get("organization_id") or "") != prospect["organization_id"]:
+            raise ValueError("Selected commercial angle belongs to another organization")
+        _validate_angle_content(angle)
+        evidence_ids = sorted({str(value) for value in angle.get("evidence_ids") or [] if str(value)})
+        if not evidence_ids:
+            raise ValueError("Selected commercial angle requires evidence")
+        records = list(records)
+        record = next((value for value in records if value.get("domain") == prospect["organization_id"]), None)
+        if not record:
+            raise ValueError("Current organization evidence is missing")
+        event = {
+            "schema_version": 1, "event_type": "COMMERCIAL_ANGLE_SELECTED",
+            "pilot_id": prospect["pilot_id"], "organization_id": prospect["organization_id"],
+            "angle_id": str(angle.get("angle_id") or _stable(prospect["organization_id"], angle)),
+            "angle_type": str(angle.get("angle_type") or "EVIDENCE_SPECIFIC"),
+            "customer_safe_observation": angle.get("customer_safe_observation"),
+            "proposed_improvement": angle.get("proposed_improvement"),
+            "evidence_ids": evidence_ids,
+            "evidence_fingerprint": _angle_fingerprint(record, forms, evidence_ids),
+            "organization_fingerprint": _record_identity(record),
+            "source_identity": angle.get("source_identity") or {},
+            "safety_classification": angle["safety_classification"],
+            "draft_preview": {
+                "status": "PREVIEW_ONLY_NOT_PREPARED", "sendable": False,
+                "subject": angle["draft_preview"]["subject"], "body": angle["draft_preview"]["body"],
+                "supporting_evidence_ids": evidence_ids, "outreach_sent": False,
+            },
+            "actor": actor.strip(), "timestamp": _now(),
+            "approval_created": False, "contacted_created": False, "outreach_sent": False,
+        }
+        event["event_id"] = _stable({key: value for key, value in event.items() if key != "timestamp"})
+        return self._append(event)
+
+    def validate_selected_angle(self, identifier: str, records: Iterable[Dict[str, Any]],
+                                forms: Dict[str, Any]) -> Dict[str, Any] | None:
+        prospect = self._prospect(identifier)
+        angle = self.selected_angle(prospect["pilot_id"])
+        if angle is None:
+            return None
+        _validate_angle_content(angle)
+        record = next((value for value in records if value.get("domain") == prospect["organization_id"]), None)
+        if not record or _record_identity(record) != angle.get("organization_fingerprint"):
+            raise ValueError("Selected commercial-angle organization identity changed")
+        current = _angle_fingerprint(record, forms, angle.get("evidence_ids") or [])
+        if current != angle.get("evidence_fingerprint"):
+            raise ValueError("Selected commercial-angle evidence is stale or materially changed")
+        return angle
+
     def record_presend_review(self, identifier: str, status: str, actor: str, *,
                               business_relevance="", note="", checks=()):
         prospect = self._prospect(identifier)
@@ -589,8 +692,9 @@ class PilotStore:
         event["event_id"] = _stable({key: value for key, value in event.items() if key != "timestamp"})
         return self._append(event)
 
-    def approve(self, identifier: str, actor: str, records: Iterable[Dict[str, Any]], *, note=""):
+    def approve(self, identifier: str, actor: str, records: Iterable[Dict[str, Any]], *, forms=None, note=""):
         prospect = self._prospect(identifier)
+        records = list(records)
         presend = self.presend_review(prospect["pilot_id"])
         if presend.get("status") != "PUBLICATION_EVIDENCE_PRESENT" or not all((presend.get("checks") or {}).values()):
             raise ValueError("Approval requires completed organization-bound pre-send evidence review")
@@ -615,12 +719,14 @@ class PilotStore:
             for key in ("source_url", "observed_at")
         ) or contact_evidence.get("evidence_id") != presend.get("evidence_id"):
             raise ValueError("Pre-send publication evidence is stale or no longer selected")
+        if self.selected_angle(prospect["pilot_id"]):
+            self.validate_selected_angle(prospect["pilot_id"], records, forms or {})
         return self.transition(
             prospect["pilot_id"], "APPROVED_FOR_CONTACT", actor,
             note=note, _approval_checked=True,
         )
 
-    def prepare_draft(self, identifier: str, actor: str) -> tuple[Dict[str, Any], bool]:
+    def prepare_draft(self, identifier: str, actor: str, *, records=None, forms=None) -> tuple[Dict[str, Any], bool]:
         prospect = self._prospect(identifier)
         if self.state(prospect["pilot_id"]) == "CONTACT_PREPARED":
             existing = next((event for event in reversed(self.history(prospect["pilot_id"])) if event.get("draft")), None)
@@ -630,8 +736,20 @@ class PilotStore:
         contact = prospect["selected_contact"]
         if contact["channel"] != "EMAIL":
             raise ValueError("Guarded email draft requires a selected public email")
-        preview = prospect["guarded_draft_preview"]
+        presend = self.presend_review(prospect["pilot_id"])
+        if presend.get("status") != "PUBLICATION_EVIDENCE_PRESENT" or not all((presend.get("checks") or {}).values()):
+            raise ValueError("Draft requires completed organization-bound pre-send evidence review")
+        selected = self.selected_angle(prospect["pilot_id"])
+        if selected:
+            if records is None or forms is None:
+                raise ValueError("Selected commercial angle requires current evidence validation")
+            selected = self.validate_selected_angle(prospect["pilot_id"], records, forms)
+            preview = selected["draft_preview"]
+        else:
+            preview = prospect["guarded_draft_preview"]
         draft = {**preview, "status": "PREPARED_UNSENT", "sendable": False, "to": contact["value"]}
+        if selected:
+            draft["selected_angle_id"] = selected["angle_id"]
         event = {
             "schema_version": 1, "event_type": "STATE_TRANSITION",
             "pilot_id": prospect["pilot_id"], "organization_id": prospect["organization_id"],

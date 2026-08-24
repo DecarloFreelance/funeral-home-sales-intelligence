@@ -128,6 +128,7 @@ readiness with:
 python pilot_cli.py generate
 python pilot_cli.py list
 python pilot_cli.py audit DOMAIN
+python pilot_cli.py angle DOMAIN
 ```
 
 All prospects begin as candidates. Manual review and explicit approval are
@@ -135,6 +136,10 @@ required before `pilot_cli.py draft` can create an unsent draft. Contact, reply,
 meeting, proposal, outcome, and manually configured offer amounts are recorded
 as append-only local events; the pilot command never sends outreach or writes
 external CRM state. See `audit/FIRST_REVENUE_PILOT.md`.
+An explicitly selected commercial angle is stored in the append-only pilot
+history and becomes the sole draft source for that prospect. It is revalidated
+against current organization-bound evidence at approval and preparation; an
+invalid selection fails closed and never falls back to generic copy.
 
 Automated discovery, public contact extraction, platform-candidate ranking, and
 reviewable outreach generation, the operator interface, progressive local

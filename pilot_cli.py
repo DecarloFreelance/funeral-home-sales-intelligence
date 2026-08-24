@@ -35,6 +35,12 @@ def main(argv=None):
     listing = sub.add_parser("list"); listing.add_argument("--state")
     for name in ("show", "audit", "history", "presend"):
         target = sub.add_parser(name); target.add_argument("identifier")
+    angle = sub.add_parser("angle"); angle.add_argument("identifier")
+    angle_select = sub.add_parser("angle-select")
+    angle_select.add_argument("identifier"); angle_select.add_argument("--actor", required=True)
+    angle_select.add_argument("--package", type=Path, required=True)
+    angle_select.add_argument("--results", type=Path, default=Path("data/generated/scale/enriched_results.json"))
+    angle_select.add_argument("--forms", type=Path, default=Path("data/generated/forms/form_intelligence.json"))
     presend_review = sub.add_parser("presend-review")
     presend_review.add_argument("identifier")
     presend_review.add_argument("status", choices=["PUBLICATION_EVIDENCE_PRESENT", "DO_NOT_CONTACT", "INSUFFICIENT_EVIDENCE"])
@@ -47,10 +53,10 @@ def main(argv=None):
     annotate.add_argument("--actor", required=True); annotate.add_argument("--source", action="append", required=True)
     annotate.add_argument("--observation", action="append", required=True); annotate.add_argument("--note", default="")
     review = sub.add_parser("review"); review.add_argument("identifier"); review.add_argument("--actor", required=True); review.add_argument("--note", default="")
-    approve = sub.add_parser("approve"); approve.add_argument("identifier"); approve.add_argument("--actor", required=True); approve.add_argument("--note", default=""); approve.add_argument("--results", type=Path, default=Path("data/generated/scale/enriched_results.json"))
+    approve = sub.add_parser("approve"); approve.add_argument("identifier"); approve.add_argument("--actor", required=True); approve.add_argument("--note", default=""); approve.add_argument("--results", type=Path, default=Path("data/generated/scale/enriched_results.json")); approve.add_argument("--forms", type=Path, default=Path("data/generated/forms/form_intelligence.json"))
     defer = sub.add_parser("defer"); defer.add_argument("identifier"); defer.add_argument("--actor", required=True); defer.add_argument("--note", default="")
     disqualify = sub.add_parser("disqualify"); disqualify.add_argument("identifier"); disqualify.add_argument("--actor", required=True); disqualify.add_argument("--note", required=True)
-    draft = sub.add_parser("draft"); draft.add_argument("identifier"); draft.add_argument("--actor", required=True)
+    draft = sub.add_parser("draft"); draft.add_argument("identifier"); draft.add_argument("--actor", required=True); draft.add_argument("--results", type=Path, default=Path("data/generated/scale/enriched_results.json")); draft.add_argument("--forms", type=Path, default=Path("data/generated/forms/form_intelligence.json"))
     transition = sub.add_parser("transition"); transition.add_argument("identifier"); transition.add_argument("state"); transition.add_argument("--actor", required=True); transition.add_argument("--note", default=""); transition.add_argument("--reply-sentiment"); transition.add_argument("--activity-reference", action="append", default=[])
     offer = sub.add_parser("offer"); offer.add_argument("identifier"); offer.add_argument("variant"); offer.add_argument("--actor", required=True); offer.add_argument("--quoted", type=float, default=0); offer.add_argument("--accepted", type=float, default=0); offer.add_argument("--recurring", type=float, default=0); offer.add_argument("--note", default="")
     sub.add_parser("stats")
@@ -79,6 +85,16 @@ def main(argv=None):
         output = store.history(args.identifier)
     elif args.command == "presend":
         output = store.presend_review(args.identifier)
+    elif args.command == "angle":
+        output = store.selected_angle(args.identifier) or {"status": "NO_SELECTED_COMMERCIAL_ANGLE"}
+    elif args.command == "angle-select":
+        package = _json(args.package, dict)
+        organization_id = store._prospect(args.identifier)["organization_id"]
+        angle_payload = next((value for value in package.get("selected_angles") or [] if value.get("organization_id") == organization_id), None)
+        if angle_payload is None:
+            parser.error("package has no selected angle for this prospect")
+        event, created = store.select_angle(args.identifier, angle_payload, args.actor, _json(args.results, list), _json(args.forms, dict))
+        output = {"created": created, "selected_angle": event, "outreach_sent": False}
     elif args.command == "presend-review":
         event, created = store.record_presend_review(
             args.identifier, args.status, args.actor,
@@ -92,13 +108,13 @@ def main(argv=None):
     elif args.command == "review":
         event, created = store.transition(args.identifier, "MANUAL_REVIEW", args.actor, note=args.note); output = {"created": created, "event": event}
     elif args.command == "approve":
-        event, created = store.approve(args.identifier, args.actor, _json(args.results, list), note=args.note); output = {"created": created, "event": event}
+        event, created = store.approve(args.identifier, args.actor, _json(args.results, list), forms=_json(args.forms, dict), note=args.note); output = {"created": created, "event": event}
     elif args.command == "defer":
         event, created = store.transition(args.identifier, "DEFERRED", args.actor, note=args.note); output = {"created": created, "event": event}
     elif args.command == "disqualify":
         event, created = store.transition(args.identifier, "DISQUALIFIED", args.actor, note=args.note); output = {"created": created, "event": event}
     elif args.command == "draft":
-        event, created = store.prepare_draft(args.identifier, args.actor); output = {"created": created, "draft": event.get("draft"), "outreach_sent": False}
+        event, created = store.prepare_draft(args.identifier, args.actor, records=_json(args.results, list), forms=_json(args.forms, dict)); output = {"created": created, "draft": event.get("draft"), "outreach_sent": False}
     elif args.command == "transition":
         event, created = store.transition(args.identifier, args.state, args.actor, note=args.note, reply_sentiment=args.reply_sentiment, activity_references=args.activity_reference); output = {"created": created, "event": event}
     elif args.command == "offer":

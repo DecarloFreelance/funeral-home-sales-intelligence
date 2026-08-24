@@ -35,11 +35,26 @@ python pilot_cli.py show PILOT_OR_DOMAIN
 python pilot_cli.py audit PILOT_OR_DOMAIN
 python pilot_cli.py presend PILOT_OR_DOMAIN
 python pilot_cli.py package PILOT_OR_DOMAIN
+python pilot_cli.py angle PILOT_OR_DOMAIN
 ```
 
 Every new record begins in `CANDIDATE`. Generation creates a non-sendable draft
 preview, not approval or contact activity. An operator must inspect the sources
 and explicitly progress it:
+
+An evidence-specific evaluation package may first be selected with:
+
+```bash
+python pilot_cli.py angle-select DOMAIN --actor OPERATOR --package PATH
+python pilot_cli.py angle DOMAIN
+```
+
+Selection records a `PREVIEW_ONLY_NOT_PREPARED` append-only event. It is not an
+approval. When a selection exists, both approval and draft preparation require
+its current organization identity and every bound enrichment/form observation
+to match. Missing, foreign, stale, or unsafe selected evidence fails closed;
+the workflow never substitutes the older generic preview. With no selection,
+the existing evidence-backed generic preview remains available.
 
 ```bash
 python pilot_cli.py review DOMAIN --actor OPERATOR --note "Sources inspected"

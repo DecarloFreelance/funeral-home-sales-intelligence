@@ -314,6 +314,16 @@ is not required for the controlled pilot path and is not an active task.
   changing facts, identity, quality, CRM/outreach readiness, approval, contact,
   CRM, or outreach state. See `audit/FORM_INTELLIGENCE.md`.
 
+- [x] **GAP-2026-031 (HIGH): bind guarded drafts to the explicitly selected
+  evidence-specific angle.** Fernhill's confirmed form-label observation and
+  customer-safe preview existed only in an ignored evaluation package, while
+  `pilot draft` still consumed the older cohort preview. Add an append-only
+  angle-selection event, current evidence/identity fingerprints, operator
+  inspection, approval/preparation revalidation, and fail-closed no-fallback
+  behavior. **VALIDATED:** Fernhill's canonical selection is
+  `PREVIEW_ONLY_NOT_PREPARED`; its three organization-bound evidence references
+  resolve; zero approval, contact, send, CRM, or form-submit action occurred.
+
 ## Data and Release Hygiene
 
 - [x] Align `verify_audit.py` with the production feature detector. Discovered
