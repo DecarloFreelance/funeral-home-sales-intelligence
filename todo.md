@@ -361,6 +361,16 @@ is not required for the controlled pilot path and is not an active task.
 
 ## Current Verification
 
+- [x] **GAP-2026-034 (HIGH): derive effective prepared-draft presentation from
+  pilot history.** Evidence: live `pilot show` reports Cornerstone as
+  `CONTACT_PREPARED` while retaining the cohort's blocked generic preview,
+  despite its canonical transition event containing the selected-angle
+  `PREPARED_UNSENT` draft. Overlay only a real persisted prepared draft in the
+  effective read model; preserve blocked previews before preparation and after
+  external-send reconciliation without local drafting. **VALIDATED:** the live
+  Cornerstone read model now exposes its persisted selected-angle prepared
+  draft, while focused and full workflow tests retain fail-closed boundaries.
+
 - [x] **GAP-2026-033 (HIGH): include reconciled external sends in pilot
   lifecycle aggregation.** Evidence: the live per-prospect reducer reports the
   externally reconciled Foothills send as `CONTACTED`, while aggregate stats

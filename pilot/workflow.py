@@ -652,8 +652,22 @@ class PilotStore:
         event["event_id"] = _stable({key: value for key, value in event.items() if key != "timestamp"})
         return self._append(event)
 
+    def _prepared_draft(self, identifier: str) -> Dict[str, Any] | None:
+        return next((
+            event["draft"]
+            for event in reversed(self.history(identifier))
+            if (event.get("draft") or {}).get("status") == "PREPARED_UNSENT"
+        ), None)
+
     def effective(self) -> List[Dict[str, Any]]:
-        return [{**item, "current_state": self.state(item["pilot_id"])} for item in self.cohort().get("prospects", [])]
+        effective = []
+        for item in self.cohort().get("prospects", []):
+            value = {**item, "current_state": self.state(item["pilot_id"])}
+            draft = self._prepared_draft(item["pilot_id"])
+            if draft is not None:
+                value.update(draft_status="PREPARED_UNSENT", guarded_draft_preview=draft)
+            effective.append(value)
+        return effective
 
     def _append(self, event: Dict[str, Any]) -> tuple[Dict[str, Any], bool]:
         lock_path = self.events_path.with_suffix(self.events_path.suffix + ".lock")

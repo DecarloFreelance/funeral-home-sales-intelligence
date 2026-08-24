@@ -142,12 +142,20 @@ def test_draft_requires_approval_is_evidence_supported_and_never_sends(tmp_path)
     store = PilotStore(tmp_path / "cohort.json", tmp_path / "events.json")
     store.save_cohort(_cohort())
     identifier = store.effective()[0]["pilot_id"]
+    before = store.effective()[0]
+    assert before["draft_status"] == "BLOCKED_PENDING_MANUAL_REVIEW_AND_APPROVAL"
+    assert before["guarded_draft_preview"]["sendable"] is False
+    assert before["guarded_draft_preview"]["status"] != "PREPARED_UNSENT"
     with pytest.raises(ValueError, match="requires explicit"):
         store.prepare_draft(identifier, "operator")
     record, _ = _record()
     store.transition(identifier, "MANUAL_REVIEW", "operator")
     _complete_presend(store, identifier)
     store.approve(identifier, "operator", [record])
+    approved = store.effective()[0]
+    assert approved["current_state"] == "APPROVED_FOR_CONTACT"
+    assert approved["draft_status"] == "BLOCKED_PENDING_MANUAL_REVIEW_AND_APPROVAL"
+    assert approved["guarded_draft_preview"]["status"] != "PREPARED_UNSENT"
     event, created = store.prepare_draft(identifier, "operator")
     repeated, repeated_created = store.prepare_draft(identifier, "operator")
     appendix = store._prospect(identifier)["audit_package"]["evidence_appendix"]
@@ -156,6 +164,10 @@ def test_draft_requires_approval_is_evidence_supported_and_never_sends(tmp_path)
     assert event["draft"]["outreach_sent"] is False
     assert set(event["draft"]["supporting_evidence_ids"]).issubset(appendix)
     assert "revenue" not in event["draft"]["body"].lower()
+    effective = store.effective()[0]
+    assert effective["current_state"] == "CONTACT_PREPARED"
+    assert effective["draft_status"] == "PREPARED_UNSENT"
+    assert effective["guarded_draft_preview"] == event["draft"]
 
 
 def test_selected_angle_is_canonical_preview_then_prepared_unsent(tmp_path):
@@ -177,6 +189,10 @@ def test_selected_angle_is_canonical_preview_then_prepared_unsent(tmp_path):
     assert "placeholder text rather than persistent field labels" in event["draft"]["body"]
     assert event["draft"]["supporting_evidence_ids"] == selected["evidence_ids"]
     assert event["draft"]["outreach_sent"] is False and event["draft"]["sendable"] is False
+    effective = store.effective()[0]
+    assert effective["guarded_draft_preview"] == event["draft"]
+    assert effective["guarded_draft_preview"] != store._prospect(identifier)["guarded_draft_preview"]
+    assert effective["guarded_draft_preview"]["selected_angle_id"] == selected["angle_id"]
     rendered = json.dumps(event["draft"]).lower()
     assert all(term not in rendered for term in ("internal score", "lost revenue", "compliance", "conversion loss"))
 
@@ -271,8 +287,12 @@ def test_offer_assignment_and_manual_funnel_metrics(tmp_path):
     store.transition(identifier, "MANUAL_REVIEW", "operator")
     _complete_presend(store, identifier)
     store.approve(identifier, "operator", [record])
-    store.prepare_draft(identifier, "operator")
+    prepared, _ = store.prepare_draft(identifier, "operator")
     contacted, _ = store.transition(identifier, "CONTACTED", "operator", note="Manually sent outside system", activity_references=["manual-email-log:1"])
+    effective = store.effective()[0]
+    assert effective["current_state"] == "CONTACTED"
+    assert effective["draft_status"] == "PREPARED_UNSENT"
+    assert effective["guarded_draft_preview"] == prepared["draft"]
     store.transition(identifier, "REPLIED", "operator", reply_sentiment="POSITIVE")
     store.transition(identifier, "MEETING", "operator")
     store.transition(identifier, "PROPOSAL", "operator")
@@ -347,7 +367,15 @@ def test_cli_list_show_audit_history_stats_and_guarded_draft(tmp_path, capsys):
     pilot_main([*common, "presend", identifier]); assert json.loads(capsys.readouterr().out)["status"] == "REVIEW_REQUIRED"
     pilot_main([*common, "presend-review", identifier, "PUBLICATION_EVIDENCE_PRESENT", "--actor", "operator", "--business-relevance", "Relevant website review", *checks]); capsys.readouterr()
     pilot_main([*common, "approve", identifier, "--actor", "operator", "--results", str(records_path)]); capsys.readouterr()
-    pilot_main([*common, "draft", identifier, "--actor", "operator"]); assert json.loads(capsys.readouterr().out)["outreach_sent"] is False
+    pilot_main([*common, "draft", identifier, "--actor", "operator"])
+    prepared = json.loads(capsys.readouterr().out)
+    assert prepared["outreach_sent"] is False
+    pilot_main([*common, "show", identifier])
+    shown = json.loads(capsys.readouterr().out)
+    assert shown["current_state"] == "CONTACT_PREPARED"
+    assert shown["draft_status"] == "PREPARED_UNSENT"
+    assert shown["guarded_draft_preview"]["subject"] == prepared["draft"]["subject"]
+    assert shown["guarded_draft_preview"]["body"] == prepared["draft"]["body"]
     pilot_main([*common, "history", identifier]); assert len(json.loads(capsys.readouterr().out)) == 4
     pilot_main([*common, "stats"]); assert json.loads(capsys.readouterr().out)["drafted"] == 1
 
@@ -488,6 +516,12 @@ def test_external_send_reconciliation_records_contact_without_backfilled_gates(t
     assert event["reconciliation_reason"] == "OUTREACH_SENT_OUTSIDE_GUARDED_WORKFLOW"
     assert event["activity_references"] == ["manual-email:test-1"]
     assert store.state(identifier) == "CONTACTED"
+
+    effective = store.effective()[0]
+    assert effective["current_state"] == "CONTACTED"
+    assert effective["draft_status"] == "BLOCKED_PENDING_MANUAL_REVIEW_AND_APPROVAL"
+    assert effective["guarded_draft_preview"] == store._prospect(identifier)["guarded_draft_preview"]
+    assert effective["guarded_draft_preview"]["status"] != "PREPARED_UNSENT"
 
     stats = store.stats()
     assert stats["current_states"] == {"CONTACTED": 1}
