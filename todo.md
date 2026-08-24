@@ -2,6 +2,19 @@
 
 Last reconciled: 2026-08-24
 
+## Pre-planning information pathway coverage (2026-08-24)
+
+- [x] **GAP-2026-028 (HIGH): retain a bounded commercial angle for positive
+  first-party pre-planning evidence without online-arrangements evidence.**
+  Evidence: `build_first_prospect_package` has one all-or-nothing gate requiring
+  `digital.online_arrangements`, so current McCaw and Beaverlodge pre-planning
+  facts cannot produce a package. Require current organization-bound website
+  and positive pre-planning facts, preserve the stronger online-arrangements
+  angle, and prove lifecycle/read-only invariants with deterministic tests.
+  Validated with 240 tests and 2 subtests; real McCaw and Beaverlodge package
+  generation preserved the 27-event pilot history byte-for-byte at SHA-256
+  `edd4c9048ae10c198b563bcd9ba59ba9acc2f4a5b3a791c6369b5399b0bbb289`.
+
 This file tracks current work. Historical v34/v35 recommendations are preserved
 in the handoff and audit documents; they are not active tasks unless listed
 below.

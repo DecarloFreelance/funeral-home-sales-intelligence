@@ -174,7 +174,7 @@ def _bounded_scope(angle: Dict[str, Any], resolved: Dict[str, Any]) -> bool:
     improvement = str(angle.get("proposed_improvement") or "")
     if not observation or not improvement:
         return False
-    if "FORM" in angle_type:
+    if angle_type.startswith("FORM_") or "_FORM_" in angle_type:
         form_count = sum(bool(value.get("form_id") or value.get("observation_id")) for value in resolved.values())
         return form_count >= 1
     return any(token in angle_type for token in ("LINK", "NAVIGATION", "CONTENT", "PATHWAY")) and bool(resolved)
@@ -220,6 +220,44 @@ def _form_advisory(angle: Dict[str, Any]) -> Dict[str, List[str]]:
             "Shared-template changes affect sibling organizations or unrelated pages.",
             "Existing submission behaviour is already broken or requires repair.",
             "Additional pages, forms, redesign, or content strategy enter scope.",
+        ],
+    }
+
+
+def _pathway_advisory() -> Dict[str, List[str]]:
+    return {
+        "scope_assumptions": [
+            "The selected first-party pathway evidence remains current at review time.",
+            "The work is a bounded desktop/mobile review; no defect, redesign, or platform replacement is implied.",
+        ],
+        "required_access": [
+            "No edit access is required for the review.",
+            "Confirm website ownership and appropriate CMS or provider access before any separately approved implementation.",
+        ],
+        "discovery_questions": [
+            "Who currently manages the website and approves pathway changes?",
+            "What should a visitor do after reading the pre-planning information?",
+            "Can navigation, calls to action, or content be edited directly, or must the provider make changes?",
+        ],
+        "proposed_work_units": [
+            "Review the existing pre-planning information pathway on desktop and mobile without submitting anything.",
+            "Document only evidence-supported navigation, call-to-action, content, or completion-clarity observations.",
+            "Scope any proposed change separately after ownership, access, and approval are confirmed.",
+        ],
+        "verification_plan": [
+            "Retain current page and pathway evidence before review.",
+            "Check the existing navigation and information path on desktop and mobile.",
+            "Confirm every recommendation maps to a current observed page element.",
+        ],
+        "acceptance_criteria": [
+            "The review distinguishes observations from recommendations and asserts no unsupported defect.",
+            "Every scoped recommendation cites current organization-bound evidence.",
+            "No form is submitted and no customer-site change is performed.",
+        ],
+        "rescope_triggers": [
+            "The provider must perform or separately approve implementation.",
+            "The requested work expands to forms, platform replacement, redesign, compliance, or conversion claims.",
+            "Current evidence or organization identity changes.",
         ],
     }
 
@@ -299,7 +337,13 @@ class ImplementationFeasibilityAgent(RecordAgent):
             guidance = _unscoped_advisory()
         else:
             scope = "NARROW" if bounded else "UNSCOPED"
-            guidance = _form_advisory(angle) if bounded and "FORM" in str(angle.get("angle_type") or "").upper() else _unscoped_advisory()
+            normalized_angle_type = str(angle.get("angle_type") or "").upper()
+            if bounded and (normalized_angle_type.startswith("FORM_") or "_FORM_" in normalized_angle_type):
+                guidance = _form_advisory(angle)
+            elif bounded:
+                guidance = _pathway_advisory()
+            else:
+                guidance = _unscoped_advisory()
             if conflicting_provider_signals or hosted_providers:
                 implementation_path = "PROVIDER_CONTROL_LIKELY"
                 outcome = "PROVIDER_CONFIRMATION_REQUIRED"

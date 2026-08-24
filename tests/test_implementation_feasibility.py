@@ -188,6 +188,29 @@ def test_prearrangement_pathway_review_is_bounded_when_fact_evidence_resolves(tm
     assert result["advisory_outcome"] == "READY_FOR_DISCOVERY"
 
 
+def test_preplanning_information_pathway_review_is_bounded_content_scope(tmp_path):
+    store, record = _store(tmp_path)
+    fact = record["enrichment"]["facts"][0]
+    angle = {
+        **_angle(),
+        "angle_id": "example.ca-preplanning-information-pathway-review-v1",
+        "angle_type": "PREPLANNING_INFORMATION_PATHWAY_REVIEW",
+        "evidence_ids": [fact["id"]],
+        "customer_safe_observation": "The public website provides pre-planning information.",
+        "proposed_improvement": "Review the information pathway and scope only evidence-supported content improvements.",
+    }
+    store.select_angle("example.ca", angle, "operator", [record], {"forms": []})
+    result = evaluate_with_orchestrator(
+        store, "example.ca", [record], {"forms": []}, [_page()],
+        tmp_path / "state.json", tmp_path / "audit.json",
+    )
+    assert result["scope"] == "NARROW"
+    assert result["advisory_outcome"] == "READY_FOR_DISCOVERY"
+    assert result["implementation_path"] == "UNKNOWN_ACCESS"
+    assert result["proposed_work_units"]
+    assert "No edit access is required for the review." in result["required_access"]
+
+
 def test_provider_positive_unknown_direct_and_conflicting_classification(tmp_path):
     store, record = _store(tmp_path)
     form = _form()
