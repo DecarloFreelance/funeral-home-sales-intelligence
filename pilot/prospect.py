@@ -63,6 +63,10 @@ def build_first_prospect_package(store: PilotStore, identifier: str,
                                  records: Iterable[Dict[str, Any]], pages: Iterable[Dict[str, Any]],
                                  research: Iterable[Dict[str, Any]] = (), forms: Dict[str, Any] | None = None) -> Dict[str, Any]:
     prospect = store._prospect(identifier)
+    contact_history = store.contact_history(prospect["pilot_id"])
+    if not contact_history["eligible_as_unsent"]:
+        reason = "prior external contact" if contact_history["ever_contacted"] else "ambiguous contact history"
+        raise ValueError(f"Fresh initial outreach package blocked by {reason}")
     organization_id = prospect["organization_id"]
     record = next((item for item in records if item.get("domain") == organization_id), None)
     if not record:
@@ -175,6 +179,21 @@ def build_first_prospect_package(store: PilotStore, identifier: str,
         },
     ]
     checklist = {name: False for name in sorted(PRESEND_CHECKS)}
+    angle_id = f"{organization_id}-prearrangement-pathway-review-v1"
+    supersedes_angle_id = None
+    current_angle = store.selected_angle(identifier)
+    if current_angle and all((
+        current_angle.get("angle_type") == "PREARRANGEMENT_PATHWAY_REVIEW",
+        current_angle.get("customer_safe_observation") == f"{short_name} public website provides pre-planning information and an online-arrangements pathway.",
+        current_angle.get("proposed_improvement") == "Perform a non-submitting desktop/mobile review of the existing pathway and scope only evidence-supported navigation, call-to-action, content, or completion-clarity improvements.",
+        sorted(current_angle.get("evidence_ids") or []) == sorted(support_ids),
+    )):
+        if current_angle.get("angle_id") == angle_id:
+            angle_id = f"{organization_id}-prearrangement-pathway-review-v2"
+            supersedes_angle_id = current_angle["angle_id"]
+        else:
+            angle_id = current_angle["angle_id"]
+            supersedes_angle_id = current_angle.get("supersedes_angle_id")
     result = {
         "schema_version": 1, "generator": "first_prospect_package", "generator_version": "1.0.0",
         "pilot_id": prospect["pilot_id"], "audit_id": prospect["selected_audit_id"],
@@ -241,7 +260,8 @@ def build_first_prospect_package(store: PilotStore, identifier: str,
         },
         "drafts": drafts,
         "selected_angles": [{
-            "angle_id": f"{organization_id}-prearrangement-pathway-review-v1",
+            "angle_id": angle_id,
+            "supersedes_angle_id": supersedes_angle_id,
             "organization_id": organization_id,
             "angle_type": "PREARRANGEMENT_PATHWAY_REVIEW",
             "evidence_ids": support_ids,

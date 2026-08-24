@@ -4,6 +4,7 @@ import pytest
 
 from commercial_readiness import build_package as build_commercial
 from enrichment.company import enrich_company
+from pilot.prospect import build_first_prospect_package
 from pilot.workflow import OFFER, PRESEND_CHECKS, PilotStore, build_pilot_cohort
 from pilot_cli import main as pilot_main
 
@@ -254,6 +255,77 @@ def test_selected_angle_form_evidence_is_idempotent_and_stale_changes_fail_close
         store.validate_selected_angle(identifier, [record], changed_forms)
     with pytest.raises(ValueError, match="evidence is missing"):
         store.validate_selected_angle(identifier, [record], {"forms": []})
+
+
+def test_selected_angle_revision_supersedes_append_only_and_drives_future_draft(tmp_path):
+    record, _ = _record()
+    store = PilotStore(tmp_path / "cohort.json", tmp_path / "events.json")
+    store.save_cohort(_cohort([record], [_page()]))
+    identifier = store.effective()[0]["pilot_id"]
+    v1_payload = _selected_angle(record)
+    v1_payload["angle_id"] = "homepage-form-labels-v1"
+    v1, created = store.select_angle(identifier, v1_payload, "operator", [record], {"forms": []})
+    assert created is True
+
+    v2_payload = {
+        **v1_payload,
+        "angle_id": "homepage-form-labels-v2",
+        "supersedes_angle_id": v1["angle_id"],
+        "draft_preview": {
+            **v1_payload["draft_preview"],
+            "subject": "A revised homepage form review",
+            "body": v1_payload["draft_preview"]["body"].replace(
+                "I reviewed", "I completed a revised review of",
+            ),
+        },
+    }
+    v2, v2_created = store.select_angle(identifier, v2_payload, "operator", [record], {"forms": []})
+    repeated, repeated_created = store.select_angle(identifier, v2_payload, "operator", [record], {"forms": []})
+    selected_events = [event for event in store.history(identifier) if event["event_type"] == "COMMERCIAL_ANGLE_SELECTED"]
+    assert v2_created is True and repeated_created is False and repeated == v2
+    assert [event["angle_id"] for event in selected_events] == [v1["angle_id"], v2["angle_id"]]
+    assert selected_events[0] == v1
+    assert v2["supersedes_angle_id"] == v1["angle_id"]
+    assert v2["evidence_ids"] == v1["evidence_ids"]
+    assert v2["evidence_fingerprint"] == v1["evidence_fingerprint"]
+    assert store.selected_angle(identifier) == v2
+    assert store.validate_selected_angle(identifier, [record], {"forms": []}) == v2
+
+    store.transition(identifier, "MANUAL_REVIEW", "operator")
+    _complete_presend(store, identifier)
+    store.approve(identifier, "operator", [record], forms={"forms": []})
+    prepared, _ = store.prepare_draft(identifier, "operator", records=[record], forms={"forms": []})
+    assert prepared["draft"]["selected_angle_id"] == v2["angle_id"]
+    assert prepared["draft"]["subject"] == v2_payload["draft_preview"]["subject"]
+    assert prepared["draft"]["body"] == v2_payload["draft_preview"]["body"]
+    assert prepared["draft"]["sendable"] is False
+    assert prepared["draft"]["outreach_sent"] is False
+
+
+def test_selected_angle_revision_rejects_foreign_missing_and_stale_supersession(tmp_path):
+    record, _ = _record()
+    store = PilotStore(tmp_path / "cohort.json", tmp_path / "events.json")
+    store.save_cohort(_cohort([record], [_page()]))
+    identifier = store.effective()[0]["pilot_id"]
+    v1_payload = _selected_angle(record)
+    v1_payload["angle_id"] = "homepage-form-labels-v1"
+    v1, _ = store.select_angle(identifier, v1_payload, "operator", [record], {"forms": []})
+    revision = {
+        **v1_payload,
+        "angle_id": "homepage-form-labels-v2",
+        "supersedes_angle_id": v1["angle_id"],
+        "draft_preview": {**v1_payload["draft_preview"], "subject": "Revised subject"},
+    }
+    with pytest.raises(ValueError, match="must supersede the current angle"):
+        store.select_angle(identifier, {**revision, "supersedes_angle_id": "foreign-angle-v1"}, "operator", [record], {"forms": []})
+    with pytest.raises(ValueError, match="evidence is missing"):
+        store.select_angle(identifier, {**revision, "evidence_ids": ["missing"]}, "operator", [record], {"forms": []})
+    changed = json.loads(json.dumps(record))
+    changed["enrichment"]["facts"][0]["value"] = "materially changed"
+    with pytest.raises(ValueError, match="stale or materially changed"):
+        store.select_angle(identifier, revision, "operator", [changed], {"forms": []})
+    assert store.selected_angle(identifier) == v1
+    assert len([event for event in store.history(identifier) if event["event_type"] == "COMMERCIAL_ANGLE_SELECTED"]) == 1
 
 
 def test_selected_angle_does_not_bypass_do_not_contact_and_generic_remains_supported(tmp_path):
@@ -628,3 +700,112 @@ def test_external_send_reconciliation_is_idempotent(tmp_path):
         value for value in store.history(identifier)
         if value.get("event_type") == "EXTERNAL_SEND_RECONCILIATION"
     ]) == 1
+
+
+@pytest.mark.parametrize("final_state", ["CONTACTED", "REPLIED", "MEETING"])
+def test_next_unsent_excludes_contact_transition_and_later_states(tmp_path, final_state):
+    store = PilotStore(tmp_path / "cohort.json", tmp_path / "events.json")
+    store.save_cohort(_cohort())
+    identifier = store.effective()[0]["pilot_id"]
+    store.transition(identifier, "MANUAL_REVIEW", "operator")
+    _complete_presend(store, identifier)
+    record, _ = _record()
+    store.approve(identifier, "operator", [record])
+    store.prepare_draft(identifier, "operator")
+    store.transition(identifier, "CONTACTED", "operator")
+    if final_state in {"REPLIED", "MEETING"}:
+        store.transition(identifier, "REPLIED", "operator", reply_sentiment="POSITIVE")
+    if final_state == "MEETING":
+        store.transition(identifier, "MEETING", "operator")
+
+    assert store.state(identifier) == final_state
+    assert store.contact_history(identifier)["ever_contacted"] is True
+    assert store.next_unsent(limit=5) == []
+
+
+def test_next_unsent_ranks_only_never_contacted_candidate_and_manual_review(tmp_path):
+    pairs = [_record("high.ca"), _record("review.ca"), _record("sent.ca")]
+    cohort = _cohort([pair[0] for pair in pairs], [pair[1] for pair in pairs])
+    scores = {"high.ca": 120, "review.ca": 110, "sent.ca": 200}
+    for prospect in cohort["prospects"]:
+        prospect["selection_score_internal"] = scores[prospect["organization_id"]]
+    store = PilotStore(tmp_path / "cohort.json", tmp_path / "events.json")
+    store.save_cohort(cohort)
+    store.transition("review.ca", "MANUAL_REVIEW", "operator")
+    store.transition("sent.ca", "MANUAL_REVIEW", "operator")
+    store.record_external_send(
+        "sent.ca", "operator", recipient="office@sent.ca", subject="Subject",
+        activity_references=["gmail:sent"],
+    )
+
+    result = store.next_unsent(limit=5)
+    assert [item["organization_id"] for item in result] == ["high.ca", "review.ca"]
+    assert [item["current_state"] for item in result] == ["CANDIDATE", "MANUAL_REVIEW"]
+    assert result[0]["score"] == 120
+    assert set(result[0]) >= {
+        "organization_name", "pilot_id", "contact_channel", "contact_value",
+        "selected_angle_status", "presend_status",
+    }
+
+
+def test_external_reconciliation_and_duplicate_attempt_never_restore_unsent_eligibility(tmp_path):
+    store = PilotStore(tmp_path / "cohort.json", tmp_path / "events.json")
+    store.save_cohort(_cohort())
+    identifier = store.effective()[0]["pilot_id"]
+    store.transition(identifier, "MANUAL_REVIEW", "operator")
+    kwargs = {
+        "recipient": "office@example.ca", "subject": "Subject",
+        "activity_references": ["gmail:gregory-style"],
+    }
+    store.record_external_send(identifier, "operator", **kwargs)
+    with pytest.raises(ValueError, match="already-contacted"):
+        store.record_external_send(identifier, "operator", **kwargs)
+    assert store.next_unsent(limit=5) == []
+    assert store.contact_history(identifier)["reasons"][0]["reason"] == "EXTERNAL_SEND_RECONCILIATION"
+    record, page = _record()
+    with pytest.raises(ValueError, match="prior external contact"):
+        build_first_prospect_package(store, identifier, [record], [page])
+
+
+@pytest.mark.parametrize("malformed", [
+    {"event_id": "bad-contact-state", "event_type": "STATE_TRANSITION"},
+    {
+        "event_id": "unknown-contact-event", "event_type": "STATE_TRNSITION",
+        "to_state": "CONTACTED", "outreach_sent": False,
+    },
+])
+def test_malformed_contact_history_fails_closed_and_blocks_initial_preparation(tmp_path, malformed):
+    store = PilotStore(tmp_path / "cohort.json", tmp_path / "events.json")
+    store.save_cohort(_cohort())
+    prospect = store.effective()[0]
+    malformed_event = {
+        **malformed,
+        "pilot_id": prospect["pilot_id"], "organization_id": prospect["organization_id"],
+    }
+    store.events_path.write_text(json.dumps([malformed_event]), encoding="utf-8")
+
+    assessment = store.contact_history(prospect["pilot_id"])
+    assert assessment["ambiguous"] is True
+    assert assessment["eligible_as_unsent"] is False
+    assert store.next_unsent(limit=5) == []
+    with pytest.raises(ValueError, match="ambiguous contact history"):
+        store.prepare_draft(prospect["pilot_id"], "operator")
+
+
+def test_next_unsent_cli_is_read_only(tmp_path, capsys):
+    cohort_path = tmp_path / "cohort.json"
+    events_path = tmp_path / "events.json"
+    store = PilotStore(cohort_path, events_path)
+    store.save_cohort(_cohort())
+    events_path.write_text("[]\n", encoding="utf-8")
+    before_cohort = cohort_path.read_bytes()
+    before_events = events_path.read_bytes()
+
+    pilot_main([
+        "--cohort", str(cohort_path), "--events", str(events_path),
+        "next-unsent", "--limit", "5",
+    ])
+    output = json.loads(capsys.readouterr().out)
+    assert len(output) == 1
+    assert cohort_path.read_bytes() == before_cohort
+    assert events_path.read_bytes() == before_events

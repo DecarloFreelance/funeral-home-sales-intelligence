@@ -135,6 +135,25 @@ def test_stale_evidence_and_changed_identity_invalidate_advisory(tmp_path):
     assert any("identity changed" in value for value in changed["limitations"])
 
 
+def test_feasibility_evaluates_current_superseding_angle(tmp_path):
+    store, record = _store(tmp_path)
+    form = _form()
+    v1 = _select(store, record, form)
+    payload = {
+        **_angle(),
+        "angle_id": "example.ca-form-labels-v2",
+        "supersedes_angle_id": v1["angle_id"],
+        "draft_preview": {
+            **_angle()["draft_preview"],
+            "subject": "A revised contact-form detail",
+        },
+    }
+    v2, _ = store.select_angle("example.ca", payload, "operator", [record], {"forms": [form]})
+    advisory = _evaluate(tmp_path, store, record, form)
+    assert advisory["angle_id"] == v2["angle_id"]
+    assert advisory["evidence_ids"] == v2["evidence_ids"]
+    assert advisory["angle_evidence_fingerprint"] == v2["evidence_fingerprint"]
+
 def test_expired_selected_fact_is_not_reused_as_current_evidence(tmp_path):
     store, record = _store(tmp_path)
     fact = record["enrichment"]["facts"][0]

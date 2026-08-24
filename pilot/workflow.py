@@ -76,6 +76,12 @@ TRANSITIONS = {
     "DEFERRED": {"MANUAL_REVIEW", "DISQUALIFIED"},
     "WON": set(), "LOST": set(), "DISQUALIFIED": set(),
 }
+CONTACT_IMPLYING_STATES = {
+    "CONTACTED", "REPLIED", "MEETING", "PROPOSAL", "WON", "LOST",
+}
+INITIAL_OUTREACH_STATES = {
+    "CANDIDATE", "MANUAL_REVIEW", "APPROVED_FOR_CONTACT", "CONTACT_PREPARED",
+}
 POSITIVE_FIELDS = {
     "organization.social_profile": ("public_social_link", "Our scan observed a public social profile linked from the website."),
     "business.careers_page": ("careers_page", "Our scan observed a publicly linked careers page."),
@@ -391,6 +397,65 @@ def _lifecycle_state(event: Dict[str, Any]) -> str | None:
     return None
 
 
+def assess_contact_history(events: Iterable[Dict[str, Any]], *, pilot_id: str,
+                           organization_id: str) -> Dict[str, Any]:
+    """Return the fail-closed, append-only external-contact assessment."""
+    reasons = []
+    ambiguous = []
+    for index, event in enumerate(events):
+        if not isinstance(event, dict):
+            ambiguous.append({"event_index": index, "reason": "NON_OBJECT_EVENT"})
+            continue
+        matches_pilot = event.get("pilot_id") == pilot_id
+        matches_organization = event.get("organization_id") == organization_id
+        if not (matches_pilot or matches_organization):
+            continue
+        if not (matches_pilot and matches_organization):
+            ambiguous.append({
+                "event_id": event.get("event_id"),
+                "event_type": event.get("event_type"),
+                "reason": "PILOT_ORGANIZATION_IDENTITY_MISMATCH",
+            })
+            continue
+        event_type = event.get("event_type")
+        if event_type == "EXTERNAL_SEND_RECONCILIATION":
+            if event.get("to_state") != "CONTACTED" or event.get("outreach_sent") is not True:
+                ambiguous.append({
+                    "event_id": event.get("event_id"), "event_type": event_type,
+                    "reason": "MALFORMED_EXTERNAL_SEND_RECONCILIATION",
+                })
+            else:
+                reasons.append({
+                    "event_id": event.get("event_id"), "event_type": event_type,
+                    "to_state": "CONTACTED", "reason": "EXTERNAL_SEND_RECONCILIATION",
+                })
+        elif event_type == "STATE_TRANSITION":
+            to_state = event.get("to_state")
+            if to_state not in STATES:
+                ambiguous.append({
+                    "event_id": event.get("event_id"), "event_type": event_type,
+                    "reason": "INVALID_OR_MISSING_TRANSITION_STATE",
+                })
+            elif to_state in CONTACT_IMPLYING_STATES:
+                reasons.append({
+                    "event_id": event.get("event_id"), "event_type": event_type,
+                    "to_state": to_state, "reason": f"REACHED_{to_state}",
+                })
+        elif (event.get("outreach_sent") is True
+              or event.get("to_state") in CONTACT_IMPLYING_STATES):
+            ambiguous.append({
+                "event_id": event.get("event_id"), "event_type": event_type,
+                "reason": "UNRECOGNIZED_CONTACT_BEARING_EVENT",
+            })
+    return {
+        "ever_contacted": bool(reasons),
+        "ambiguous": bool(ambiguous),
+        "eligible_as_unsent": not reasons and not ambiguous,
+        "reasons": reasons,
+        "ambiguities": ambiguous,
+    }
+
+
 def build_stats(cohort: Dict[str, Any], events: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
     events = list(events)
     states = {item["pilot_id"]: item.get("initial_state", "CANDIDATE") for item in cohort.get("prospects") or []}
@@ -418,7 +483,16 @@ def build_stats(cohort: Dict[str, Any], events: Iterable[Dict[str, Any]]) -> Dic
                 reply_sentiments[identifier] = event["reply_sentiment"]
         elif event.get("event_type") == "OFFER_ASSIGNED":
             offers[identifier] = event
-    contacted = reached["CONTACTED"]
+    prospects_by_pilot = {
+        item["pilot_id"]: item for item in cohort.get("prospects") or []
+    }
+    contacted = {
+        identifier for identifier, prospect in prospects_by_pilot.items()
+        if assess_contact_history(
+            events, pilot_id=identifier,
+            organization_id=prospect["organization_id"],
+        )["ever_contacted"]
+    }
     replied = reached["REPLIED"]
     positive = {value for value, sentiment in reply_sentiments.items() if sentiment == "POSITIVE"}
     meetings, proposals, wins = reached["MEETING"], reached["PROPOSAL"], reached["WON"]
@@ -498,6 +572,13 @@ class PilotStore:
                 state = event_state
         return state
 
+    def contact_history(self, identifier: str) -> Dict[str, Any]:
+        prospect = self._prospect(identifier)
+        return assess_contact_history(
+            self.events(), pilot_id=prospect["pilot_id"],
+            organization_id=prospect["organization_id"],
+        )
+
     def presend_review(self, identifier: str) -> Dict[str, Any]:
         prospect = self._prospect(identifier)
         event = next((
@@ -531,8 +612,25 @@ class PilotStore:
 
     def selected_angle(self, identifier: str) -> Dict[str, Any] | None:
         prospect = self._prospect(identifier)
-        return next((value for value in reversed(self.history(prospect["pilot_id"]))
-                     if value.get("event_type") == "COMMERCIAL_ANGLE_SELECTED"), None)
+        selected = None
+        for event in self.history(prospect["pilot_id"]):
+            if event.get("event_type") != "COMMERCIAL_ANGLE_SELECTED":
+                continue
+            if selected is None and event.get("organization_id") == prospect["organization_id"]:
+                selected = event
+            elif (selected is not None
+                  and event.get("organization_id") == prospect["organization_id"]
+                  and event.get("supersedes_angle_id") == selected.get("angle_id")
+                  and event.get("angle_id") != selected.get("angle_id")
+                  and all(event.get(key) == selected.get(key) for key in (
+                      "angle_type", "customer_safe_observation", "proposed_improvement",
+                      "safety_classification", "evidence_ids", "evidence_fingerprint",
+                      "organization_fingerprint",
+                  ))
+                  and any((event.get("draft_preview") or {}).get(key) != (selected.get("draft_preview") or {}).get(key)
+                          for key in ("subject", "body"))):
+                selected = event
+        return selected
 
     def select_angle(self, identifier: str, angle: Dict[str, Any], actor: str,
                      records: Iterable[Dict[str, Any]], forms: Dict[str, Any]):
@@ -549,10 +647,46 @@ class PilotStore:
         record = next((value for value in records if value.get("domain") == prospect["organization_id"]), None)
         if not record:
             raise ValueError("Current organization evidence is missing")
+        current = self.selected_angle(prospect["pilot_id"])
+        supersedes_angle_id = str(angle.get("supersedes_angle_id") or "") or None
+        if current is not None:
+            if _record_identity(record) != current.get("organization_fingerprint"):
+                raise ValueError("Selected commercial-angle organization identity changed")
+            if _angle_fingerprint(record, forms, evidence_ids) != current.get("evidence_fingerprint"):
+                raise ValueError("Selected commercial-angle evidence is stale or materially changed")
+            if str(angle.get("angle_id") or "") == current.get("angle_id"):
+                comparable = (
+                    "angle_type", "customer_safe_observation", "proposed_improvement",
+                    "safety_classification",
+                )
+                current_draft = current.get("draft_preview") or {}
+                proposed_draft = angle.get("draft_preview") or {}
+                if (all(angle.get(key) == current.get(key) for key in comparable)
+                        and evidence_ids == sorted(current.get("evidence_ids") or [])
+                        and all(proposed_draft.get(key) == current_draft.get(key) for key in ("subject", "body"))):
+                    return current, False
+                raise ValueError("Selected commercial angle ID already exists with different content")
+            if supersedes_angle_id != current.get("angle_id"):
+                raise ValueError("A new selected commercial angle must supersede the current angle")
+            invariant_fields = (
+                "angle_type", "customer_safe_observation", "proposed_improvement",
+                "safety_classification",
+            )
+            if any(angle.get(key) != current.get(key) for key in invariant_fields):
+                raise ValueError("A commercial-angle revision must preserve the selected observation and improvement")
+            if evidence_ids != sorted(current.get("evidence_ids") or []):
+                raise ValueError("A commercial-angle revision must preserve supporting evidence")
+            current_draft = current.get("draft_preview") or {}
+            proposed_draft = angle.get("draft_preview") or {}
+            if all(proposed_draft.get(key) == current_draft.get(key) for key in ("subject", "body")):
+                raise ValueError("A commercial-angle revision requires materially changed customer-facing copy")
+        elif supersedes_angle_id:
+            raise ValueError("Superseded commercial angle does not belong to this organization")
         event = {
             "schema_version": 1, "event_type": "COMMERCIAL_ANGLE_SELECTED",
             "pilot_id": prospect["pilot_id"], "organization_id": prospect["organization_id"],
             "angle_id": str(angle.get("angle_id") or _stable(prospect["organization_id"], angle)),
+            "supersedes_angle_id": supersedes_angle_id,
             "angle_type": str(angle.get("angle_type") or "EVIDENCE_SPECIFIC"),
             "customer_safe_observation": angle.get("customer_safe_observation"),
             "proposed_improvement": angle.get("proposed_improvement"),
@@ -668,6 +802,42 @@ class PilotStore:
                 value.update(draft_status="PREPARED_UNSENT", guarded_draft_preview=draft)
             effective.append(value)
         return effective
+
+    def next_unsent(self, *, limit: int = 1) -> List[Dict[str, Any]]:
+        if limit < 1:
+            raise ValueError("Limit must be at least 1")
+        ranked = []
+        for item in self.cohort().get("prospects", []):
+            history = self.contact_history(item["pilot_id"])
+            if not history["eligible_as_unsent"]:
+                continue
+            current_state = self.state(item["pilot_id"])
+            presend = self.presend_review(item["pilot_id"])
+            if current_state not in INITIAL_OUTREACH_STATES:
+                continue
+            if presend.get("status") == "DO_NOT_CONTACT":
+                continue
+            contact = item.get("selected_contact") or {}
+            angle = self.selected_angle(item["pilot_id"])
+            ranked.append({
+                "organization_name": item.get("organization_name"),
+                "organization_id": item["organization_id"],
+                "pilot_id": item["pilot_id"],
+                "score": item.get("selection_score_internal"),
+                "current_state": current_state,
+                "contact_channel": contact.get("channel"),
+                "contact_value": contact.get("value"),
+                "selected_angle_status": (
+                    "SELECTED" if angle else "NO_SELECTED_COMMERCIAL_ANGLE"
+                ),
+                "selected_angle_id": angle.get("angle_id") if angle else None,
+                "presend_status": presend.get("status"),
+            })
+        return sorted(
+            ranked,
+            key=lambda value: (-(value["score"] if isinstance(value["score"], (int, float)) else -1),
+                               value["organization_id"]),
+        )[:limit]
 
     def _append(self, event: Dict[str, Any]) -> tuple[Dict[str, Any], bool]:
         lock_path = self.events_path.with_suffix(self.events_path.suffix + ".lock")
@@ -812,6 +982,10 @@ class PilotStore:
 
     def prepare_draft(self, identifier: str, actor: str, *, records=None, forms=None) -> tuple[Dict[str, Any], bool]:
         prospect = self._prospect(identifier)
+        contact_history = self.contact_history(prospect["pilot_id"])
+        if not contact_history["eligible_as_unsent"]:
+            reason = "prior external contact" if contact_history["ever_contacted"] else "ambiguous contact history"
+            raise ValueError(f"Fresh initial outreach draft blocked by {reason}")
         if self.state(prospect["pilot_id"]) == "CONTACT_PREPARED":
             existing = next((event for event in reversed(self.history(prospect["pilot_id"])) if event.get("draft")), None)
             return existing, False

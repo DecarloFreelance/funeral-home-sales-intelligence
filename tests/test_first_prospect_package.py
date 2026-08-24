@@ -144,3 +144,22 @@ def test_generated_pathway_angle_still_fails_closed_for_foreign_or_missing_evide
     missing = {**angle, "evidence_ids": ["missing-current-evidence"]}
     with pytest.raises(ValueError, match="evidence is missing"):
         store.select_angle("example.ca", missing, "operator", [record], {"forms": []})
+
+
+def test_pathway_package_generates_v2_for_matching_selected_v1(tmp_path):
+    store, record, page = _prepared(
+        tmp_path, "gregorysfuneralhomes.com", "Gregory's Funeral Home Inc.",
+    )
+    first = build_first_prospect_package(store, "gregorysfuneralhomes.com", [record], [page])
+    v1 = first["selected_angles"][0]
+    selected, _ = store.select_angle(
+        "gregorysfuneralhomes.com", v1, "operator", [record], {"forms": []},
+    )
+    revised = build_first_prospect_package(store, "gregorysfuneralhomes.com", [record], [page])
+    v2 = revised["selected_angles"][0]
+    assert v2["angle_id"] == "gregorysfuneralhomes.com-prearrangement-pathway-review-v2"
+    assert v2["supersedes_angle_id"] == selected["angle_id"]
+    assert v2["angle_type"] == selected["angle_type"]
+    assert v2["customer_safe_observation"] == selected["customer_safe_observation"]
+    assert v2["proposed_improvement"] == selected["proposed_improvement"]
+    assert sorted(v2["evidence_ids"]) == selected["evidence_ids"]

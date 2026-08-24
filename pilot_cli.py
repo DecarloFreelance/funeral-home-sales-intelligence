@@ -36,6 +36,8 @@ def main(argv=None):
     package.add_argument("--forms", type=Path, default=Path("data/generated/forms/form_intelligence.json"))
     package.add_argument("--output", type=Path, default=root / "first_prospect.json")
     listing = sub.add_parser("list"); listing.add_argument("--state")
+    next_unsent = sub.add_parser("next-unsent")
+    next_unsent.add_argument("--limit", type=int, default=1)
     for name in ("show", "audit", "history", "presend"):
         target = sub.add_parser(name); target.add_argument("identifier")
     angle = sub.add_parser("angle"); angle.add_argument("identifier")
@@ -93,6 +95,8 @@ def main(argv=None):
         output = store.effective()
         if args.state:
             output = [item for item in output if item["current_state"] == args.state.upper()]
+    elif args.command == "next-unsent":
+        output = store.next_unsent(limit=args.limit)
     elif args.command == "show":
         output = next((item for item in store.effective() if args.identifier in {item["pilot_id"], item["organization_id"]}), None)
         if output is None: parser.error("unknown pilot prospect")

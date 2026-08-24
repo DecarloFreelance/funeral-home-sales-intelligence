@@ -1,10 +1,38 @@
 # Product Task List
 
-Last reconciled: 2026-08-23
+Last reconciled: 2026-08-24
 
 This file tracks current work. Historical v34/v35 recommendations are preserved
 in the handoff and audit documents; they are not active tasks unless listed
 below.
+
+## Selected-angle revision safety (2026-08-24)
+
+- [x] **GAP-2026-026 (HIGH): supersede materially outdated customer-facing
+  angle copy without rewriting selected-angle history.** Evidence: Gregory's
+  immutable v1 selection retained unresolved sender placeholders after the
+  package generator was hardened. Require an explicit same-organization,
+  same-observation, same-improvement, same-evidence supersession chain; resolve
+  the current angle deterministically; reject missing, foreign, or stale
+  evidence; and keep draft preparation and implementation feasibility bound to
+  the current revision. Validated with append-only, idempotency, adversarial,
+  downstream-consumer, and named pilot regression tests.
+
+## Duplicate-contact safety (2026-08-24)
+
+- [x] **GAP-2026-027 (CRITICAL): prevent prior-contact prospects from being
+  presented or prepared as fresh initial outreach.** Evidence: Gregory was
+  manually emailed while its projected state still appeared eligible, then
+  received a duplicate message before external-send event
+  `e259499faca544f70e7d1364` was reconciled. Centralize append-only contact
+  history assessment across stats, selection, and draft preparation; fail
+  closed on ambiguous lifecycle evidence; add a read-only ranked `next-unsent`
+  command; and prove real pilot history and event bytes remain unchanged.
+  Validated with transition, reconciliation, progressed-state, ranking,
+  malformed-history, preparation-guard, idempotency, and read-only tests. The
+  real command excluded all five contacted cohort members and preserved the
+  27-event file byte-for-byte at SHA-256
+  `edd4c9048ae10c198b563bcd9ba59ba9acc2f4a5b3a791c6369b5399b0bbb289`.
 
 ## Completed
 
