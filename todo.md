@@ -240,6 +240,21 @@ entity identity. A 15-record sample across the eight provinces represented by
 automatic resolutions matched fetched page title/location evidence. No merge,
 parent/branch reassignment, CRM bulk sync, or outreach occurred.
 
+## Manual ambiguity review (2026-08-24)
+
+- [x] **GAP-2026-026 (HIGH): add an auditable finding-level manual-review
+  workflow.** Generate stable review IDs from source findings; retain research
+  questions, evidence, location, and related-entity context; append rather than
+  overwrite decisions; preserve conflicting history; require evidence for
+  resolving dispositions; derive eligibility without mutating canonical data.
+
+Scale evidence: the same 99 review-required organizations produce 131 stable
+finding-level items (47 duplicate, 44 no-website, 21 email, nine multi-location,
+eight shared-address, and two website-identity). A repeated refresh is
+byte-identical. Before operator decisions, 131 remain unresolved, 102 block CRM,
+and all 131 block outreach. No generated decision, entity merge, page/contact
+movement, or readiness change was fabricated during validation.
+
 ## Data and Release Hygiene
 
 - [x] Align `verify_audit.py` with the production feature detector. Discovered
@@ -266,7 +281,7 @@ parent/branch reassignment, CRM bulk sync, or outreach occurred.
 
 ## Current Verification
 
-- Automated tests: 147 passing on 2026-08-24.
+- Automated tests: 155 passing on 2026-08-24.
 - Local enrichment validation: 35 organizations, 1,610 unique facts across 24
   fields, 15 explicit review records, and a 70-of-70 unchanged-task skip on the
   second run. No uncontrolled enrichment network requests were made.

@@ -57,6 +57,17 @@ class GapMetricsTests(unittest.TestCase):
             "outcomes": {"LOCATION_PAGE_CONFIRMED": 1, "REQUIRES_REVIEW": 1},
         })
 
+    def test_includes_manual_review_burden_without_changing_source_findings(self):
+        item = {
+            "review_id": "review-1", "organization_id": "example.ca",
+            "finding_type": "EMAIL_DOMAIN_MISMATCH", "province": "AB",
+            "finding_snapshot": {"severity": "MEDIUM", "requires_review": True},
+        }
+        metrics = build_metrics(*self.fixture(), manual_review=[item], manual_decisions=[])
+        self.assertEqual(metrics["manual_review"]["total_review_items"], 1)
+        self.assertEqual(metrics["manual_review"]["unresolved"], 1)
+        self.assertEqual(metrics["quality_findings"], {"EMAIL_DOMAIN_MISMATCH": 1})
+
     def test_flags_material_regression_not_small_change(self):
         before = build_metrics(*self.fixture(), now=datetime(2025, 5, 1, tzinfo=timezone.utc))
         before["review_rate_percent"] = 0

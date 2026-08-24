@@ -22,7 +22,8 @@ def _stale(fact, now):
         return False
 
 
-def build_metrics(results, review, state, audit, *, now=None, baseline=None, crawl=None, research=None):
+def build_metrics(results, review, state, audit, *, now=None, baseline=None, crawl=None,
+                  research=None, manual_review=None, manual_decisions=None):
     now = now or datetime.now(timezone.utc)
     results = list(results)
     review = list(review)
@@ -157,6 +158,12 @@ def build_metrics(results, review, state, audit, *, now=None, baseline=None, cra
             "ambiguous": sum(not bool((question.get("outcome") or {}).get("resolved")) for question in questions),
             "outcomes": dict(sorted(outcomes.items())),
         }
+    if isinstance(manual_review, list):
+        from review.manual import review_metrics
+        metrics["manual_review"] = review_metrics(
+            manual_review,
+            manual_decisions if isinstance(manual_decisions, list) else [],
+        )
     metrics["regressions"] = compare_metrics(baseline, metrics) if baseline else []
     fingerprint_value = {
         key: value for key, value in metrics.items()

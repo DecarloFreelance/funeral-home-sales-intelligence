@@ -61,6 +61,30 @@ confidence, and refusal reasons. It can authorize only a strongly matched
 network location page; branch identity remains local, generic parent contact
 pages are excluded, and insufficient evidence remains operator-reviewable.
 
+Generate and work the deterministic manual-review queue without changing source
+findings or canonical entities:
+
+```bash
+python review_cli.py refresh \
+  --review data/generated/enrichment/review_queue.json \
+  --research data/generated/enrichment/research_resolution_results.json \
+  --records data/generated/enrichment/results.json
+python review_cli.py list --status UNRESOLVED
+python review_cli.py show REVIEW_ID
+python review_cli.py decide REVIEW_ID DEFER --actor OPERATOR
+python review_cli.py history REVIEW_ID
+python review_cli.py stats
+python review_cli.py apply \
+  --output data/generated/manual_review/effective_review.json
+```
+
+Resolving decisions require explicit evidence references. Decisions are
+append-only, exact repeats are idempotent, and later conflicts remain linked in
+history. The applied artifact is a non-destructive eligibility view: it never
+merges entities or moves pages/contacts. Confirmed duplicates and relationship
+decisions awaiting recrawl or CRM-scope mapping remain fail-closed. Manual
+decisions are local dispositions, not signals that loosen automatic thresholds.
+
 For the reproducible 211-domain Canadian scale workflow—including approved
 AFSA/CANA discovery, checkpointed crawling, queue-backed zero-page handling,
 scoring, enrichment, metrics, research output, and representative localhost

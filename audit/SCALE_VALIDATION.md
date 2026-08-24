@@ -62,6 +62,13 @@ python run_research_resolution.py \
   --queue data/generated/scale/research_resolution_queue.json \
   --state data/generated/scale/research_agent_state.json \
   --audit data/generated/scale/research_agent_audit.json
+python review_cli.py \
+  --queue data/generated/scale/manual_review_queue.json \
+  --decisions data/generated/scale/manual_review_decisions.json \
+  refresh \
+  --review data/generated/scale/review_queue.json \
+  --research data/generated/scale/research_resolution_results.json \
+  --records data/generated/scale/enriched_results.json
 ```
 
 The crawl command checkpoints atomically after every domain. `--resume` skips

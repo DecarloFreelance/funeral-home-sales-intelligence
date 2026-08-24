@@ -415,3 +415,25 @@ and rejected suspicions so they are not repeatedly rediscovered.
   reason; skip unchanged work.
 - Status: VALIDATED — all 130 current finding/entity pairs have structured
   questions and the unchanged production repeat skipped 172/172 resolver tasks.
+
+### GAP-2026-026 — Genuine ambiguities lack a durable finding-level decision workflow
+
+- Discovered: 2026-08-24
+- Category: operator workflow / auditability
+- Severity: HIGH
+- Evidence: 99 organizations retained 131 review-required findings after safe
+  automatic resolution. Existing reviewed-domain replacement overwrote one
+  domain decision and could not represent duplicate, address, email, or
+  multi-location dispositions without mutating research inputs.
+- Root cause: operator tooling exposed findings and research refusals but had no
+  stable review-item identity, append-only decision history, or non-destructive
+  eligibility interpretation.
+- Acceptance: deterministic finding-level queue; append-only evidence-referenced
+  decisions; idempotent exact repeats; visible conflicts; fail-closed duplicate,
+  recrawl, and CRM-scope states; CLI list/show/decide/history/stats/apply;
+  outcome metrics and regression tests; no entity/page/contact mutation.
+- Status: VALIDATED — the scale queue deterministically contains 131 items across
+  the same 99 organizations and is byte-identical on repeat. With no operator
+  decisions, all 131 remain unresolved, 102 block CRM safety, and 131 block
+  outreach. Focused tests cover history, idempotency, CLI behavior, sibling
+  isolation, non-merging duplicate confirmation, and explicit eligibility.
