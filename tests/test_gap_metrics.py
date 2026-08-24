@@ -46,6 +46,17 @@ class GapMetricsTests(unittest.TestCase):
         self.assertEqual(metrics["crawl"]["successful_domains"], 1)
         self.assertEqual(metrics["crawl"]["attempt_outcomes"]["REQUEST_ERROR"], 1)
 
+    def test_includes_research_resolution_outcomes(self):
+        research = [{"research_resolution": {"questions": [
+            {"outcome": {"outcome": "LOCATION_PAGE_CONFIRMED", "resolved": True}},
+            {"outcome": {"outcome": "REQUIRES_REVIEW", "resolved": False}},
+        ]}}]
+        metrics = build_metrics(*self.fixture(), research=research)
+        self.assertEqual(metrics["research_resolution"], {
+            "candidates": 1, "questions": 2, "resolved": 1, "ambiguous": 1,
+            "outcomes": {"LOCATION_PAGE_CONFIRMED": 1, "REQUIRES_REVIEW": 1},
+        })
+
     def test_flags_material_regression_not_small_change(self):
         before = build_metrics(*self.fixture(), now=datetime(2025, 5, 1, tzinfo=timezone.utc))
         before["review_rate_percent"] = 0

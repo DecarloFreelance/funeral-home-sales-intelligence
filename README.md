@@ -50,6 +50,17 @@ shows direct versus derived facts, source evidence, confidence/conflicts,
 freshness, and recommended research actions. See
 `audit/ENRICHMENT_AUTOMATION.md` for contracts and recovery behavior.
 
+Resolve bounded quality ambiguities from retained public evidence with:
+
+```bash
+python run_research_resolution.py
+```
+
+The durable resolver records per-finding questions, checked source classes,
+confidence, and refusal reasons. It can authorize only a strongly matched
+network location page; branch identity remains local, generic parent contact
+pages are excluded, and insufficient evidence remains operator-reviewable.
+
 For the reproducible 211-domain Canadian scale workflow—including approved
 AFSA/CANA discovery, checkpointed crawling, queue-backed zero-page handling,
 scoring, enrichment, metrics, research output, and representative localhost
@@ -60,7 +71,8 @@ Generate a repeatable coverage, quality, freshness, readiness, and agent-run
 snapshot after enrichment with:
 
 ```bash
-python generate_gap_metrics.py
+python generate_gap_metrics.py \
+  --research-results data/generated/enrichment/research_resolution_results.json
 ```
 
 Identical snapshots are not duplicated in history. Material organization/fact or

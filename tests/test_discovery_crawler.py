@@ -133,6 +133,24 @@ class PriorityPageCrawlerTests(unittest.TestCase):
         }), [])
         self.assertEqual(session.requested, [])
 
+    def test_crawls_only_explicit_high_confidence_location_resolution_under_original_entity(self):
+        target = "https://network.example/calgary/example-funeral-home/42"
+        session = FakeSession({target: FakeResponse(target, "<html><body>Example Funeral Home Calgary <a href='/contact-us'>Contact</a></body></html>")})
+        crawler = PriorityPageCrawler(session=session, host_resolver=PUBLIC_RESOLVER)
+        lead = {
+            "domain": "example.ca", "url": target,
+            "resolution": {"outcome": "LOCATION_PAGE_CONFIRMED", "resolved": True,
+                "confidence": 0.95, "official_website": target},
+        }
+        records = crawler.crawl_lead(lead)
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0]["discovery"]["queue_domain"], "example.ca")
+        self.assertEqual(records[0]["url"], target)
+        self.assertEqual(session.requested, [(target, 15)])
+
+        lead["resolution"]["confidence"] = 0.89
+        self.assertEqual(crawler.crawl_lead(lead), [])
+
     def test_queue_report_identifies_domains_without_pages(self):
         homepage = "https://example.com/"
         session = FakeSession({

@@ -44,6 +44,33 @@ class OperatorUiTests(unittest.TestCase):
         self.assertIn(b"Example Home", queue.data)
         self.assertIn(b"example.com", queue.data)
 
+    def test_research_queue_explains_why_automation_refused_resolution(self):
+        self.write_json("research_queue.json", [{
+            "company": "Example Home", "domain": "example.com",
+            "failure_reason": "No usable pages", "recommended_action": "Inspect official sources",
+        }])
+        self.write_json("generated/enrichment/research_resolution_results.json", [{
+            "domain": "example.com", "research_resolution": {"questions": [{
+                "question": "Does this organization have an official website?",
+                "candidate_sources": ["first_party_redirect", "association_directory"],
+                "outcome": {"outcome": "REQUIRES_REVIEW", "confidence": 0.0,
+                    "reason": "Evidence does not meet the identity threshold."},
+            }]},
+        }])
+
+        response = self.client.get("/research")
+
+        self.assertIn(b"Does this organization have an official website?", response.data)
+        self.assertIn(b"REQUIRES_REVIEW", response.data)
+        self.assertIn(b"Evidence does not meet the identity threshold.", response.data)
+
+        self.write_json("generated/enrichment/review_queue.json", [{
+            "domain": "example.com", "status": "NEEDS_REVIEW", "findings": [],
+        }])
+        quality = self.client.get("/quality")
+        self.assertIn(b"Does this organization have an official website?", quality.data)
+        self.assertIn(b"Research conclusions and refusals", quality.data)
+
     def test_lead_list_links_to_escaped_detail(self):
         self.write_json("generated/campaign/results.json", [{
             "domain": "example.com",

@@ -216,7 +216,29 @@ The controlled crawl reused 31 domains and attempted 180; 22 new domains yielded
 45 pages and 158 remained in the research queue. All 211 organizations were
 scored/enriched into 3,257 facts across 25 fields. The repeat pass skipped
 422/422 tasks. Zero provenance omissions, duplicate fact IDs, stale facts, agent
-failures, or metric regressions were observed. See `audit/SCALE_VALIDATION.md`.
+ failures, or metric regressions were observed. See `audit/SCALE_VALIDATION.md`.
+
+## Ambiguity resolution (2026-08-24)
+
+- [x] **GAP-2026-023 (HIGH): recover exact parent-network location pages without
+  collapsing branch identity.** Require directly observed legacy-domain redirect
+  plus strong name/location evidence; retain provenance and original entity ID;
+  leave weak candidates unresolved.
+- [x] **GAP-2026-024 (HIGH): isolate shared parent URLs and location-scope crawl
+  evidence.** Persist by organization plus URL, replace successful per-entity
+  recrawls atomically, and exclude generic parent contact/about pages.
+- [x] **GAP-2026-025 (MEDIUM): give every quality finding an explicit durable
+  research question.** Include review-only entities, preserve refusal reasons,
+  expose them to operators, and measure outcomes and idempotency.
+
+Production evidence: 172 candidates produced 245 explicit questions; 116 were
+safely resolved (115 exact location pages and one existing first-party email
+confirmation), while 129 remain unresolved. Review-required fell 172→99;
+`NO_USABLE_WEBSITE_EVIDENCE` fell 159→44; CRM-safe rose 45→122 and
+outreach-ready 39→112. All 115 location pages were fetched under their original
+entity identity. A 15-record sample across the eight provinces represented by
+automatic resolutions matched fetched page title/location evidence. No merge,
+parent/branch reassignment, CRM bulk sync, or outreach occurred.
 
 ## Data and Release Hygiene
 
@@ -244,7 +266,7 @@ failures, or metric regressions were observed. See `audit/SCALE_VALIDATION.md`.
 
 ## Current Verification
 
-- Automated tests: 136 passing on 2026-08-23.
+- Automated tests: 147 passing on 2026-08-24.
 - Local enrichment validation: 35 organizations, 1,610 unique facts across 24
   fields, 15 explicit review records, and a 70-of-70 unchanged-task skip on the
   second run. No uncontrolled enrichment network requests were made.

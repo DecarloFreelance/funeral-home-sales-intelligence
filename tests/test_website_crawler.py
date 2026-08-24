@@ -61,6 +61,29 @@ class WebsiteCrawlerRecoveryTests(unittest.TestCase):
             self.assertEqual(summary["queued_domains"], 2)
             self.assertEqual(summary["successful_domains"], 2)
 
+    def test_append_keeps_shared_urls_separate_and_replaces_entity_pages(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            queue, output = root / "queue.json", root / "pages.json"
+            queue.write_text(json.dumps([
+                {"domain": "one.example", "url": "https://network.example/location/1"},
+                {"domain": "two.example", "url": "https://network.example/location/1"},
+            ]), encoding="utf-8")
+            output.write_text(json.dumps([
+                {"url": "https://network.example/stale", "discovery": {"queue_domain": "one.example"}},
+            ]), encoding="utf-8")
+
+            with patch("website_crawler.PriorityPageCrawler", return_value=CompletingCrawler()):
+                crawl_queue(queue, output, append=True)
+
+            records = json.loads(output.read_text())
+            self.assertEqual(len(records), 2)
+            self.assertEqual(
+                {item["discovery"]["queue_domain"] for item in records},
+                {"one.example", "two.example"},
+            )
+            self.assertNotIn("https://network.example/stale", {item["url"] for item in records})
+
 
 if __name__ == "__main__":
     unittest.main()

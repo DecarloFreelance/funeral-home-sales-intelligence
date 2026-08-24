@@ -48,6 +48,11 @@ def _atomic_json(path, value):
     temporary.replace(path)
 
 
+def _record_key(record):
+    discovery = record.get("discovery") or {}
+    return (str(discovery.get("queue_domain") or record.get("domain") or ""), record.get("url"))
+
+
 def crawl_queue(
     input_path: Path,
     output_path: Path,
@@ -89,12 +94,18 @@ def crawl_queue(
         completed = {item.get("domain") for item in existing_report.get("leads", [])}
         selected = [lead for lead in selected if lead.get("domain") not in completed]
 
-    current_records = {item.get("url"): item for item in existing_records if item.get("url")}
+    current_records = {_record_key(item): item for item in existing_records if item.get("url")}
     current_report = existing_report
 
     def checkpoint(lead_records, lead_report):
         nonlocal current_report
-        current_records.update({item.get("url"): item for item in lead_records if item.get("url")})
+        # A successful per-entity result atomically supersedes that entity's old
+        # page set. Failures retain the last known usable evidence for recovery.
+        if lead_records:
+            entity = str(lead_report.get("domain") or "")
+            for key in [key for key in current_records if key[0] == entity]:
+                del current_records[key]
+            current_records.update({_record_key(item): item for item in lead_records if item.get("url")})
         current_report = merge_crawl_reports(current_report, {"leads": [lead_report]})
         _atomic_json(output_path, list(current_records.values()))
         if report_path is not None:

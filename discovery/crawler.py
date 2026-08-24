@@ -140,13 +140,21 @@ class PriorityPageCrawler:
         started = time.monotonic()
         domain = str(lead.get("domain", "")).lower().strip()
         homepage = _canonical_page_url(lead.get("url") or lead.get("website") or "")
+        resolution = lead.get("resolution") or {}
+        resolved_location = (
+            resolution.get("outcome") == "LOCATION_PAGE_CONFIRMED"
+            and resolution.get("resolved") is True
+            and float(resolution.get("confidence", 0)) >= 0.9
+            and _canonical_page_url(resolution.get("official_website", "")) == homepage
+        )
+        website_domain = (urlsplit(homepage).hostname or "").lower().removeprefix("www.")
         outcome = {
             "domain": domain,
             "status": "FAILED",
             "attempts": [],
             "pages": 0,
         }
-        if not domain or not homepage or not _same_domain(homepage, domain):
+        if not domain or not homepage or (not _same_domain(homepage, domain) and not resolved_location):
             outcome["reason"] = "INVALID_QUEUE_RECORD"
             self.last_lead_report = outcome
             return []
@@ -154,11 +162,11 @@ class PriorityPageCrawler:
         seeds = [homepage, *(lead.get("priority_urls") or [])]
         pending = deque(
             url for url in dict.fromkeys(_canonical_page_url(seed) for seed in seeds)
-            if url and _same_domain(url, domain)
+            if url and _same_domain(url, website_domain if resolved_location else domain)
         )
         visited = set()
         records = []
-        active_domain = domain
+        active_domain = website_domain if resolved_location else domain
         attempts = 0
 
         while (
@@ -286,9 +294,13 @@ class PriorityPageCrawler:
                 },
             })
 
-            for discovered in _priority_links(soup, final_url, active_domain):
-                if discovered not in visited:
-                    pending.append(discovered)
+            # A confirmed network location URL is scoped to one branch. Generic
+            # parent-domain contact/about pages can contain corporate contacts
+            # and must not be published as location evidence automatically.
+            if not resolved_location:
+                for discovered in _priority_links(soup, final_url, active_domain):
+                    if discovered not in visited:
+                        pending.append(discovered)
 
         outcome["pages"] = len(records)
         outcome["duration_ms"] = round((time.monotonic() - started) * 1000)

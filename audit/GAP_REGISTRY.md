@@ -335,8 +335,9 @@ and rejected suspicions so they are not repeatedly rediscovered.
   domains to location-specific Dignity Memorial URLs.
 - Status: NOT_A_DEFECT
 - Reason: collapsing branch URLs into one corporate domain would lose branch
-  identity. All 158 unresolved domains remain in the research queue with redirect
-  evidence for operator resolution.
+  identity. A later evidence-resolution pass confirmed that exact network
+  location pages can be crawled while retaining branch identity; corporate
+  domains themselves are still never merged (see GAP-2026-023).
 
 ### GAP-2026-021 — Every audit event reparses the complete audit history
 
@@ -367,3 +368,50 @@ and rejected suspicions so they are not repeatedly rediscovered.
   URLs; contact extraction uses the matching field source; regression tests.
 - Status: VALIDATED — queue and extractor tests prove complementary fields and
   their distinct evidence URLs survive repeated-source ingestion.
+
+### GAP-2026-023 — Safe location redirects are discarded with unsafe corporate redirects
+
+- Discovered: 2026-08-24
+- Category: research / entity resolution
+- Severity: HIGH
+- Evidence: 118 legacy business domains directly redirected to public Dignity or
+  Arbor pages, many containing the listed branch name and city. The safe crawler
+  correctly rejected every cross-domain redirect; corporate-domain merging would
+  destroy branch identity.
+- Root cause: redirect authorization had no provenance-backed location scope.
+- Acceptance: explicit question; require direct homepage redirect plus strong
+  name/location evidence; retain original entity; authorize only the exact page;
+  reject sibling/weak matches; preserve SSRF controls and unresolved review.
+- Status: VALIDATED — 115 location pages passed the tightened threshold and were
+  fetched exactly. Radville/Weyburn and one weak Toronto candidate were rejected
+  during adversarial review. A 15-record, eight-province sample matched fetched
+  first-party titles and location evidence.
+
+### GAP-2026-024 — Append crawl storage conflates organizations sharing one URL
+
+- Discovered: 2026-08-24
+- Category: data integrity / contact attribution
+- Severity: HIGH
+- Evidence: append storage keyed only by URL. Two Fletcher branch records
+  targeting one page silently replaced each other; successful location recrawls
+  also retained generic parent contact pages.
+- Root cause: URL-only persistence identity and unscoped parent link discovery.
+- Acceptance: key by organization plus URL; successful recrawl atomically
+  replaces that entity's pages; retain prior evidence on failed retry; location
+  resolution follows no generic parent links; regression coverage.
+- Status: VALIDATED — shared URLs remain distinct in tests, stale entity pages
+  are replaced, and all 115 production resolutions contain only their authorized
+  page under the original entity identity.
+
+### GAP-2026-025 — Crawlable-site quality findings lack research questions
+
+- Discovered: 2026-08-24
+- Category: automation / operator observability
+- Severity: MEDIUM
+- Evidence: the no-page input omitted 21 live finding/entity pairs on crawlable
+  sites, including multi-location, shared-address, and email questions.
+- Acceptance: union review-only entities into the durable run; map every current
+  finding to a question; expose checked sources, outcome, confidence, and refusal
+  reason; skip unchanged work.
+- Status: VALIDATED — all 130 current finding/entity pairs have structured
+  questions and the unchanged production repeat skipped 172/172 resolver tasks.

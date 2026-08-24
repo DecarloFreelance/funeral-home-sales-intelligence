@@ -55,12 +55,25 @@ python build_research_queue.py \
   --pages data/generated/scale/pages.json \
   --report data/generated/scale/crawl_report.json \
   --output data/generated/scale/research_queue.json
+python run_research_resolution.py \
+  --research data/generated/scale/research_queue.json \
+  --review data/generated/scale/review_queue.json \
+  --output data/generated/scale/research_resolution_results.json \
+  --queue data/generated/scale/research_resolution_queue.json \
+  --state data/generated/scale/research_agent_state.json \
+  --audit data/generated/scale/research_agent_audit.json
 ```
 
 The crawl command checkpoints atomically after every domain. `--resume` skips
 both successful and failed terminal domains from the same bounded run. Refreshes
 remain explicit; there is no uncontrolled recurring daemon, paid provider use,
 or outreach action.
+
+`research_resolution_queue.json` is an optional second crawl input containing
+only exact high-confidence parent-network location pages. Run it with `--append`,
+then repeat scoring, enrichment, and metrics. The crawler retains the original
+branch entity, crawls only the location page, and excludes generic parent
+contact/about pages from location evidence.
 
 ## Crawl and recovery evidence
 

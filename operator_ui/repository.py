@@ -30,7 +30,17 @@ class OperatorRepository:
 
     def research(self):
         value = self._json("research_queue.json", [])
-        return value if isinstance(value, list) else []
+        if not isinstance(value, list):
+            return []
+        resolutions = self._json("generated/enrichment/research_resolution_results.json", [])
+        by_domain = {
+            item.get("domain"): item.get("research_resolution")
+            for item in resolutions if isinstance(item, dict)
+        } if isinstance(resolutions, list) else {}
+        return [
+            {**item, "research_resolution": by_domain.get(item.get("domain"))}
+            for item in value
+        ]
 
     def leads(self):
         value = self._json("generated/enrichment/results.json", None)
@@ -51,7 +61,17 @@ class OperatorRepository:
 
     def quality_review(self):
         value = self._json("generated/enrichment/review_queue.json", [])
-        return value if isinstance(value, list) else []
+        if not isinstance(value, list):
+            return []
+        resolutions = self._json("generated/enrichment/research_resolution_results.json", [])
+        by_domain = {
+            item.get("domain"): item.get("research_resolution")
+            for item in resolutions if isinstance(item, dict)
+        } if isinstance(resolutions, list) else {}
+        return [
+            {**item, "research_resolution": by_domain.get(item.get("domain"))}
+            for item in value
+        ]
 
     def candidates(self):
         value = self._json("generated/platform/platform_candidate_results.json", [])
