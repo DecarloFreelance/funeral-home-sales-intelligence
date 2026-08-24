@@ -113,6 +113,11 @@ def analyze_page_forms(
     results = []
     for index, form in enumerate(soup.find_all("form")):
         controls = form.find_all(["input", "select", "textarea", "button"])
+        section_headings = []
+        for heading in form.find_all(["legend", "h1", "h2", "h3", "h4", "h5", "h6"]):
+            value = _normalize(heading.get_text(" ", strip=True))
+            if value and value not in section_headings:
+                section_headings.append(value)
         hidden = [control for control in controls if control.name == "input" and str(control.get("type", "text")).lower() == "hidden"]
         visible = [control for control in controls if control not in hidden]
         fields = []
@@ -159,6 +164,7 @@ def analyze_page_forms(
             "form_action": action, "form_method": str(form.get("method") or "GET").upper(),
             "action_scope": action_scope, "control_count": len(controls), "visible_control_count": len(fields),
             "visible_field_count": len(data_fields),
+            "section_count": len(section_headings), "section_headings": section_headings,
             "hidden_field_count": len(hidden), "text_like_count": sum(f["input_type"] in {"text", "email", "tel", "date", "number", "url"} for f in fields),
             "select_count": counts["select"], "textarea_count": counts["textarea"],
             "checkbox_count": counts["checkbox"], "radio_count": counts["radio"],

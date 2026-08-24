@@ -9,6 +9,7 @@ HTML = """
 <html><body><a href="/privacy-policy">Privacy Policy</a>
 <p>At a minimum, provide your name and telephone number.</p>
 <form id="intake" action="https://processor.example/submit" method="post">
+  <h3>Personal Information</h3>
   <input type="hidden" name="token" value="secret-runtime-value">
   <label for="name">Full Name</label><input id="name" name="full-name" required value="submitted-name">
   <label>SIN #<input name="sin"></label>
@@ -35,6 +36,7 @@ def test_discovers_form_schema_labels_controls_requirements_without_values_or_su
     assert form["form_method"] == "POST" and form["action_scope"] == "CROSS_ORIGIN"
     assert form["control_count"] == 12 and form["hidden_field_count"] == 1
     assert form["visible_control_count"] == 11 and form["visible_field_count"] == 10
+    assert form["section_count"] == 1 and form["section_headings"] == ["Personal Information"]
     assert form["select_count"] == form["textarea_count"] == form["radio_count"] == form["checkbox_count"] == 1
     assert form["file_upload_present"] is True and form["submit_count"] == 1
     assert next(field for field in form["fields"] if field["name"] == "full-name")["label"] == "Full Name"

@@ -14,7 +14,8 @@ network-location pages without allowing arbitrary sibling evidence to attach.
 
 Each form records page/source identity, action/method/scope, neutral control
 counts, labels/names/types, placeholders, autocomplete, requirement state,
-semantic categories, page privacy links, minimum/explanatory text, HTTPS context,
+semantic categories, visible section headings, page privacy links,
+minimum/explanatory text, HTTPS context,
 and detector/version/observation metadata. Hidden fields are counted but their
 names and values are not retained. No control value or submitted data is stored.
 
@@ -77,6 +78,9 @@ Full Name and Telephone are the two HTML-required fields; the other 63 visible
 data-entry fields are `UNSPECIFIED`, not
 automatically optional. The page says name and telephone are the minimum. The
 POST action is same-origin HTTPS and a privacy-policy link is present on the page.
+Seven visible section headings include the overall pre-arrangement details
+legend plus personal information, work/education, military record, funeral
+service, disposition, and summary details.
 Government-identifier, Indigenous/treaty, birth, family, marital, military,
 religion, will/estate, and funeral/disposition categories are visibly represented.
 No defect or compliance conclusion was created.
