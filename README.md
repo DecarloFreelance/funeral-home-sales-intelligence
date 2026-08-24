@@ -121,6 +121,21 @@ excluded from customer-facing observations. See
 `audit/AGENT_HEALTH_COMMERCIAL_READINESS.md` for the complete runtime/health and
 commercial-signal audit.
 
+Run the manually controlled first-revenue pilot after generating commercial
+readiness with:
+
+```bash
+python pilot_cli.py generate
+python pilot_cli.py list
+python pilot_cli.py audit DOMAIN
+```
+
+All prospects begin as candidates. Manual review and explicit approval are
+required before `pilot_cli.py draft` can create an unsent draft. Contact, reply,
+meeting, proposal, outcome, and manually configured offer amounts are recorded
+as append-only local events; the pilot command never sends outreach or writes
+external CRM state. See `audit/FIRST_REVENUE_PILOT.md`.
+
 Automated discovery, public contact extraction, platform-candidate ranking, and
 reviewable outreach generation, the operator interface, progressive local
 verification, and an EspoCRM synchronization boundary are implemented.

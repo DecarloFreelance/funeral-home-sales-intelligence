@@ -275,6 +275,20 @@ safe shortlist records and five audit prototypes without CRM writes or outreach.
 Legacy revenue/opportunity prose remains explicitly internal-only; replacing it
 is not required for the controlled pilot path and is not an active task.
 
+## Manually controlled first revenue pilot (2026-08-24)
+
+- [x] **GAP-2026-028 (HIGH): bridge verified intelligence to an auditable human
+  revenue experiment.** The commercial package could rank prospects but had no
+  customer-safe content schema, guarded approval-before-draft lifecycle,
+  append-only pilot history, manual offer assignment, or outcome/revenue funnel.
+  Add a deterministic ten-record cohort, same-organization evidence checks,
+  structurally safe wording, non-sendable previews, explicit state transitions,
+  three manually priced offer variants, descriptive pilot metrics, CLI/tests,
+  stale-evidence approval rechecks, and a runbook. **VALIDATED:** ten artifacts
+  generate idempotently; all remain
+  `CANDIDATE`; zero approvals, drafts, contacts, CRM writes, network requests, or
+  sends were fabricated. See `audit/FIRST_REVENUE_PILOT.md`.
+
 ## Data and Release Hygiene
 
 - [x] Align `verify_audit.py` with the production feature detector. Discovered
@@ -301,7 +315,7 @@ is not required for the controlled pilot path and is not an active task.
 
 ## Current Verification
 
-- Automated tests: 155 passing on 2026-08-24.
+- Automated tests: 175 passing plus 2 subtests on 2026-08-24.
 - Local enrichment validation: 35 organizations, 1,610 unique facts across 24
   fields, 15 explicit review records, and a 70-of-70 unchanged-task skip on the
   second run. No uncontrolled enrichment network requests were made.

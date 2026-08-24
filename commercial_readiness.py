@@ -111,6 +111,10 @@ def build_shortlist(records: Iterable[Dict[str, Any]], pages: Iterable[Dict[str,
             "observed_opportunities": opportunities,
             "evidence_references": evidence,
             "pages_checked": scanned_pages,
+            "page_evidence": [
+                {"organization_id": domain, "url": url}
+                for url in scanned_pages
+            ],
             "safety": {"crm_sync_safe": True, "outreach_ready": True, "outreach_sent": False, "crm_synced": False},
             "legacy_score_internal_only": record.get("executive_priority_score", record.get("sales_priority_score")),
         })

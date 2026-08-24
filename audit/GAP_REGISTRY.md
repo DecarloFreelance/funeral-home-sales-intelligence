@@ -456,3 +456,23 @@ and rejected suspicions so they are not repeatedly rediscovered.
   both, action start requires outreach approval, Espo sync requires CRM approval,
   and `--all` selects only approved rows. The production cohort metrics are
   unchanged and no external write was made.
+
+### GAP-2026-028 — Commercial evidence has no controlled pilot lifecycle
+
+- Discovered: 2026-08-24
+- Category: commercial workflow / auditability
+- Severity: HIGH
+- Evidence: the 25-record commercial package contained internal prototypes but
+  no durable human-review/approval state, no approval-before-draft enforcement,
+  no offer experiment assignment, and no reply/meeting/proposal/revenue funnel.
+- Root cause: commercial readiness intentionally stopped before execution; the
+  older CRM/draft systems do not preserve evidence-to-wording references for
+  this funeral-home audit offer.
+- Acceptance: deterministic ten-record cohort; customer-safe structured audits;
+  same-entity evidence checks; append-only state/offer history; explicit manual
+  contact transition; guarded unsent drafts; outcome metrics; no source-data,
+  CRM, network, or outreach side effects; regression tests and runbook.
+- Status: VALIDATED — the generated cohort contains ten candidates, ten complete
+  audit/evidence artifacts and ten non-sendable previews. Repeat generation is
+  byte-stable. No approval/contact/outcome was fabricated, and all source
+  intelligence metrics remain unchanged.
