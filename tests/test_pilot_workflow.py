@@ -409,6 +409,15 @@ def test_presend_requires_relevance_all_checks_and_same_organization(tmp_path):
     with pytest.raises(ValueError, match="every pre-send"):
         store.record_presend_review(identifier, "PUBLICATION_EVIDENCE_PRESENT", "operator", business_relevance="Relevant")
 
+    checks_without_sender = PRESEND_CHECKS - {"sender_identification_ready"}
+    with pytest.raises(ValueError, match="every pre-send"):
+        store.record_presend_review(
+            identifier, "PUBLICATION_EVIDENCE_PRESENT", "operator",
+            business_relevance="Relevant", checks=checks_without_sender,
+        )
+    assert store.presend_review(identifier)["status"] == "REVIEW_REQUIRED"
+    assert store.state(identifier) == "CANDIDATE"
+
     foreign, foreign_page = _record("one.ca", source_domain="two.ca")
     foreign["enrichment"] = enrich_company("one.ca", [foreign_page], foreign["business_profile"], foreign["contact_intelligence"])
     commercial = {

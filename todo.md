@@ -361,6 +361,19 @@ is not required for the controlled pilot path and is not an active task.
 
 ## Current Verification
 
+- [x] **GAP-2026-036 (HIGH): render pathway-review previews without unresolved
+  sender placeholders.** Evidence: the Gregory package's selected-angle preview
+  exposed literal sender placeholders even though validated pilot conventions
+  already identify Alex De Carlo and Digital Pathway; the presend checklist
+  separately retains mandatory sender-identification gating. Render that
+  established identity in preview copy, use owner names only from current
+  organization-owned person evidence, make no defect or outcome claim, and
+  preserve the non-sendable preview and approval/presend boundaries.
+  **VALIDATED:** Gregory's generated preview uses the established Alex De Carlo
+  / Digital Pathway convention without fabricating missing contact details;
+  owner names require current first-party owner evidence, the sender-identification
+  presend check still fails closed, and 222 tests plus 2 subtests pass.
+
 - [x] **GAP-2026-035 (HIGH): generate organization-bound pathway-review angles
   from current first-party evidence.** Evidence: the nominally generic first
   prospect-package constructor hard-codes Foothills identity/copy and requires a
@@ -398,7 +411,7 @@ is not required for the controlled pilot path and is not an active task.
   contacted prospects with current states of 3 `CONTACTED` and 7 `CANDIDATE`;
   approval and draft reach remain 2, and the focused and full suites pass.
 
-- Automated tests: 218 passing plus 2 subtests on 2026-08-24.
+- Automated tests: 222 passing plus 2 subtests on 2026-08-24.
 - Production-scale validation: 211 organizations and 4,648 enrichment facts;
   form intelligence separately inventories 1,898 page-level forms across 152
   organizations without changing the 122 CRM-safe or 112 outreach-ready records.

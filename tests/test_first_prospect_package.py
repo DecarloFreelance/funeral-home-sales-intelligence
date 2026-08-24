@@ -79,6 +79,14 @@ def test_gregory_package_generates_safe_resolvable_pathway_angle_without_form_cl
     assert angle["angle_type"] == "PREARRANGEMENT_PATHWAY_REVIEW"
     assert set(_angle_evidence(record, {"forms": []}, angle["evidence_ids"])) == set(angle["evidence_ids"])
     assert package["form_intelligence"]["forms"] == []
+    preview = angle["draft_preview"]
+    assert preview["subject"] == "A small review of Gregory's pre-arrangement pathway"
+    assert preview["body"].startswith("Hello Gregory's team,")
+    assert "Alex De Carlo\nDigital Pathway" in preview["body"]
+    sender_placeholders = ("[FULL NAME]", "[BUSINESS NAME]", "[MAILING ADDRESS]", "[PHONE / EMAIL]")
+    assert not any(value in draft["body"] for draft in package["drafts"] for value in sender_placeholders)
+    assert preview["sendable"] is False and preview["outreach_sent"] is False
+    assert all(draft["sendable"] is False and draft["outreach_sent"] is False for draft in package["drafts"])
     rendered = json.dumps({
         "angle": angle,
         "audit": package["customer_safe_mini_audit"],
@@ -88,6 +96,43 @@ def test_gregory_package_generates_safe_resolvable_pathway_angle_without_form_cl
     assert "no form, usability, accessibility, privacy" in rendered
     for assertion in ("has a broken form", "has a form defect", "has an accessibility defect", "has a privacy defect", "has a conversion defect", "has a usability defect"):
         assert assertion not in rendered
+
+
+def test_pathway_preview_uses_named_owners_only_with_first_party_support(tmp_path):
+    store, record, page = _prepared(
+        tmp_path, "gregorysfuneralhomes.com", "Gregory's Funeral Home Inc.",
+    )
+    record["enrichment"]["facts"].extend([
+        {
+            "id": "jeremy-owner", "field": "contact.person",
+            "value": {"name": "Jeremy Allen", "title": "Owner"},
+            "source_url": "https://gregorysfuneralhomes.com/10/Our-Staff.html",
+        },
+        {
+            "id": "bailey-owner", "field": "contact.person",
+            "value": {"name": "Bailey Allen", "title": "Owner"},
+            "source_url": "https://gregorysfuneralhomes.com/10/Our-Staff.html",
+        },
+    ])
+    package = build_first_prospect_package(store, "gregorysfuneralhomes.com", [record], [page])
+    body = package["selected_angles"][0]["draft_preview"]["body"]
+    assert body.startswith("Hello Jeremy and Bailey,")
+    forbidden = ("defect", "conversion", "revenue", "compliance", "accessibility", "privacy", "security", "abandon", "lost enquiries")
+    assert not any(value in body.lower() for value in forbidden)
+
+    for fact in record["enrichment"]["facts"]:
+        if fact.get("field") == "contact.person":
+            fact["source_url"] = "https://sibling.example/staff"
+    neutral = build_first_prospect_package(store, "gregorysfuneralhomes.com", [record], [page])
+    assert neutral["selected_angles"][0]["draft_preview"]["body"].startswith("Hello Gregory's team,")
+
+    record["enrichment"]["facts"].append({
+        "id": "first-party-non-owner", "field": "contact.person",
+        "value": {"name": "Unrelated Staff", "title": "Funeral Director"},
+        "source_url": "https://gregorysfuneralhomes.com/10/Our-Staff.html",
+    })
+    non_owner = build_first_prospect_package(store, "gregorysfuneralhomes.com", [record], [page])
+    assert non_owner["selected_angles"][0]["draft_preview"]["body"].startswith("Hello Gregory's team,")
 
 
 def test_generated_pathway_angle_still_fails_closed_for_foreign_or_missing_evidence(tmp_path):

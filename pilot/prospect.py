@@ -11,6 +11,10 @@ from automation.orchestrator import AgentOrchestrator
 from pilot.workflow import PRESEND_CHECKS, PilotStore
 
 
+PATHWAY_REVIEW_SENDER_NAME = "Alex De Carlo"
+PATHWAY_REVIEW_SENDER_BUSINESS = "Digital Pathway"
+
+
 def _host(value: Any) -> str:
     parsed = urlsplit(str(value or ""))
     return (parsed.hostname or "").lower().removeprefix("www.")
@@ -39,6 +43,20 @@ def _fact_refs(facts: Iterable[Dict[str, Any]], organization_id: str) -> List[Di
         "verification_state": fact.get("verification_state"), "observed_at": fact.get("observed_at"),
         "semantic_value": fact.get("value"), "evidence": fact.get("evidence"),
     } for fact in facts]
+
+
+def _owner_salutation(record: Dict[str, Any], organization_id: str, fallback: str) -> str:
+    names = []
+    for fact in _facts(record, "contact.person"):
+        value = fact.get("value") or {}
+        name = str(value.get("name") or "").strip()
+        title = str(value.get("title") or "").strip()
+        if title.casefold() != "owner" or _host(fact.get("source_url")) != organization_id or not name:
+            continue
+        first_name = name.split()[0]
+        if first_name not in names:
+            names.append(first_name)
+    return " and ".join(names) if names else f"{fallback} team"
 
 
 def build_first_prospect_package(store: PilotStore, identifier: str,
@@ -109,17 +127,26 @@ def build_first_prospect_package(store: PilotStore, identifier: str,
     support_ids = [preplanning[0]["id"], online_arrangements[0]["id"]]
     organization_name = str((record.get("business_profile") or {}).get("company") or organization_id)
     short_name = re.sub(r"\s+(?:Funeral Home(?: Inc\.)?|Memorial Chapel)\.?$", "", organization_name, flags=re.I)
+    possessive_name = short_name if short_name.casefold().endswith("'s") else f"{short_name}'s"
+    salutation = _owner_salutation(record, organization_id, short_name)
+    # Match the established manually reviewed pilot-message convention. The
+    # repository intentionally does not persist a mailing address or sender
+    # phone/email; those remain mandatory human presend checks rather than
+    # values the generation layer can invent.
+    sender_signature = f"{PATHWAY_REVIEW_SENDER_NAME}\n{PATHWAY_REVIEW_SENDER_BUSINESS}"
     drafts = [
         {
             "variant": "DIRECT_BUSINESSLIKE", "recommended": True,
-            "subject": "A short review of your pre-arrangement pathway",
+            "subject": f"A small review of {possessive_name} pre-arrangement pathway",
             "body": (
-                f"Hello {organization_name} team,\n\n"
-                "I reviewed your public website and noticed that it provides pre-planning information and an online-arrangements pathway. "
-                "I put together a short, cited review of that visitor pathway with a few practical checks for clarity and completion. "
-                "Would it be useful if I sent the findings over?\n\n"
-                "Best,\n[FULL NAME]\n[BUSINESS NAME]\n[MAILING ADDRESS]\n[PHONE / EMAIL]\n\n"
-                "If you would prefer not to receive messages from me, reply unsubscribe."
+                f"Hello {salutation},\n\n"
+                f"I was reviewing {possessive_name} public website and noticed that you already provide both pre-planning "
+                "information and an online-arrangements pathway.\n\n"
+                "I put together a short review of that existing pathway, focusing on a few practical things that can be "
+                "checked on desktop and mobile without submitting anything or changing the current process.\n\n"
+                "Would it be useful if I sent the one-page summary?\n\n"
+                f"{sender_signature}\n\n"
+                "If you would rather not receive messages from me, reply ‘unsubscribe’ and I will stop."
             ),
             "supporting_evidence_ids": support_ids, "sendable": False, "outreach_sent": False,
         },
@@ -131,7 +158,7 @@ def build_first_prospect_package(store: PilotStore, identifier: str,
                 "While reviewing your public site, I saw the pre-planning resources and online-arrangements pathway you make available to families. "
                 "I prepared a concise outside review of that pathway—what is already working and a few practical points worth checking. "
                 "I would be glad to share it if that would be useful.\n\n"
-                "Best,\n[FULL NAME] | [BUSINESS NAME]\n[MAILING ADDRESS] | [PHONE / EMAIL]\n"
+                f"{sender_signature}\n"
                 "Reply unsubscribe if you do not want further messages."
             ),
             "supporting_evidence_ids": support_ids, "sendable": False, "outreach_sent": False,
@@ -141,7 +168,7 @@ def build_first_prospect_package(store: PilotStore, identifier: str,
             "subject": f"{short_name} website review",
             "body": (
                 f"Hello {organization_name} team— I reviewed the public pre-planning and online-arrangements pathway on your website and made a short list of practical observations. "
-                "May I send it over?\n\n[FULL NAME], [BUSINESS NAME], [MAILING ADDRESS], [PHONE / EMAIL]\n"
+                f"May I send it over?\n\n{sender_signature}\n"
                 "Reply unsubscribe to opt out."
             ),
             "supporting_evidence_ids": support_ids, "sendable": False, "outreach_sent": False,
@@ -222,7 +249,10 @@ def build_first_prospect_package(store: PilotStore, identifier: str,
             "proposed_improvement": "Perform a non-submitting desktop/mobile review of the existing pathway and scope only evidence-supported navigation, call-to-action, content, or completion-clarity improvements.",
             "safety_classification": "CUSTOMER_SAFE_WITH_WORDING",
             "source_identity": {"generator": "first_prospect_package", "pilot_cohort": "FIRST_REVENUE_PILOT_2026_08"},
-            "draft_preview": {"subject": drafts[0]["subject"], "body": drafts[0]["body"]},
+            "draft_preview": {
+                "subject": drafts[0]["subject"], "body": drafts[0]["body"],
+                "sendable": False, "outreach_sent": False,
+            },
         }],
         "response_paths": {
             "sure_send_it": "Thanks—I’ll send the one-page snapshot with the cited observations. If any point is useful, would a 15-minute call be worthwhile to discuss the existing pre-arrangement pathway?",
