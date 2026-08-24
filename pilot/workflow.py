@@ -487,7 +487,7 @@ class PilotStore:
         prospect = self._prospect(identifier)
         state = prospect.get("initial_state", "CANDIDATE")
         for event in self.history(prospect["pilot_id"]):
-            if event.get("event_type") == "STATE_TRANSITION":
+            if event.get("event_type") in {"STATE_TRANSITION", "EXTERNAL_SEND_RECONCILIATION"}:
                 state = event["to_state"]
         return state
 
@@ -659,6 +659,69 @@ class PilotStore:
                 return existing, False
             AgentOrchestrator._atomic_json(self.events_path, [*events, event])
             return event, True
+
+    def record_external_send(self, identifier: str, actor: str, *, recipient: str,
+                             subject: str, note: str = "", activity_references=()):
+        """Reconcile outreach that was actually sent outside the guarded workflow.
+
+        This is deliberately separate from transition(): it records the historical
+        fact of external contact without asserting that approval or draft-preparation
+        gates were completed beforehand.
+        """
+        prospect = self._prospect(identifier)
+        actor = actor.strip()
+        recipient = recipient.strip()
+        subject = subject.strip()
+        refs = sorted({
+            str(value).strip()
+            for value in activity_references
+            if str(value).strip()
+        })
+
+        if not actor:
+            raise ValueError("Actor is required")
+        if not recipient:
+            raise ValueError("External send requires recipient")
+        if not subject:
+            raise ValueError("External send requires subject")
+        if not refs:
+            raise ValueError("External send requires at least one activity reference")
+
+        current = self.state(prospect["pilot_id"])
+
+        if current in {"CONTACTED", "REPLIED", "MEETING", "PROPOSAL", "WON", "LOST"}:
+            raise ValueError(
+                f"External-send reconciliation is not valid from already-contacted state: {current}"
+            )
+
+        event = {
+            "schema_version": 1,
+            "event_type": "EXTERNAL_SEND_RECONCILIATION",
+            "pilot_id": prospect["pilot_id"],
+            "organization_id": prospect["organization_id"],
+            "from_state": current,
+            "to_state": "CONTACTED",
+            "actor": actor,
+            "timestamp": _now(),
+            "note": note,
+            "recipient": recipient,
+            "subject": subject,
+            "selected_contact_id": prospect["selected_contact"]["contact_id"],
+            "selected_audit_id": prospect["selected_audit_id"],
+            "selected_audit_version": prospect["selected_audit_version"],
+            "activity_references": refs,
+            "outreach_sent": True,
+            "normal_presend_gates_completed_before_send": (
+                current == "CONTACT_PREPARED"
+            ),
+            "reconciliation_reason": "OUTREACH_SENT_OUTSIDE_GUARDED_WORKFLOW",
+        }
+        event["event_id"] = _stable({
+            key: value
+            for key, value in event.items()
+            if key != "timestamp"
+        })
+        return self._append(event)
 
     def transition(self, identifier: str, to_state: str, actor: str, *, note="", reply_sentiment=None,
                    activity_references=(), _approval_checked=False) -> tuple[Dict[str, Any], bool]:

@@ -461,3 +461,75 @@ def test_human_form_observation_is_append_only_bound_and_does_not_change_state(t
     with pytest.raises(ValueError, match="same organization"):
         store.annotate(identifier, "FORM_SOURCE_REVIEW", "human-operator",
             source_urls=["https://sibling.example/form"], observations=["Foreign form"])
+
+
+def test_external_send_reconciliation_records_contact_without_backfilled_gates(tmp_path):
+    store = PilotStore(tmp_path / "cohort.json", tmp_path / "events.json")
+    store.save_cohort(_cohort())
+    identifier = store.effective()[0]["pilot_id"]
+
+    store.transition(identifier, "MANUAL_REVIEW", "operator")
+
+    event, created = store.record_external_send(
+        identifier,
+        "operator",
+        recipient="office@example.com",
+        subject="A small detail",
+        note="Actually sent outside guarded workflow.",
+        activity_references=["manual-email:test-1"],
+    )
+
+    assert created is True
+    assert event["event_type"] == "EXTERNAL_SEND_RECONCILIATION"
+    assert event["from_state"] == "MANUAL_REVIEW"
+    assert event["to_state"] == "CONTACTED"
+    assert event["outreach_sent"] is True
+    assert event["normal_presend_gates_completed_before_send"] is False
+    assert event["reconciliation_reason"] == "OUTREACH_SENT_OUTSIDE_GUARDED_WORKFLOW"
+    assert event["activity_references"] == ["manual-email:test-1"]
+    assert store.state(identifier) == "CONTACTED"
+
+    history = store.history(identifier)
+    transitions = [
+        value for value in history
+        if value.get("event_type") == "STATE_TRANSITION"
+    ]
+
+    assert [value["to_state"] for value in transitions] == ["MANUAL_REVIEW"]
+    assert not any(
+        value.get("to_state") in {"APPROVED_FOR_CONTACT", "CONTACT_PREPARED"}
+        for value in transitions
+    )
+
+
+def test_external_send_reconciliation_is_idempotent(tmp_path):
+    store = PilotStore(tmp_path / "cohort.json", tmp_path / "events.json")
+    store.save_cohort(_cohort())
+    identifier = store.effective()[0]["pilot_id"]
+
+    store.transition(identifier, "MANUAL_REVIEW", "operator")
+
+    kwargs = dict(
+        recipient="office@example.com",
+        subject="A small detail",
+        note="Actually sent outside guarded workflow.",
+        activity_references=["manual-email:test-1"],
+    )
+
+    first, created = store.record_external_send(identifier, "operator", **kwargs)
+    assert created is True
+
+    # Once reconciled, a second reconciliation must not create another
+    # contacted event.
+    try:
+        store.record_external_send(identifier, "operator", **kwargs)
+    except ValueError as exc:
+        assert "already-contacted state" in str(exc)
+    else:
+        raise AssertionError("duplicate external-send reconciliation was accepted")
+
+    assert store.state(identifier) == "CONTACTED"
+    assert len([
+        value for value in store.history(identifier)
+        if value.get("event_type") == "EXTERNAL_SEND_RECONCILIATION"
+    ]) == 1

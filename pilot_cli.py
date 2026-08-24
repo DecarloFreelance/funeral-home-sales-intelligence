@@ -58,6 +58,13 @@ def main(argv=None):
     disqualify = sub.add_parser("disqualify"); disqualify.add_argument("identifier"); disqualify.add_argument("--actor", required=True); disqualify.add_argument("--note", required=True)
     draft = sub.add_parser("draft"); draft.add_argument("identifier"); draft.add_argument("--actor", required=True); draft.add_argument("--results", type=Path, default=Path("data/generated/scale/enriched_results.json")); draft.add_argument("--forms", type=Path, default=Path("data/generated/forms/form_intelligence.json"))
     transition = sub.add_parser("transition"); transition.add_argument("identifier"); transition.add_argument("state"); transition.add_argument("--actor", required=True); transition.add_argument("--note", default=""); transition.add_argument("--reply-sentiment"); transition.add_argument("--activity-reference", action="append", default=[])
+    external_send = sub.add_parser("record-external-send")
+    external_send.add_argument("identifier")
+    external_send.add_argument("--actor", required=True)
+    external_send.add_argument("--recipient", required=True)
+    external_send.add_argument("--subject", required=True)
+    external_send.add_argument("--note", default="")
+    external_send.add_argument("--activity-reference", action="append", required=True)
     offer = sub.add_parser("offer"); offer.add_argument("identifier"); offer.add_argument("variant"); offer.add_argument("--actor", required=True); offer.add_argument("--quoted", type=float, default=0); offer.add_argument("--accepted", type=float, default=0); offer.add_argument("--recurring", type=float, default=0); offer.add_argument("--note", default="")
     sub.add_parser("stats")
     args = parser.parse_args(argv)
@@ -115,6 +122,21 @@ def main(argv=None):
         event, created = store.transition(args.identifier, "DISQUALIFIED", args.actor, note=args.note); output = {"created": created, "event": event}
     elif args.command == "draft":
         event, created = store.prepare_draft(args.identifier, args.actor, records=_json(args.results, list), forms=_json(args.forms, dict)); output = {"created": created, "draft": event.get("draft"), "outreach_sent": False}
+    elif args.command == "record-external-send":
+        event, created = store.record_external_send(
+            args.identifier,
+            args.actor,
+            recipient=args.recipient,
+            subject=args.subject,
+            note=args.note,
+            activity_references=args.activity_reference,
+        )
+        output = {
+            "created": created,
+            "event": event,
+            "outreach_sent": True,
+            "reconciled": True,
+        }
     elif args.command == "transition":
         event, created = store.transition(args.identifier, args.state, args.actor, note=args.note, reply_sentiment=args.reply_sentiment, activity_references=args.activity_reference); output = {"created": created, "event": event}
     elif args.command == "offer":
