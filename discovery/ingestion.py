@@ -16,6 +16,8 @@ PRIORITY_PATHS = (
     "/locations",
 )
 
+MALFORMED_WEBSITE_USERINFO = "MALFORMED_WEBSITE_USERINFO"
+
 
 def normalize_website(value: str) -> str:
     website = (value or "").strip()
@@ -31,6 +33,11 @@ def normalize_website(value: str) -> str:
 
     parsed = urlsplit(website)
     if parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname:
+        return ""
+    # Public organization websites are canonical identities in this pipeline.
+    # Accepting URI userinfo would silently turn values such as
+    # http://info@example.com into an unsupported example.com identity.
+    if parsed.username is not None or parsed.password is not None:
         return ""
 
     host = parsed.hostname.lower().rstrip(".")
@@ -76,10 +83,23 @@ class DiscoveryLead:
     contact_name: str = ""
     contact_title: str = ""
     domain: str = field(init=False)
+    source_website: str = field(init=False)
+    quality_flags: List[str] = field(init=False)
 
     def __post_init__(self):
         self.company = self.company.strip()
-        self.website = normalize_website(self.website)
+        self.source_website = (self.website or "").strip()
+        parsed_source = urlsplit(
+            self.source_website
+            if "://" in self.source_website
+            else f"//{self.source_website}"
+        )
+        self.quality_flags = (
+            [MALFORMED_WEBSITE_USERINFO]
+            if parsed_source.username is not None or parsed_source.password is not None
+            else []
+        )
+        self.website = normalize_website(self.source_website)
         self.domain = domain_from_website(self.website)
         self.city = self.city.strip()
         self.province = self.province.strip().upper()
@@ -113,6 +133,8 @@ class DiscoveryLead:
 
     def to_queue_record(self) -> Dict[str, object]:
         record = asdict(self)
+        record.pop("source_website", None)
+        record.pop("quality_flags", None)
         record["url"] = self.website
         record["sources"] = sorted(
             source for source in self.source.split(",") if source
@@ -128,7 +150,7 @@ class DiscoveryLead:
 def _merge(existing: DiscoveryLead, incoming: DiscoveryLead) -> DiscoveryLead:
     values = {}
     for name in DiscoveryLead.__dataclass_fields__:
-        if name == "domain":
+        if name in {"domain", "source_website", "quality_flags"}:
             continue
         old_value = getattr(existing, name)
         new_value = getattr(incoming, name)

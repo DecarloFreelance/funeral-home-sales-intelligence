@@ -2,6 +2,24 @@
 
 Last reconciled: 2026-08-24
 
+## Discovery website identity safety (2026-08-26)
+
+- [x] **GAP-2026-038 (HIGH): reject userinfo-bearing organization website
+  values before canonical domain creation.** Evidence: the AFSA source value
+  `http://info@fostercmgarvey.com` is parsed by `urlsplit` with
+  `info` as userinfo and `fostercmgarvey.com` as the hostname, after which
+  `normalize_website` silently emits `http://fostercmgarvey.com/` and
+  `build_crawl_queue` creates an unsupported standalone identity. Fix website
+  normalization to fail closed on URL userinfo, retain the rejected source value
+  and association provenance on the in-memory lead with a bounded quality flag,
+  and prove valid URLs, email separation, multi-location retention, unrelated
+  records, and deterministic generation remain intact. Do not rewrite AFSA raw
+  data or merge locations by brand name. **VALIDATED:** the generated queue fell
+  from 52 to 51 identities by removing only the unsupported
+  `fostercmgarvey.com` entry; the valid `fostermcgarvey.com` St. Albert record
+  remains; 244 tests plus 2 subtests pass; and AFSA raw source and the 34-event
+  pilot history remained byte-identical.
+
 ## Online pre-arrangement pathway detection (2026-08-24)
 
 - [x] **GAP-2026-037 (HIGH): recognize explicit verb-first online
