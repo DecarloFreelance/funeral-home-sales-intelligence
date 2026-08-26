@@ -13,7 +13,7 @@ from technology_detector import detect_technology
 
 
 DETECTOR = "public_business_enrichment"
-VERSION = "1.5.1"
+VERSION = "1.5.2"
 SOCIAL_HOSTS = {
     "facebook.com": "facebook",
     "instagram.com": "instagram",
@@ -29,7 +29,13 @@ SERVICE_PATTERNS = {
     "services.obituaries": r"\bobituar(?:y|ies)\b",
     "services.grief_resources": r"\b(?:grief support|bereavement|aftercare)\b",
     "digital.livestream": r"\b(?:live[ -]?stream|webcast)\b",
-    "digital.online_arrangements": r"\b(?:online|virtual) (?:funeral )?arrangements?\b",
+    "digital.online_arrangements": (
+        r"\b(?:"
+        r"(?:online|virtual)\s+(?:funeral\s+)?arrangements?(?:\s+form)?|"
+        r"pre[ -]?arrange(?:ments?)?\s+online|"
+        r"pre[ -]?arrangements?\s+form"
+        r")\b"
+    ),
     "digital.online_payment": r"\b(?:pay online|online payment|make a payment)\b",
     "digital.flowers": r"\b(?:send|order|shop) flowers?\b",
     "business.accessibility": r"\b(?:wheelchair accessible|accessibility|accessible entrance)\b",

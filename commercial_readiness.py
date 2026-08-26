@@ -27,7 +27,13 @@ POSITIVE_FIELDS = {
     "organization.social_profile": "public social profile",
 }
 PAGE_CAPABILITY_PATTERNS = {
-    "digital.online_arrangements": r"\b(?:(?:online|virtual)\s+(?:funeral\s+)?arrangements?|pre[ -]?arrangements?\s+form)\b",
+    "digital.online_arrangements": (
+        r"\b(?:"
+        r"(?:online|virtual)\s+(?:funeral\s+)?arrangements?(?:\s+form)?|"
+        r"pre[ -]?arrange(?:ments?)?\s+online|"
+        r"pre[ -]?arrangements?\s+form"
+        r")\b"
+    ),
     "digital.livestream": r"\b(?:live[ -]?stream|webcast)\b",
     "business.careers_page": r"\b(?:careers?|jobs?|employment|join our team)\b",
     "organization.social_profile": r"\b(?:facebook|instagram|linkedin|youtube|twitter|x\.com)\b",

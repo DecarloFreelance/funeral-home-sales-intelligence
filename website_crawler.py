@@ -4,6 +4,7 @@ import argparse
 from collections import Counter
 import json
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from discovery.crawler import PriorityPageCrawler
 
@@ -50,7 +51,13 @@ def _atomic_json(path, value):
 
 def _record_key(record):
     discovery = record.get("discovery") or {}
-    return (str(discovery.get("queue_domain") or record.get("domain") or ""), record.get("url"))
+    url = str(record.get("url") or "")
+    entity = str(
+        discovery.get("queue_domain")
+        or record.get("domain")
+        or (urlsplit(url).hostname or "")
+    ).lower().removeprefix("www.")
+    return (entity, record.get("url"))
 
 
 def crawl_queue(

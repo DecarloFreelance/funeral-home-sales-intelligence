@@ -8,6 +8,32 @@ NOW = datetime(2026, 8, 23, 12, 0, tzinfo=timezone.utc)
 
 
 class EnrichmentTests(unittest.TestCase):
+    def test_online_arrangements_detector_recognizes_explicit_pathway_labels_only(self):
+        for label in (
+            "Pre-Arrange Online",
+            "Prearrange Online",
+            "Online Arrangements",
+            "Online Arrangement Form",
+        ):
+            result = enrich_company("example.ca", [{
+                "url": "https://example.ca/", "text": label, "html": "", "metadata": {},
+            }], {}, {}, observed_at=NOW)
+            matches = [item for item in result["facts"] if item["field"] == "digital.online_arrangements"]
+            self.assertEqual(len(matches), 1, label)
+            self.assertTrue(matches[0]["value"])
+            self.assertEqual(matches[0]["source_url"], "https://example.ca/")
+
+        for text in (
+            "Call us to discuss pre-arrangements.",
+            "Read obituaries online and arrange flowers by phone.",
+        ):
+            result = enrich_company("example.ca", [{
+                "url": "https://example.ca/", "text": text, "html": "", "metadata": {},
+            }], {}, {}, observed_at=NOW)
+            self.assertFalse(any(
+                item["field"] == "digital.online_arrangements" for item in result["facts"]
+            ), text)
+
     def test_directory_contact_remains_candidate_not_role_verified_person(self):
         result = enrich_company("example.ca", [], {"company": "Example"}, {
             "directory_contacts": [{"name": "Jane Smith", "title": "Directory contact",

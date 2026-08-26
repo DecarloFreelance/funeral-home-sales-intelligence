@@ -2,6 +2,31 @@
 
 Last reconciled: 2026-08-24
 
+## Online pre-arrangement pathway detection (2026-08-24)
+
+- [x] **GAP-2026-037 (HIGH): recognize explicit verb-first online
+  pre-arrangement pathway labels.** Evidence: Beaverlodge's current retained
+  first-party navigation repeatedly contains `Pre-Arrange Online`, but
+  `public_business_enrichment` 1.5.1 recognizes only noun-first
+  `online/virtual arrangements`, leaving `digital.online_arrangements` absent
+  after enrichment. Extend the positive detector and bounded-scan safety mirror
+  only to explicit online-arrangement/form language; retain provenance,
+  freshness, organization isolation, and negative bounded-scan semantics.
+  A supported Beaverlodge append refresh additionally proved that legacy pages
+  without `discovery.queue_domain` were not superseded because the replacement
+  key did not fall back to the page URL hostname, duplicating the refreshed
+  organization while leaving unrelated organizations intact.
+  Acceptance: positive label variants produce current first-party facts,
+  adjacent offline/online wording remains negative, Beaverlodge refreshes via
+  the normal crawl/enrichment/package commands, and pilot event bytes do not
+  change. **VALIDATED:** a single-organization live crawl retained four current
+  first-party pages and the same-domain pre-arrangement form link; enrichment
+  1.5.2 produced four corroborated positive facts for both pre-planning and
+  online arrangements; the regenerated non-sendable package uses
+  `PREARRANGEMENT_PATHWAY_REVIEW`; 242 tests plus 2 subtests pass; and the
+  28-event pilot history remained byte-identical at SHA-256
+  `ea0a59323a0780a1f50760c1ecb5a6f115b6b7d4c67c58a70c5898f0c06fbf45`.
+
 ## Pre-planning information pathway coverage (2026-08-24)
 
 - [x] **GAP-2026-028 (HIGH): retain a bounded commercial angle for positive

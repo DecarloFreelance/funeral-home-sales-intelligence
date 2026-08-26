@@ -84,6 +84,26 @@ class WebsiteCrawlerRecoveryTests(unittest.TestCase):
             )
             self.assertNotIn("https://network.example/stale", {item["url"] for item in records})
 
+    def test_append_replaces_legacy_same_domain_pages_without_queue_domain(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            queue, output = root / "queue.json", root / "pages.json"
+            queue.write_text(json.dumps([
+                {"domain": "one.example", "url": "https://one.example/"},
+            ]), encoding="utf-8")
+            output.write_text(json.dumps([
+                {"url": "https://one.example/stale", "discovery": {}},
+                {"url": "https://two.example/retained", "discovery": {}},
+            ]), encoding="utf-8")
+
+            with patch("website_crawler.PriorityPageCrawler", return_value=CompletingCrawler()):
+                crawl_queue(queue, output, append=True)
+
+            records = json.loads(output.read_text())
+            self.assertEqual({item["url"] for item in records}, {
+                "https://one.example/", "https://two.example/retained",
+            })
+
 
 if __name__ == "__main__":
     unittest.main()
