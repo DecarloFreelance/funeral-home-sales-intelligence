@@ -53,3 +53,6 @@ data/discovery_sources/*.json
 
 # Legacy/misnamed generated scoring artifact
 /data/scores.csv
+/.ai_context.md
+/continue.md
+/nvchat.py
