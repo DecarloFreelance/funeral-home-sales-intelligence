@@ -9,7 +9,7 @@ from urllib.parse import urlsplit
 from automation.agents import RecordAgent
 
 
-VERSION = "1.0.3"
+VERSION = "1.0.4"
 IDENTITY_CODES = {
     "NO_USABLE_WEBSITE_EVIDENCE",
     "POSSIBLE_DUPLICATE_ORGANIZATION",
@@ -51,6 +51,31 @@ def _host(value: Any) -> str:
     return (urlsplit(str(value or "")).hostname or "").lower().removeprefix("www.")
 
 
+def _token_equivalent(left: str, right: str) -> bool:
+    if left == right:
+        return True
+    if min(len(left), len(right)) < 5:
+        return False
+    return left.rstrip("s") == right.rstrip("s")
+
+
+def _matching_tokens(source_tokens: set[str], target_tokens: set[str]) -> set[str]:
+    return {
+        source
+        for source in source_tokens
+        if any(_token_equivalent(source, target) for target in target_tokens)
+    }
+
+
+def _host_token_matches(source_tokens: set[str], host: str) -> set[str]:
+    label = host.split(".", 1)[0]
+    return {
+        token
+        for token in source_tokens
+        if len(token) >= 4 and token in label
+    }
+
+
 def _homepage_redirect(item: Dict[str, Any]) -> Dict[str, Any] | None:
     entity = str(item.get("domain") or "").lower().removeprefix("www.")
     for attempt in item.get("attempts") or []:
@@ -72,11 +97,18 @@ def _location_redirect_resolution(item: Dict[str, Any]) -> Dict[str, Any] | None
         return None
     target = str(attempt["final_url"])
     company_tokens = _tokens(item.get("company"))
-    target_tokens = _tokens(urlsplit(target).path)
-    matched = sorted(company_tokens & target_tokens)
+    target_path_tokens = _tokens(urlsplit(target).path)
+    target_host = _host(target)
+    path_matches = _matching_tokens(company_tokens, target_path_tokens)
+    host_matches = _host_token_matches(company_tokens, target_host)
+    matched = sorted(path_matches | host_matches)
     locations = [value for value in item.get("locations") or [] if isinstance(value, dict)]
     city_tokens = set().union(*(_tokens(value.get("city")) for value in locations)) if locations else set()
-    city_match = bool(city_tokens & target_tokens)
+    city_matches = (
+        _matching_tokens(city_tokens, target_path_tokens)
+        | _host_token_matches(city_tokens, target_host)
+    )
+    city_match = bool(city_matches)
     name_ratio = len(matched) / len(company_tokens) if company_tokens else 0.0
     path_segments = [value for value in urlsplit(target).path.rstrip("/").split("/") if value]
     location_identifier = bool(path_segments and path_segments[-1].isdigit())
@@ -96,7 +128,13 @@ def _location_redirect_resolution(item: Dict[str, Any]) -> Dict[str, Any] | None
     # prevents sibling locations with similar names from borrowing one another's
     # network page (observed for Radville and Weyburn Fletcher locations).
     numbered_named_location = location_identifier and len(matched) >= 2
-    if not matched or not (city_match or numbered_named_location or named_branch_file):
+    homepage_named_migration = not path_segments and len(host_matches) >= 2
+    if not matched or not (
+        city_match
+        or numbered_named_location
+        or named_branch_file
+        or homepage_named_migration
+    ):
         return None
     source_urls = sorted({
         str(value.get("source_url") or "") for value in locations if value.get("source_url")
@@ -115,7 +153,7 @@ def _location_redirect_resolution(item: Dict[str, Any]) -> Dict[str, Any] | None
             "redirect_from": attempt.get("url"),
             "redirect_to": target,
             "matched_name_tokens": matched,
-            "matched_city_tokens": sorted(city_tokens & target_tokens),
+            "matched_city_tokens": sorted(city_matches),
             "association_sources": source_urls,
         },
         "reason": "The supplied business domain directly redirects to a public network location URL matching the listed business identity.",

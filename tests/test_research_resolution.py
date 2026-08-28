@@ -36,6 +36,90 @@ class ResearchResolutionTests(unittest.TestCase):
         self.assertEqual(queue[0]["domain"], "examplefuneralhome.ca")
         self.assertEqual(queue[0]["url"], outcome["official_website"])
 
+    def test_same_business_homepage_domain_migration_resolves(self):
+        cases = [
+            (
+                {
+                    "domain": "cochranecountryfuneralhome.com",
+                    "company": "Cochrane Country Funeral Home",
+                    "locations": [{"city": "Cochrane"}],
+                    "attempts": [{
+                        "url": "http://cochranecountryfuneralhome.com/",
+                        "outcome": "CROSS_DOMAIN_REDIRECT",
+                        "final_url": "https://www.cochranecountryfuneral.ca/",
+                    }],
+                },
+                "https://www.cochranecountryfuneral.ca/",
+            ),
+            (
+                {
+                    "domain": "countryhillscares.ca",
+                    "company": "Country Hill Crematorium",
+                    "locations": [{"city": "Calgary"}],
+                    "attempts": [{
+                        "url": "http://countryhillscares.ca/",
+                        "outcome": "CROSS_DOMAIN_REDIRECT",
+                        "final_url": "https://www.countryhillscrematorium.ca/",
+                    }],
+                },
+                "https://www.countryhillscrematorium.ca/",
+            ),
+        ]
+        for item, expected in cases:
+            output = ResearchResolutionAgent().run({
+                "domain": item["domain"],
+                "research_item": item,
+                "findings": [no_website_finding()],
+            })["research_resolution"]
+            outcome = output["questions"][0]["outcome"]
+            self.assertTrue(outcome["resolved"])
+            self.assertEqual(outcome["outcome"], "LOCATION_PAGE_CONFIRMED")
+            self.assertEqual(outcome["official_website"], expected)
+
+    def test_pluralized_name_token_and_city_resolve_network_location(self):
+        item = {
+            "domain": "assmansfuneralchapel.com",
+            "company": "Assman Funeral Chapel",
+            "locations": [{"city": "Prince George"}],
+            "attempts": [{
+                "url": "http://assmansfuneralchapel.com/",
+                "outcome": "CROSS_DOMAIN_REDIRECT",
+                "final_url": (
+                    "https://www.dignitymemorial.com/en-ca/funeral-homes/"
+                    "british-columbia/prince-george/assmans-funeral-chapel/3736"
+                ),
+            }],
+        }
+        output = ResearchResolutionAgent().run({
+            "domain": item["domain"],
+            "research_item": item,
+            "findings": [no_website_finding()],
+        })["research_resolution"]
+        outcome = output["questions"][0]["outcome"]
+        self.assertTrue(outcome["resolved"])
+        self.assertEqual(outcome["outcome"], "LOCATION_PAGE_CONFIRMED")
+        self.assertIn("assman", outcome["evidence"]["matched_name_tokens"])
+        self.assertIn("prince", outcome["evidence"]["matched_city_tokens"])
+        self.assertIn("george", outcome["evidence"]["matched_city_tokens"])
+
+    def test_one_hostname_name_token_does_not_resolve_homepage(self):
+        item = {
+            "domain": "example.ca",
+            "company": "Example Funeral Home",
+            "locations": [{"city": "Calgary"}],
+            "attempts": [{
+                "url": "http://example.ca/",
+                "outcome": "CROSS_DOMAIN_REDIRECT",
+                "final_url": "https://examplememorial.ca/",
+            }],
+        }
+        output = ResearchResolutionAgent().run({
+            "domain": item["domain"],
+            "research_item": item,
+            "findings": [no_website_finding()],
+        })["research_resolution"]
+        self.assertFalse(output["questions"][0]["outcome"]["resolved"])
+
     def test_weak_or_non_homepage_redirect_refuses_resolution(self):
         for attempt in [
             {"url": "http://example.ca/contact", "outcome": "CROSS_DOMAIN_REDIRECT",
