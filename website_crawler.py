@@ -74,6 +74,7 @@ def crawl_queue(
     progress_callback=None,
     report_path=None,
     resume=False,
+    workers=1,
 ):
     leads = json.loads(input_path.read_text(encoding="utf-8"))
     if not isinstance(leads, list):
@@ -123,7 +124,13 @@ def crawl_queue(
         callback = lambda index, total, domain, pages: print(
             f"[{index}/{total}] {domain}: {pages} pages", flush=True,
         )
-    records = crawler.crawl_queue(selected, on_lead=callback, checkpoint=checkpoint)
+    crawl_kwargs = {
+        "on_lead": callback,
+        "checkpoint": checkpoint,
+    }
+    if workers != 1:
+        crawl_kwargs["workers"] = workers
+    records = crawler.crawl_queue(selected, **crawl_kwargs)
 
     if append:
         records = list(current_records.values())
@@ -155,7 +162,15 @@ def main():
     parser.add_argument("--append", action="store_true")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--report-output", type=Path)
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help="Concurrent domain workers; each worker owns an independent HTTP session.",
+    )
     args = parser.parse_args()
+    if args.workers < 1:
+        parser.error("--workers must be at least 1")
 
     report_path = args.report_output or args.output.with_name(
         args.output.stem + "_report.json"
@@ -173,6 +188,7 @@ def main():
         progress=True,
         report_path=report_path,
         resume=args.resume,
+        workers=args.workers,
     )
     print(
         f"Crawled {report['pages']} pages across "

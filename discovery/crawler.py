@@ -316,15 +316,16 @@ class PriorityPageCrawler:
         leads: Iterable[Dict[str, Any]],
         on_lead=None,
         checkpoint=None,
+        workers=1,
     ) -> List[Dict[str, Any]]:
         leads = list(leads)
         records = []
         successful_domains = []
         failed_domains = []
         lead_reports = []
-        for index, lead in enumerate(leads, start=1):
-            lead_records = self.crawl_lead(lead)
-            lead_reports.append(self.last_lead_report)
+
+        def consume(index, lead, lead_records, lead_report):
+            lead_reports.append(lead_report)
             records.extend(lead_records)
             domain = lead.get("domain", "")
             if lead_records:
@@ -332,9 +333,35 @@ class PriorityPageCrawler:
             else:
                 failed_domains.append(domain)
             if checkpoint:
-                checkpoint(lead_records, self.last_lead_report)
+                checkpoint(lead_records, lead_report)
             if on_lead:
                 on_lead(index, len(leads), domain, len(lead_records))
+
+        if workers <= 1 or len(leads) <= 1:
+            for index, lead in enumerate(leads, start=1):
+                lead_records = self.crawl_lead(lead)
+                consume(index, lead, lead_records, self.last_lead_report)
+        else:
+            from concurrent.futures import ThreadPoolExecutor, as_completed
+
+            def crawl_one(index, lead):
+                crawler = PriorityPageCrawler(
+                    timeout=self.timeout,
+                    max_pages_per_lead=self.max_pages_per_lead,
+                    max_attempts_per_lead=self.max_attempts_per_lead,
+                    delay=self.delay,
+                    host_resolver=self.host_resolver,
+                )
+                lead_records = crawler.crawl_lead(lead)
+                return index, lead, lead_records, crawler.last_lead_report
+
+            with ThreadPoolExecutor(max_workers=workers) as executor:
+                futures = [
+                    executor.submit(crawl_one, index, lead)
+                    for index, lead in enumerate(leads, start=1)
+                ]
+                for future in as_completed(futures):
+                    consume(*future.result())
         attempt_outcomes = Counter(
             attempt.get("outcome")
             for report in lead_reports for attempt in report.get("attempts", [])
