@@ -50,3 +50,6 @@ data/platform_candidate_emails/
 data/discovery_sources/*.csv
 data/discovery_sources/*.json
 !data/discovery_sources/.gitkeep
+
+# Legacy/misnamed generated scoring artifact
+/data/scores.csv
