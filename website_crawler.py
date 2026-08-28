@@ -99,7 +99,18 @@ def crawl_queue(
     if append and report_path is not None and report_path.exists():
         existing_report = json.loads(report_path.read_text(encoding="utf-8"))
     if resume:
-        completed = {item.get("domain") for item in existing_report.get("leads", [])}
+        # Resume only skips domains with previously usable crawl evidence.
+        # Failed/empty domains remain eligible so transient network failures
+        # are retried on the next invocation.
+        completed = {
+            item.get("domain")
+            for item in existing_report.get("leads", [])
+            if item.get("domain")
+            and (
+                item.get("status") == "SUCCESS"
+                or int(item.get("pages") or 0) > 0
+            )
+        }
         selected = [lead for lead in selected if lead.get("domain") not in completed]
 
     current_records = {_record_key(item): item for item in existing_records if item.get("url")}

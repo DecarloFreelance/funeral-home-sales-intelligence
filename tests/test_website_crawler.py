@@ -104,6 +104,75 @@ class WebsiteCrawlerRecoveryTests(unittest.TestCase):
                 "https://one.example/", "https://two.example/retained",
             })
 
+    def test_resume_retries_failed_domain_and_skips_successful_domain(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            queue = root / "queue.json"
+            output = root / "pages.json"
+            report_path = root / "report.json"
+
+            queue.write_text(json.dumps([
+                {"domain": "success.example", "url": "https://success.example/"},
+                {"domain": "retry.example", "url": "https://retry.example/"},
+            ]), encoding="utf-8")
+
+            output.write_text(json.dumps([
+                {
+                    "url": "https://success.example/",
+                    "discovery": {"queue_domain": "success.example"},
+                },
+            ]), encoding="utf-8")
+
+            report_path.write_text(json.dumps({
+                "leads": [
+                    {
+                        "domain": "success.example",
+                        "status": "SUCCESS",
+                        "pages": 1,
+                        "attempts": [],
+                    },
+                    {
+                        "domain": "retry.example",
+                        "status": "FAILED",
+                        "pages": 0,
+                        "attempts": [],
+                    },
+                ],
+            }), encoding="utf-8")
+
+            captured = {}
+
+            class ResumeCrawler:
+                def __init__(self):
+                    self.last_report = {
+                        "queued_domains": 1,
+                        "successful_domains": 0,
+                        "failed_domains": ["retry.example"],
+                        "pages": 0,
+                        "leads": [],
+                        "attempt_outcomes": {},
+                        "duration_ms": 1,
+                    }
+
+                def crawl_queue(self, leads, on_lead=None, checkpoint=None):
+                    captured["domains"] = [
+                        lead.get("domain") for lead in leads
+                    ]
+                    return []
+
+            with patch(
+                "website_crawler.PriorityPageCrawler",
+                return_value=ResumeCrawler(),
+            ):
+                crawl_queue(
+                    queue,
+                    output,
+                    append=True,
+                    resume=True,
+                    report_path=report_path,
+                )
+
+            self.assertEqual(captured["domains"], ["retry.example"])
 
 if __name__ == "__main__":
     unittest.main()
