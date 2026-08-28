@@ -2,6 +2,36 @@
 
 Last reconciled: 2026-08-24
 
+## Autonomous national discovery (2026-08-26)
+
+- [x] **GAP-2026-039 (HIGH): add a bounded, evidence-preserving national
+  discovery lifecycle.** Evidence: the production-representative scale artifact
+  contains 211 domain-grouped organizations and 255 location observations, but
+  repository inspection finds only manually invoked AFSA/CANA acquisition and
+  file import; there is no persistent query ledger, canonical discovery
+  candidate record, deterministic search-gap planner, first-party publication
+  policy, novelty saturation measure, or resumable discovery coordinator.
+  This prevents safe incremental national expansion and would require an
+  operator to reconstruct provenance and retry state between runs. Implement at
+  the discovery subsystem, reusing URL/network safety, the priority crawler,
+  association providers, atomic persistence, and organization/location
+  semantics. Acceptance: bounded plan/run/status commands; idempotent candidates
+  and query spending; checkpoint/retry/quota behavior; fail-closed verification,
+  publication, and quarantine; machine/human reports; dry-run/protected-state
+  invariance; adversarial tests including the Foster userinfo regression; and a
+  documented unattended invocation. No outreach, CRM, pilot, or raw-source
+  writes are permitted. General web search remains unavailable until an
+  authorized provider adapter and credentials are configured. **VALIDATED:**
+  the deterministic planner prioritizes the three uncovered territories and
+  suppresses fresh completed queries; a one-query/three-result fixture run
+  produced one high-confidence publication, one evidence-rich parent/redirect
+  quarantine, and one generic-directory rejection. The full suite passes 264
+  tests plus 2 subtests. Raw AFSA/CANA inputs, the 211-domain scale queue and
+  enriched results, the broader discovered-page artifact, and the 40-event
+  pilot history retained their pre-run SHA-256 values. No general search API or
+  credential is configured, so live general-web discovery remains an explicit
+  limitation rather than fabricated validation.
+
 ## Discovery website identity safety (2026-08-26)
 
 - [x] **GAP-2026-038 (HIGH): reject userinfo-bearing organization website
