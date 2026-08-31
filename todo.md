@@ -632,6 +632,114 @@ is not required for the controlled pilot path and is not an active task.
 
 ## Current Verification
 
+- [x] **GAP-2026-054 (HIGH): recover explicit Roadhouse & Rose staff from the
+  cached zero-page crawl into V15.** Evidence: V14 recovered Roadhouse's branch
+  email and phone from its contact block, but did not promote people; the same
+  cached first-party crawl contains an explicit 13-person staff page and a
+  contact page that independently identifies the business/location and five
+  roles. Impact: named staff and conservative owner/manager evidence remained
+  stranded despite reviewable local provenance. Responsible subsystem: offline
+  cached-evidence staff attribution and canonical materialization. Acceptance:
+  merge only the 13 explicit staff cards into CFI-0753 from exact V14, treat only
+  Wes Playter and Gregg Davey as decision makers based on explicit owner/co-owner
+  evidence, reject biography/condolence/obituary names and fax/shared-office
+  smearing, retain URL/file/text/HTML hash provenance, conserve 955 unique
+  records, preserve all V14 contacts and people, fail closed on cache drift,
+  produce byte-identical reruns, validate PostgreSQL through the no-connection
+  dry-run, and preserve V14/CRM bytes with zero network or CRM writes.
+  **VALIDATED:** V15 changes only CFI-0753 and adds 13 staff plus two decision
+  makers. Businesses with staff increase 138→139, businesses with a decision
+  maker 111→112, named staff 705→718, and named decision makers 270→272;
+  businesses with any safe contact remain 318, with 161 email and 317 phone
+  businesses. PostgreSQL dry-run reports 955 organizations, 889 contacts, 718
+  people, and 1,053 evidence sources; no Supabase import was performed. The
+  targeted tests, persistence tests, and full 279-test plus 2-subtest suite pass;
+  V14 and CRM SHA-256 remain canonical, with zero network requests or CRM writes.
+
+- [x] **GAP-2026-051 (HIGH): retry the 38 verified zero-page domains in an
+  isolated recovery crawl.** Evidence: the complete verified crawl attempted
+  all 352 domains, but 38 domains covering 50 businesses returned no pages and
+  44 of those businesses remain unresolved in V13. Build a deterministic queue
+  only from reviewed mappings and the recorded failed-domain set; crawl with
+  eight workers, bounded time/pages/attempts, checkpoints, and no CRM/outreach
+  integration; preserve every failure explicitly. Acceptance: queue/domain and
+  business conservation pass, recovered pages retain provenance, unresolved
+  domains remain retryable, and CRM SHA256 is unchanged.
+  **VALIDATED:** the deterministic 38-domain/50-business queue recovered 58
+  pages from 12 domains with eight workers; all 26 remaining zero-page domains
+  are explicit in the isolated report. Source conservation passed and the CRM
+  SHA256 remained canonical.
+
+- [x] **GAP-2026-052 (HIGH): merge branch-safe contacts from the zero-page
+  recovery into V14.** Evidence: recovered first-party pages contain explicit
+  location/contact blocks for Armstrong Oshawa, Holy Cross Thornhill, Hall
+  Estevan and Redvers, Roadhouse & Rose Newmarket, and Stacey's Gander. Merge
+  only six branch phones plus Armstrong/Roadhouse emails; retain repeated
+  Hall/Stacey/Holy Cross emails as organization-shared; reject fax, toll-free,
+  obituary-only, vendor, and wrong-identity values. Acceptance: V14 has 161
+  email businesses, 317 phone businesses, 318 with any safe contact/staff, 273
+  email values, 616 phone values, unchanged staff/DM metrics, and 318 + 637 =
+  955; CRM/network invariants and full tests pass.
+  **VALIDATED:** deterministic V14 adds eight explicit values across the six
+  named businesses, retains three shared emails separately, rejects all listed
+  adversarial values/pages, reports the exact expected metrics, and imports to
+  Supabase as 889 contacts with 1,040 evidence sources and zero integrity gaps.
+
+- [x] **GAP-2026-053 (HIGH): prevent canonical snapshot replay from promoting
+  superseded website signals.** Evidence: after migration `0002` marks the 530
+  reviewed mappings canonical, replaying the core V13/V14 importer would set
+  its 93 embedded website signals canonical, including 21 legacy-only values.
+  Make reviewed verification authoritative for canonical status, insert new
+  embedded signals as non-canonical, and keep website coverage validation in
+  the dedicated coverage command. Acceptance: replay retains exactly 530
+  canonical mappings and 551 preserved signals while core counts validate.
+  **VALIDATED:** the V14 core replay retained 530 canonical mappings and all
+  551 signals, while core source/database counts matched and targeted
+  adversarial tests passed.
+
+- [x] **GAP-2026-050 (HIGH): persist complete verified website and crawl
+  coverage in PostgreSQL.** Evidence: Supabase has all 955 organizations but
+  only the 93 website values embedded in canonical V13, while the reviewed
+  crawlset contains 530 business mappings across 352 attempted domains and the
+  batch retains 1,372 unique fetched URLs. Add a non-destructive migration for
+  mapping verification/provenance plus crawl runs, targets, and page evidence;
+  retain superseded website signals as non-canonical; import searchable text,
+  structured metadata, hashes, and source paths without duplicating raw HTML;
+  provide dry-run/apply/validation commands and adversarial tests. Acceptance:
+  530 canonical mappings, 352 targets, 314 successful/38 zero-page domains, and
+  1,372 deduplicated pages match source; repeat import is idempotent; existing
+  PostgreSQL and local pipeline invariants remain unchanged.
+  **VALIDATED:** migration `0002` is applied; Supabase contains 530 canonical
+  mappings plus 21 preserved non-canonical signals, one crawl run, all 352
+  targets (314 successful and 38 zero-page), and 1,372 deduplicated searchable
+  page observations. A repeated import produced identical counts with no
+  mismatches; unknown-organization mappings abort transactionally.
+
+- [x] **GAP-2026-049 (HIGH): add production-safe PostgreSQL persistence and a
+  reversible Supabase import path.** Evidence: canonical directory/enrichment
+  state is retained as provenance-rich JSON, workflow/CRM state is retained in
+  SQLite, and the repository has neither a PostgreSQL connection boundary nor
+  versioned migrations. The hosted Supabase session pooler is operator-tested
+  and exposes standard `PG*` configuration with native `.pgpass` credentials.
+  Add a centralized SSL-enforcing `psql` runner, an isolated normalized `fhsi`
+  schema, tracked non-destructive migrations, deterministic transactional
+  import/upserts for the canonical 955 records and read-only CRM lead snapshot,
+  dry-run/status/connect/validate commands, tests including rollback and unsafe
+  SSL/config cases, and operating documentation. Preserve JSON/SQLite as the
+  domain/workflow sources of truth; never import outreach events, print secrets,
+  or change CRM/outreach state. Acceptance: migrations and a clean dry-run/real
+  import succeed against Supabase, source/database counts and integrity match,
+  rerun is idempotent, existing tests pass, and secret/private paths stay clean.
+  **VALIDATED:** migration `0001` is applied to the isolated Supabase `fhsi`
+  schema; repeated guarded imports retain exact parity at 955 organizations,
+  955 source records, 93 canonical-record websites, 1,035 evidence sources,
+  881 branch-safe contacts, 705 people, and 136 read-only CRM lead snapshots.
+  Live checks found zero orphans, duplicate stable IDs, missing evidence links,
+  skipped records, or conflicts; an intentional FK failure rolled back with
+  zero residue. TLS is enforced with `sslmode=require`, the local CRM SHA256 is
+  unchanged, secrets/private/generated paths are clean, and 273 tests plus 2
+  subtests pass. No outreach, CRM, or EspoCRM write occurred.
+
 - [x] **GAP-2026-048 (HIGH): recover explicit branch contacts from the final
   cached P5 shared-domain review cohort.** Evidence: cached first-party pages
   contain separate address/phone blocks for Ward's Brampton, Woodbridge, and
