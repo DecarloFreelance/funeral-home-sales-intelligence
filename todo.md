@@ -4,6 +4,20 @@ Last reconciled: 2026-08-24
 
 ## Directory 955 precision enrichment (2026-08-31)
 
+- [x] **GAP-2026-043 (MEDIUM): fail-closed audit the three P3 cached-search
+  businesses.** Evidence: cached results for Fletcher/Radville are generic
+  Dignity pages, George/Wiarton resolves only to the different A. Millard George
+  business in London, and Hendren/Lakefield resolves only to legacy obituary or
+  service pages. Impact: accepting these results would create false website or
+  branch-contact attribution. Responsible subsystem: cached-search recovery.
+  Acceptance: conserve and classify all cached results offline, explicitly block
+  wrong-business, obituary, and generic corporate evidence, retain all three as
+  unresolved, make no canonical merge, and preserve CRM SHA-256. **VALIDATED:**
+  all 13 cached results were conserved and classified; the London George result,
+  four Hendren memorial pages, and eight generic Dignity results remained
+  blocked. No value was merged, 268 tests plus 2 subtests pass, and the CRM hash
+  remains canonical.
+
 - [x] **GAP-2026-042 (HIGH): bulk-audit the remaining P1 cached-fetch cohort.**
   Evidence: offline inspection of the 10 review and 54 weak-only P1 businesses
   found nine first-party pages with phones explicitly paired to target branch
