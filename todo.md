@@ -4,6 +4,25 @@ Last reconciled: 2026-08-24
 
 ## Directory 955 precision enrichment (2026-08-31)
 
+- [x] **GAP-2026-046 (HIGH): recover the first explicit-location batch from
+  P5's 110 shared-domain records.** Evidence: cached first-party pages contain
+  13 phone values inside named branch and street-address blocks for Beau “Lac,”
+  Essentials, Irvine, Kendrick, and Wm. Kipp, while their general emails remain
+  shared and 97 records require further structural review. Impact: safe contacts
+  are stranded by the stale row-level domain join, but domain-wide promotion
+  would smear multi-location values. Responsible subsystem: offline shared-domain
+  attribution and canonical materialization. Acceptance: conserve 110 records,
+  merge only the 13 explicit branch-block phones from exact V10, retain the other
+  97 in review, preserve shared-email evidence and provenance, conserve 955 unique
+  records, keep staff/DM metrics fixed, prove deterministic output, run the full
+  suite, and preserve CRM SHA-256. **VALIDATED:** 13 phone values were merged
+  from exact named-location and address blocks for four Beau “Lac” branches, two
+  Essentials branches, two Irvine branches, three Kendrick branches, and two
+  Wm. Kipp branches. Shared emails remained separate and 97 records remain in
+  review. V11 has 282 resolved plus 673 unresolved records, unchanged staff/DM
+  metrics, byte-identical repeat output, 268 tests plus 2 subtests passing, no
+  network or LangSearch use, and unchanged canonical CRM SHA-256.
+
 - [x] **GAP-2026-045 (HIGH): reconcile stale P5 evidence classes and recover
   the clean verified-site slice.** Evidence: 160 of 569 records labeled
   `P5_NO_LOCAL_WEB_EVIDENCE` have later verified mappings; authoritative prior
