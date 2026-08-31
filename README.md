@@ -177,6 +177,27 @@ secure this portal or its database: static JavaScript authentication would ship
 the password or protected data to every visitor. Deploy the Flask application
 on a server-side Python host for shared access instead.
 
+### Free Render deployment
+
+The root `render.yaml` defines one free Python web service using Gunicorn,
+managed TLS, secure session cookies, and a public non-sensitive `/healthz`
+endpoint. Prepare the private read-only findings file locally:
+
+```bash
+python export_portal_findings.py
+```
+
+This writes ignored, mode-0600 `instance/portal_findings.json` and fails if the
+955-record snapshot exceeds Render's 1 MB secret-file limit. In Render, create a
+Blueprint from this repository and supply `OPERATOR_UI_BOOTSTRAP_PASSWORD` when
+prompted. On the resulting service's Environment page, add a secret file named
+`portal_findings.json`, paste/upload the local file, and save. Render mounts it
+at `/etc/secrets/portal_findings.json` and redeploys. The startup process refuses
+to run if any required secret or findings file is absent; it recreates the
+ephemeral SQLite credential store with hashes for exactly Alex and Todd after
+every restart. Neither the shared password nor the findings snapshot belongs in
+Git or `render.yaml`.
+
 The interface reads existing generated datasets and exposes confirmed, CSRF-
 protected operator actions. CSV and JSON discovery sources can be normalized and
 previewed without changing data, then explicitly confirmed to atomically replace

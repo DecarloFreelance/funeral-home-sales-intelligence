@@ -632,6 +632,33 @@ is not required for the controlled pilot path and is not an active task.
 
 ## Current Verification
 
+- [x] **GAP-2026-056 (HIGH): make the authenticated findings portal deployable
+  on Render's free web-service tier.** Evidence: the operator portal is locally
+  authenticated, but the requested online deployment cannot use GitHub Pages'
+  static runtime; Render free web services provide server-side Python and TLS
+  but erase local SQLite files on sleep/restart and limit uploaded secret files
+  to 1 MB. Impact: deploying the current process directly would lose its login
+  store and omit ignored V15 findings. Responsible subsystem: production WSGI
+  startup and private deployment packaging. Acceptance: add a free-plan Render
+  Blueprint and Gunicorn entry point; generate a deterministic sub-1-MB,
+  read-only V15 portal snapshot without provenance loss in canonical artifacts;
+  keep that snapshot and password out of Git; recreate only the hashed Alex/Todd
+  credential database from a Render secret on each boot; require a stable
+  generated session key, HTTPS cookies, and a non-sensitive health endpoint;
+  test missing-secret failure, deterministic packaging, restart behavior, and
+  route protection; document exact no-cost deployment steps; preserve all
+  canonical/CRM state and commit only after complete validation.
+  **VALIDATED:** `render.yaml` defines one free Python/Gunicorn service with a
+  generated stable session secret, secure cookies, and a non-sensitive health
+  check. Production startup fails closed when secrets are absent and recreates
+  exactly the hashed Alex/Todd accounts in ephemeral storage after every boot.
+  The deterministic mode-0600 portal export contains all 955 V15 records in
+  251,643 bytes, remains ignored, and fits Render's 1 MB secret-file limit.
+  Thirty focused deployment/auth/operator tests and the full 289-test plus
+  2-subtest suite pass. No password, Render credential, or findings snapshot is
+  tracked; canonical V14/V15 and CRM hashes remain unchanged, and no database,
+  CRM, outreach, or network mutation was made by the application validation.
+
 - [x] **GAP-2026-055 (HIGH): require authenticated access to the findings
   interface and expose the canonical V15 findings safely.** Evidence: the
   existing Flask/Jinja operator interface displays generated findings and CRM

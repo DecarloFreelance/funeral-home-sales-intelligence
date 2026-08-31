@@ -33,6 +33,7 @@ def create_app(config=None):
         CRAWL_RUNNER=crawl_queue,
         AUTH_REQUIRED=True,
         AUTH_DB=PROJECT_ROOT / "instance/operator_auth.sqlite",
+        FINDINGS_PATH=None,
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
         SESSION_COOKIE_SECURE=os.environ.get("OPERATOR_UI_SECURE_COOKIE", "").lower() == "true",
@@ -60,7 +61,7 @@ def create_app(config=None):
 
     @app.before_request
     def require_login():
-        if not app.config["AUTH_REQUIRED"] or request.endpoint in {"login", "static"}:
+        if not app.config["AUTH_REQUIRED"] or request.endpoint in {"login", "static", "healthz"}:
             return None
         if session.get("authenticated_user"):
             return None
@@ -71,7 +72,9 @@ def create_app(config=None):
         return {"authenticated_user": session.get("authenticated_user")}
 
     def repository():
-        return OperatorRepository(app.config["DATA_ROOT"], app.config.get("CRM_DB"))
+        return OperatorRepository(
+            app.config["DATA_ROOT"], app.config.get("CRM_DB"), app.config.get("FINDINGS_PATH")
+        )
 
     def csrf_token():
         if "csrf_token" not in session:
@@ -79,6 +82,10 @@ def create_app(config=None):
         return session["csrf_token"]
 
     app.jinja_env.globals["csrf_token"] = csrf_token
+
+    @app.get("/healthz")
+    def healthz():
+        return {"status": "ok"}
 
     @app.route("/login", methods=["GET", "POST"])
     def login():

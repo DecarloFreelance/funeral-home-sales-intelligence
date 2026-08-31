@@ -3,6 +3,7 @@ requests
 beautifulsoup4
 email-validator
 Flask
+gunicorn
 lxml
 pandas
 phonenumbers

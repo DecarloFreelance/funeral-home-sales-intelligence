@@ -5,9 +5,10 @@ from pathlib import Path
 
 
 class OperatorRepository:
-    def __init__(self, data_root: Path, crm_db: Path | None = None):
+    def __init__(self, data_root: Path, crm_db: Path | None = None, findings_path: Path | None = None):
         self.data_root = Path(data_root).resolve()
         self.crm_db = Path(crm_db).resolve() if crm_db else self.data_root / "crm.sqlite"
+        self.findings_path = Path(findings_path).resolve() if findings_path else None
 
     def _json(self, relative_path, default):
         path = (self.data_root / relative_path).resolve()
@@ -60,6 +61,17 @@ class OperatorRepository:
         return next((item for item in self.leads() if item.get("domain") == domain), None)
 
     def findings(self):
+        if self.findings_path:
+            try:
+                payload = json.loads(self.findings_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                return [], {}
+            records = payload.get("records") if isinstance(payload, dict) else []
+            summary = payload.get("summary") if isinstance(payload, dict) else {}
+            return (
+                records if isinstance(records, list) else [],
+                summary if isinstance(summary, dict) else {},
+            )
         records = self._json(
             "generated/directory_955/full_955_enrichment_v15/full_955_enrichment.json", []
         )

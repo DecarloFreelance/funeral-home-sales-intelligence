@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: funeral-home-findings
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 4 operator_ui.wsgi:app
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.7
+      - key: OPERATOR_UI_SECRET_KEY
+        generateValue: true
+      - key: OPERATOR_UI_BOOTSTRAP_PASSWORD
+        sync: false
+      - key: PORTAL_FINDINGS_PATH
+        value: /etc/secrets/portal_findings.json
