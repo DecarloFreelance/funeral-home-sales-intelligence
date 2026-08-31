@@ -4,6 +4,27 @@ Last reconciled: 2026-08-24
 
 ## Directory 955 precision enrichment (2026-08-31)
 
+- [x] **GAP-2026-044 (HIGH): fetch and attribute the 45-record P4 known-domain
+  cohort.** Evidence: all 45 V9-unresolved records have one verified domain but
+  no matching cached crawler page, so offline extraction cannot proceed. Impact:
+  a bounded first-party crawl can recover contact/location evidence without
+  spending search quota, but shared domains and redirects require existing
+  crawler safety and branch-level attribution. Responsible subsystem: isolated
+  scale crawler plus offline contact attribution. Acceptance: prepare a
+  deterministic source, crawl with workers=8, timeout=15, max-pages=12 and
+  restartable checkpoints, use no LangSearch, classify every target, merge only
+  branch-safe contacts from exact V9, retain provenance/review/shared evidence,
+  conserve 955 unique records, keep staff/DM metrics fixed, run adversarial and
+  full tests, and preserve CRM SHA-256. **VALIDATED:** the deterministic source
+  reduced 45 locations to 32 domain crawl identities; the bounded run made 274
+  path attempts and retained 12 pages from 5 domains while 27 domains failed
+  closed. Five explicit branch phones were merged for Melita, Portage la
+  Prairie, Carberry, Neepawa, and Minnedosa. Four cross-domain redirects,
+  Willmor's unmapped Glenboro/Holland phones, Wolkowski's wrong Kamsack branch,
+  and labeled faxes remained blocked. V10 has 269 resolved plus 686 unresolved
+  records, unchanged staff/DM metrics, byte-identical attribution reruns, 268
+  tests plus 2 subtests passing, no LangSearch use, and unchanged CRM SHA-256.
+
 - [x] **GAP-2026-043 (MEDIUM): fail-closed audit the three P3 cached-search
   businesses.** Evidence: cached results for Fletcher/Radville are generic
   Dignity pages, George/Wiarton resolves only to the different A. Millard George
