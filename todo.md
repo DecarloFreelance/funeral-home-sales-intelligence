@@ -4,6 +4,28 @@ Last reconciled: 2026-08-24
 
 ## Directory 955 precision enrichment (2026-08-31)
 
+- [x] **GAP-2026-045 (HIGH): reconcile stale P5 evidence classes and recover
+  the clean verified-site slice.** Evidence: 160 of 569 records labeled
+  `P5_NO_LOCAL_WEB_EVIDENCE` have later verified mappings; authoritative prior
+  categories divide the cohort into 32 verified/no-contact, 110 shared/other,
+  18 quarantined, and 409 without verified websites. Three of the 32 mappings
+  are visibly wrong or third-party (Mahone directory, Morgan→Gordon Monk, and a
+  generic gateway obituary host). Impact: treating all 569 as equally domainless
+  wastes discovery requests and risks crawling known-bad identities. Responsible
+  subsystem: recovery inventory reconciliation and isolated crawler. Acceptance:
+  conserve all 569 records into disjoint evidence classes, exclude known-bad
+  mappings, crawl the remaining verified slice with bounded restartable settings,
+  use no LangSearch, attribute only explicit branch evidence from exact V10,
+  preserve provenance/review/quarantine artifacts, conserve 955 unique canonical
+  records, run targeted/full tests, and preserve CRM SHA-256. **VALIDATED:** all
+  569 records were conserved into disjoint 32/110/18/409 classes. Three visibly
+  wrong or third-party mappings were excluded; the remaining 29-domain isolated
+  crawl made 232 attempts and retained 33 pages from 16 domains. Its only raw
+  contacts were a FrontRunner vendor-support email and a George Darte phone on a
+  Garden City closure notice, both rejected. Seven cross-domain redirects also
+  failed closed. V10 remains canonical at 269 resolved plus 686 unresolved; 268
+  tests plus 2 subtests pass, no LangSearch was used, and CRM SHA-256 is unchanged.
+
 - [x] **GAP-2026-044 (HIGH): fetch and attribute the 45-record P4 known-domain
   cohort.** Evidence: all 45 V9-unresolved records have one verified domain but
   no matching cached crawler page, so offline extraction cannot proceed. Impact:
