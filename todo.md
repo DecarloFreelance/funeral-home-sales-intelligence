@@ -4,6 +4,27 @@ Last reconciled: 2026-08-24
 
 ## Directory 955 precision enrichment (2026-08-31)
 
+- [x] **GAP-2026-042 (HIGH): bulk-audit the remaining P1 cached-fetch cohort.**
+  Evidence: offline inspection of the 10 review and 54 weak-only P1 businesses
+  found nine first-party pages with phones explicitly paired to target branch
+  names or addresses, alongside labeled faxes, shared emails, and ambiguous
+  Cropo/Cardinal/Everest multi-location rows. Impact: trustworthy cached branch
+  contacts remain outside the canonical dataset, while naive domain extraction
+  would smear contacts. Responsible subsystem: offline P1 branch attribution
+  and canonical materialization. Acceptance: classify all 64 businesses, merge
+  only explicit branch-block phones from exact V8, retain shared/review evidence,
+  reject fax and cross-branch values, preserve provenance, regenerate unresolved
+  records, keep staff/DM metrics fixed, conserve 955 unique records, prove
+  deterministic output, run the full suite, and preserve CRM SHA-256.
+  **VALIDATED:** all 64 remaining P1 businesses were classified offline; nine
+  explicit branch phones were merged for Shediac, Brockville, Chelmsford,
+  Hanmer, Dashwood, Exeter, Lucan, Seaforth, and Spiritwood. Barclay's
+  two-column HTML structure was checked directly, not inferred from flattened
+  proximity. Four shared-email groups, labeled faxes, and ambiguous
+  Cropo/Cardinal/Everest mappings remained unmerged. V9 has 264 resolved plus
+  691 unresolved records, unchanged staff/DM metrics, byte-identical repeat
+  output, 268 tests plus 2 subtests passing, and unchanged canonical CRM hash.
+
 - [x] **GAP-2026-041 (HIGH): recover branch-safe contacts from the P2 cached
   crawler cohort.** Evidence: the ten-record P2 queue contains a first-party
   Interlake contact page with a Selkirk address, phone, labeled fax, and email;
