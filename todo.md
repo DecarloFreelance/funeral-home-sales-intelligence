@@ -2,6 +2,28 @@
 
 Last reconciled: 2026-08-24
 
+## Directory 955 precision enrichment (2026-08-31)
+
+- [x] **GAP-2026-040 (HIGH): resolve Falconer Clinton contact scope before V7.**
+  Evidence: cached first-party contact-page text pairs `+15194829521` directly
+  with the Clinton Chapel block, but repeats `info@falconerfuneralhomes.com` in
+  both Clinton and Goderich blocks; V3's distance classifier proposed both as
+  branch-safe. Impact: merging the email would smear organization-shared data
+  onto one branch. Responsible subsystem: offline branch attribution and
+  canonical 955 materialization. Acceptance: audit the cached body and its hash,
+  classify the Clinton phone separately from the shared email and labeled fax
+  values, preserve provenance, merge only audit-approved values from exact V6,
+  retain 955 unique records and unchanged staff/DM counts, regenerate the
+  unresolved queue, prove an adversarial Goderich-contact exclusion, and leave
+  CRM SHA-256 unchanged. **VALIDATED:** the cached body SHA-256 matched the V3
+  evidence; its two repeated renderings each pair `+15194829521` with Clinton,
+  `+15195241221` with Goderich, and the same email with both branches. V7 merged
+  only the Clinton phone, preserved the email as organization-shared, rejected
+  both labeled faxes, and produced 254 resolved plus 701 unresolved records.
+  All 955 IDs remain unique; staff/DM metrics are unchanged; a repeat run was
+  byte-identical; 268 tests plus 2 subtests pass; and the CRM retained SHA-256
+  `c06bee94b72a8bbde83e1755a9897800543f038e255e6e2db72cca744a736b9e`.
+
 ## Autonomous national discovery (2026-08-26)
 
 - [x] **GAP-2026-039 (HIGH): add a bounded, evidence-preserving national
