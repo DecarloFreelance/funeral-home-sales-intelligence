@@ -4,6 +4,24 @@ Last reconciled: 2026-08-24
 
 ## Directory 955 precision enrichment (2026-08-31)
 
+- [x] **GAP-2026-047 (HIGH): recover the second explicit-location batch from
+  P5 shared-domain review.** Evidence: 24 of the 97 remaining records have cached
+  first-party pages pairing a target location name and street address with a
+  phone across MacCoubrey, Narfason, Munro & Morris, Peaceful Transition,
+  Riverside, Rushnell, TJ Tracey, Wartman, and Weaver. Impact: safe phones remain
+  stranded while shared emails, fax values, and duplicate Trenton rows must not
+  be smeared. Responsible subsystem: offline shared-domain attribution and
+  canonical materialization. Acceptance: merge only these explicit phones from
+  exact V11, retain 73 records in review, preserve shared evidence/provenance,
+  conserve 955 unique records, keep staff/DM metrics unchanged, prove
+  deterministic output, run the full suite, and preserve CRM SHA-256.
+  **VALIDATED:** 24 phones were merged from exact named-location/address blocks;
+  Rushnell Picton was removed when its asserted block was absent and remains in
+  review. Shared emails and 73 unresolved mappings remain separate. V12 has 306
+  resolved plus 649 unresolved records, unchanged staff/DM metrics,
+  byte-identical repeat output, 268 tests plus 2 subtests passing, no network or
+  LangSearch use, and unchanged canonical CRM SHA-256.
+
 - [x] **GAP-2026-046 (HIGH): recover the first explicit-location batch from
   P5's 110 shared-domain records.** Evidence: cached first-party pages contain
   13 phone values inside named branch and street-address blocks for Beau “Lac,”
