@@ -29,8 +29,8 @@ class RenderDeploymentTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary); source, summary = self.fixture(root)
             one, two = root / "one.json", root / "two.json"
-            first = write_snapshot(source, summary, one)
-            second = write_snapshot(source, summary, two)
+            first = write_snapshot(source, summary, one, None)
+            second = write_snapshot(source, summary, two, None)
             self.assertEqual(one.read_bytes(), two.read_bytes())
             self.assertEqual(first, second)
             self.assertLess(first, MAX_RENDER_SECRET_BYTES)
@@ -53,7 +53,7 @@ class RenderDeploymentTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary); source, summary = self.fixture(root)
             findings, auth = root / "findings.json", root / "auth.sqlite"
-            write_snapshot(source, summary, findings)
+            write_snapshot(source, summary, findings, None)
             environment = os.environ.copy()
             environment.update({
                 "OPERATOR_UI_SECRET_KEY": "stable-test-key",

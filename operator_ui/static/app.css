@@ -47,4 +47,9 @@ td small { display:block; color:var(--muted); margin-top:.25rem; }
 .search-label { max-width:36rem; margin-bottom:1rem; }
 details { margin-top:.35rem; }
 details summary { color:var(--accent); cursor:pointer; }
+.evidence-item { display:grid; gap:.2rem; padding:.65rem 0; border-bottom:1px solid var(--line); }
+.evidence-item:last-child { border-bottom:0; }
+.evidence-item a { color:var(--accent); }
+.evidence-item small,.evidence-item span { color:var(--muted); }
+.staff-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:0 1.5rem; }
 @media (max-width:720px) { header { align-items:flex-start; flex-direction:column; } main { margin-top:1.5rem; } }

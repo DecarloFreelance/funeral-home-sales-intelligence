@@ -144,6 +144,13 @@ def create_app(config=None):
         records, summary = repository().findings()
         return render_template("findings.html", records=records, summary=summary)
 
+    @app.get("/findings/<record_id>")
+    def finding_detail(record_id):
+        record = repository().finding(record_id)
+        if record is None:
+            abort(404)
+        return render_template("finding_detail.html", record=record)
+
     @app.get("/queues")
     def queues():
         repo = repository()

@@ -100,6 +100,10 @@ class OperatorRepository:
             })
         return findings, summary
 
+    def finding(self, record_id):
+        records, _summary = self.findings()
+        return next((row for row in records if row.get("directory_record_id") == record_id), None)
+
     def quality_review(self):
         value = self._json("generated/enrichment/review_queue.json", [])
         if not isinstance(value, list):

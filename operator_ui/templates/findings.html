@@ -22,9 +22,9 @@
     <tbody>
       {% for record in records %}
       <tr data-search="{{ (record.directory_record_id ~ ' ' ~ record.company ~ ' ' ~ record.city ~ ' ' ~ record.province)|lower }}">
-        <td><strong>{{ record.company }}</strong><small>{{ record.directory_record_id }}</small></td>
+        <td><a href="{{ url_for('finding_detail', record_id=record.directory_record_id) }}"><strong>{{ record.company }}</strong></a><small>{{ record.directory_record_id }}</small></td>
         <td>{{ record.city }}, {{ record.province }}</td>
-        <td>{{ record.emails|length }} email · {{ record.phones|length }} phone</td>
+        <td>{{ record.emails|length }} email · {{ record.phones|length }} phone{% if record.website %}<small>Reviewed website available</small>{% endif %}</td>
         <td>{{ record.staff|length }}{% if record.staff %}<details><summary>View</summary>{% for person in record.staff %}<div>{{ person.name }}{% if person.title %} — {{ person.title }}{% endif %}</div>{% endfor %}</details>{% endif %}</td>
         <td>{% for person in record.decision_makers %}<div>{{ person.name }}{% if person.title %}<small>{{ person.title }}</small>{% endif %}</div>{% else %}—{% endfor %}</td>
       </tr>

@@ -107,6 +107,25 @@ class OperatorAuthenticationTests(unittest.TestCase):
         self.assertIn(b"Wes Playter", response.data)
         self.assertEqual(source.read_bytes(), before)
 
+    def test_finding_detail_is_protected_escaped_and_unknown_ids_are_404(self):
+        directory = self.data / "generated/directory_955/full_955_enrichment_v15"
+        directory.mkdir(parents=True)
+        (directory / "full_955_enrichment.json").write_text(json.dumps([{
+            "directory_record_id": "CFI-0001", "company": "<script>alert(1)</script>",
+            "city": "City", "province": "ON", "branch_safe_enrichment": {
+                "emails": [{"value": "safe@example.test", "source_url": "https://example.test/contact"}],
+                "phones": [], "staff": [], "decision_makers": [], "has_any_contact": True,
+            },
+        }]))
+        (directory / "summary.json").write_text("{}")
+        self.login()
+        detail = self.client.get("/findings/CFI-0001")
+        self.assertEqual(detail.status_code, 200)
+        self.assertIn(b"&lt;script&gt;alert(1)&lt;/script&gt;", detail.data)
+        self.assertNotIn(b"<script>alert(1)</script>", detail.data)
+        self.assertIn(b"safe@example.test", detail.data)
+        self.assertEqual(self.client.get("/findings/CFI-9999").status_code, 404)
+
 
 if __name__ == "__main__":
     unittest.main()

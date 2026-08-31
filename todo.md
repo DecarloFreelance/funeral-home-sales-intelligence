@@ -632,6 +632,33 @@ is not required for the controlled pilot path and is not an active task.
 
 ## Current Verification
 
+- [x] **GAP-2026-057 (HIGH): stop the online portal from hiding retained V15
+  evidence and reviewed website coverage.** Evidence: the deployed list reduces
+  889 safe contacts and 718 staff records to counts, exposes no per-business
+  evidence/provenance page, and omits the separate 530-record reviewed website
+  mapping inventory; users therefore see materially less data than the local
+  artifacts retain. Impact: the delivery appears emptier than the evidence base
+  and cannot be independently reviewed per business. Responsible subsystem:
+  private portal export and findings presentation. Acceptance: add protected
+  per-business detail routes; display actual email/phone/staff/decision-maker
+  values and compact source provenance; join reviewed websites by stable ID
+  with explicit verification labels; distinguish absent from unresolved data;
+  keep the private snapshot below Render's 1 MB limit; preserve canonical data,
+  attribution rules, and login controls; test XSS/path/unknown-ID behavior and
+  deterministic export; regenerate the private snapshot, run the full suite,
+  and commit only after validation.
+  **VALIDATED:** the protected findings list now links to escaped, unknown-ID-
+  safe business detail pages showing actual branch-safe email and phone values,
+  staff, decision makers, evidence classes, and source URLs. The export joins
+  reviewed website mappings by stable directory ID with their explicit
+  verification class and distinguishes missing evidence in the UI. The private
+  snapshot contains 955 businesses, 546 canonical/reviewed websites, 273 email
+  values, 616 phone values, and 718 staff records in 486,648 bytes; it remains
+  ignored and mode 0600. Eleven focused export/auth tests and the full 290-test
+  plus 2-subtest suite pass; XSS payloads escape, unknown IDs return 404, all
+  protected routes still require login, and canonical/CRM artifacts are
+  unchanged.
+
 - [x] **GAP-2026-056 (HIGH): make the authenticated findings portal deployable
   on Render's free web-service tier.** Evidence: the operator portal is locally
   authenticated, but the requested online deployment cannot use GitHub Pages'
