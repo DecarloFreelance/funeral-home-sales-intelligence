@@ -632,6 +632,21 @@ is not required for the controlled pilot path and is not an active task.
 
 ## Current Verification
 
+- [x] **GAP-2026-048 (HIGH): recover explicit branch contacts from the final
+  cached P5 shared-domain review cohort.** Evidence: cached first-party pages
+  contain separate address/phone blocks for Ward's Brampton, Woodbridge, and
+  Weston chapels; Tubman's Kars and Carp chapels; and Serenity's Burin location,
+  including a Burin-bound email. Materialize only those location-bound values
+  from V12, reject Ward placeholders/toll-free alternatives, Serenity's Grand
+  Bank phone, and the quarantined Tubman mirror, preserve provenance, and keep
+  CRM/network/LangSearch activity at zero. Acceptance: six businesses gain
+  seven safe values, staff/DM counts remain unchanged, 312 resolved + 643
+  unresolved = 955, deterministic rerun passes, and the full suite passes.
+  **VALIDATED:** V13 adds six branch phones and Serenity's Burin-bound email;
+  rejects all named adversarial values/sources; reports 312 resolved plus 643
+  unresolved; preserves the canonical CRM hash; reruns byte-identically; and
+  passes 268 tests plus 2 subtests.
+
 - [x] **GAP-2026-036 (HIGH): render pathway-review previews without unresolved
   sender placeholders.** Evidence: the Gregory package's selected-angle preview
   exposed literal sender placeholders even though validated pilot conventions
