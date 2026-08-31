@@ -4,6 +4,26 @@ Last reconciled: 2026-08-24
 
 ## Directory 955 precision enrichment (2026-08-31)
 
+- [x] **GAP-2026-041 (HIGH): recover branch-safe contacts from the P2 cached
+  crawler cohort.** Evidence: the ten-record P2 queue contains a first-party
+  Interlake contact page with a Selkirk address, phone, labeled fax, and email;
+  its About page explicitly identifies owner Rick Kotaska, while other P2 pages
+  include shared MacKenzie contacts and generic Dignity pages. Impact: one
+  unresolved record has locally cached trustworthy contacts, but naive
+  domain-wide extraction would smear shared or corporate contacts. Responsible
+  subsystem: offline crawler-evidence attribution and canonical materialization.
+  Acceptance: audit all ten records offline, join Kotaska identity to the
+  Selkirk contact block, reject the fax, leave shared/generic contacts unmerged,
+  preserve provenance, materialize exact V7 to V8, retain 955 unique records and
+  unchanged staff/DM metrics, regenerate unresolved records, and preserve CRM.
+  **VALIDATED:** all ten P2 records were classified offline; CFI-0514 gained
+  `info@interlakecremation.ca` and `+12044821040` from its explicit Selkirk
+  block with separate Kotaska identity evidence. The labeled fax, shared
+  Stonewall/Teulon values, generic Dignity contact, and unproductive cached
+  pages remained unmerged. V8 has 255 resolved plus 700 unresolved records,
+  unchanged staff/DM metrics, byte-identical repeat output, 268 tests plus 2
+  subtests passing, and unchanged canonical CRM SHA-256.
+
 - [x] **GAP-2026-040 (HIGH): resolve Falconer Clinton contact scope before V7.**
   Evidence: cached first-party contact-page text pairs `+15194829521` directly
   with the Clinton Chapel block, but repeats `info@falconerfuneralhomes.com` in
