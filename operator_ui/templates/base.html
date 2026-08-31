@@ -10,6 +10,7 @@
   <header>
     <a class="brand" href="{{ url_for('dashboard') }}">Sales Intelligence</a>
     <nav aria-label="Primary">
+      <a href="{{ url_for('findings') }}">Findings</a>
       <a href="{{ url_for('queues') }}">Queues</a>
       <a href="{{ url_for('imports') }}">Import</a>
       <a href="{{ url_for('crawl_status') }}">Crawl</a>
@@ -20,6 +21,15 @@
       <a href="{{ url_for('drafts') }}">Drafts</a>
       <a href="{{ url_for('crm_actions') }}">CRM</a>
     </nav>
+    {% if authenticated_user %}
+      <div class="user-menu">
+        <span>Signed in as {{ authenticated_user }}</span>
+        <form method="post" action="{{ url_for('logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="link-button" type="submit">Log out</button>
+        </form>
+      </div>
+    {% endif %}
   </header>
   <main>
     {% with messages = get_flashed_messages() %}{% for message in messages %}<p class="notice">{{ message }}</p>{% endfor %}{% endwith %}

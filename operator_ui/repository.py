@@ -59,6 +59,35 @@ class OperatorRepository:
     def lead(self, domain):
         return next((item for item in self.leads() if item.get("domain") == domain), None)
 
+    def findings(self):
+        records = self._json(
+            "generated/directory_955/full_955_enrichment_v15/full_955_enrichment.json", []
+        )
+        summary = self._json(
+            "generated/directory_955/full_955_enrichment_v15/summary.json", {}
+        )
+        if not isinstance(records, list):
+            records = []
+        if not isinstance(summary, dict):
+            summary = {}
+        findings = []
+        for record in records:
+            if not isinstance(record, dict):
+                continue
+            enrichment = record.get("branch_safe_enrichment") or {}
+            findings.append({
+                "directory_record_id": record.get("directory_record_id", ""),
+                "company": record.get("company", ""),
+                "city": record.get("city", ""),
+                "province": record.get("province", ""),
+                "emails": enrichment.get("emails") or [],
+                "phones": enrichment.get("phones") or [],
+                "staff": enrichment.get("staff") or [],
+                "decision_makers": enrichment.get("decision_makers") or [],
+                "has_any_contact": bool(enrichment.get("has_any_contact")),
+            })
+        return findings, summary
+
     def quality_review(self):
         value = self._json("generated/enrichment/review_queue.json", [])
         if not isinstance(value, list):

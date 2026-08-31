@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Findings · Sales Intelligence{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div><p class="eyebrow">Canonical enrichment V15</p><h1>Directory findings</h1></div>
+  <p class="lede">Read-only evidence summary. {{ records|length }} canonical businesses.</p>
+</section>
+<section class="cards compact">
+  {% set after = summary.get('after', {}) %}
+  <article class="card"><span>Safe contact</span><strong>{{ after.get('businesses_with_any_safe_contact', 0) }}</strong></article>
+  <article class="card"><span>With staff</span><strong>{{ after.get('businesses_with_staff', 0) }}</strong></article>
+  <article class="card"><span>With decision maker</span><strong>{{ after.get('businesses_with_decision_maker', 0) }}</strong></article>
+  <article class="card"><span>Named staff</span><strong>{{ after.get('named_staff', 0) }}</strong></article>
+</section>
+<section class="panel">
+  <label class="search-label">Filter findings
+    <input id="finding-search" type="search" placeholder="Company, city, province, ID…" autocomplete="off">
+  </label>
+  {% if records %}
+  <div class="table-wrap"><table id="findings-table">
+    <thead><tr><th>Business</th><th>Location</th><th>Safe contacts</th><th>Staff</th><th>Decision makers</th></tr></thead>
+    <tbody>
+      {% for record in records %}
+      <tr data-search="{{ (record.directory_record_id ~ ' ' ~ record.company ~ ' ' ~ record.city ~ ' ' ~ record.province)|lower }}">
+        <td><strong>{{ record.company }}</strong><small>{{ record.directory_record_id }}</small></td>
+        <td>{{ record.city }}, {{ record.province }}</td>
+        <td>{{ record.emails|length }} email · {{ record.phones|length }} phone</td>
+        <td>{{ record.staff|length }}{% if record.staff %}<details><summary>View</summary>{% for person in record.staff %}<div>{{ person.name }}{% if person.title %} — {{ person.title }}{% endif %}</div>{% endfor %}</details>{% endif %}</td>
+        <td>{% for person in record.decision_makers %}<div>{{ person.name }}{% if person.title %}<small>{{ person.title }}</small>{% endif %}</div>{% else %}—{% endfor %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<p class="empty">No V15 findings artifact is available.</p>{% endif %}
+</section>
+<script>
+  const search = document.getElementById('finding-search');
+  if (search) search.addEventListener('input', () => {
+    const query = search.value.trim().toLowerCase();
+    document.querySelectorAll('#findings-table tbody tr').forEach(row => {
+      row.hidden = query && !row.dataset.search.includes(query);
+    });
+  });
+</script>
+{% endblock %}

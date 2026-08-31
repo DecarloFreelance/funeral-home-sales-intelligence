@@ -161,8 +161,21 @@ verification, and an EspoCRM synchronization boundary are implemented.
 Start the local operator interface with:
 
 ```bash
+python -m operator_ui.auth
 flask --app operator_ui.app run --host 127.0.0.1
 ```
+
+The one-time initializer prompts without echoing and provisions the only two
+authorized users, Alex and Todd, in ignored `instance/operator_auth.sqlite`.
+Passwords are stored as salted hashes, never plaintext. The server requires a
+login for all findings, generated-data, CRM, and operator-action routes; use an
+HTTPS reverse proxy and set `OPERATOR_UI_SECURE_COOKIE=true` before exposing it
+beyond localhost.
+
+GitHub Pages can still host public/static presentation material, but it cannot
+secure this portal or its database: static JavaScript authentication would ship
+the password or protected data to every visitor. Deploy the Flask application
+on a server-side Python host for shared access instead.
 
 The interface reads existing generated datasets and exposes confirmed, CSRF-
 protected operator actions. CSV and JSON discovery sources can be normalized and

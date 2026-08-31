@@ -632,6 +632,34 @@ is not required for the controlled pilot path and is not an active task.
 
 ## Current Verification
 
+- [x] **GAP-2026-055 (HIGH): require authenticated access to the findings
+  interface and expose the canonical V15 findings safely.** Evidence: the
+  existing Flask/Jinja operator interface displays generated findings and CRM
+  state but every route is reachable without authentication; GitHub Pages is a
+  static host and cannot enforce database authorization without exposing the
+  protected data or shared password client-side. Impact: publishing the current
+  interface or its generated datasets would disclose business intelligence and
+  operational state. Responsible subsystem: operator UI authentication and
+  read-only findings presentation. Acceptance: use a server-side ignored SQLite
+  credential store with salted password hashes; provision exactly Alex and Todd
+  without committing plaintext credentials; require login for every data/action
+  route; use generic failures, safe redirects, session rotation/logout and
+  existing CSRF protections; add a read-only searchable V15 findings view;
+  preserve all CRM/outreach/data artifacts; document that GitHub Pages cannot
+  host the protected deployment; add adversarial authentication tests; run the
+  complete suite and secret/path checks; and commit only after validation.
+  **VALIDATED:** the server-rendered portal now gates every data and action route
+  behind an eight-hour authenticated session, provides safe login/logout with
+  CSRF enforcement, rejects external return URLs, throttles repeated failures,
+  and renders the 955-record V15 findings artifact read-only with filtering and
+  summary metrics. The ignored mode-0600 credential database contains exactly
+  Alex and Todd with Werkzeug salted hashes and no plaintext password. Static
+  assets remain public while protected content does not; production guidance
+  requires a server-side Python host and HTTPS rather than GitHub Pages. All 26
+  focused operator/authentication tests and the full 285-test plus 2-subtest
+  suite pass; canonical V14/V15/CRM hashes are unchanged and no network, CRM,
+  outreach, or PostgreSQL write occurred.
+
 - [x] **GAP-2026-054 (HIGH): recover explicit Roadhouse & Rose staff from the
   cached zero-page crawl into V15.** Evidence: V14 recovered Roadhouse's branch
   email and phone from its contact block, but did not promote people; the same

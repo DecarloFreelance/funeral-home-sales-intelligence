@@ -3,6 +3,8 @@ import secrets
 import json
 from datetime import datetime, timedelta
 import threading
+import os
+from urllib.parse import urlsplit
 
 from flask import Flask, abort, flash, redirect, render_template, request, session, url_for
 
@@ -15,6 +17,7 @@ from operator_ui.research_actions import apply_reviewed_resolution, preview_reso
 from discovery.crawler import _canonical_page_url
 from operator_ui.outreach_actions import approve_draft
 from operator_ui.repository import OperatorRepository
+from operator_ui.auth import AuthStore
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -28,15 +31,44 @@ def create_app(config=None):
         SECRET_KEY=secrets.token_hex(32),
         MAX_CONTENT_LENGTH=2 * 1024 * 1024,
         CRAWL_RUNNER=crawl_queue,
+        AUTH_REQUIRED=True,
+        AUTH_DB=PROJECT_ROOT / "instance/operator_auth.sqlite",
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",
+        SESSION_COOKIE_SECURE=os.environ.get("OPERATOR_UI_SECURE_COOKIE", "").lower() == "true",
+        PERMANENT_SESSION_LIFETIME=timedelta(hours=8),
     )
     if config:
         app.config.update(config)
+    if app.config["TESTING"] and (not config or "AUTH_REQUIRED" not in config):
+        app.config["AUTH_REQUIRED"] = False
     app.extensions["import_previews"] = {}
     app.extensions["crawl_jobs"] = {}
     app.extensions["crawl_lock"] = threading.Lock()
     app.extensions["resolution_previews"] = {}
     app.extensions["resolution_lock"] = threading.Lock()
     app.extensions["outreach_lock"] = threading.Lock()
+    app.extensions["login_failures"] = {}
+    app.extensions["login_lock"] = threading.Lock()
+
+    def auth_store():
+        return AuthStore(app.config["AUTH_DB"])
+
+    def safe_next(value):
+        parts = urlsplit(value or "")
+        return value if value and not parts.scheme and not parts.netloc and value.startswith("/") else None
+
+    @app.before_request
+    def require_login():
+        if not app.config["AUTH_REQUIRED"] or request.endpoint in {"login", "static"}:
+            return None
+        if session.get("authenticated_user"):
+            return None
+        return redirect(url_for("login", next=request.full_path.rstrip("?")))
+
+    @app.context_processor
+    def authenticated_user():
+        return {"authenticated_user": session.get("authenticated_user")}
 
     def repository():
         return OperatorRepository(app.config["DATA_ROOT"], app.config.get("CRM_DB"))
@@ -48,6 +80,47 @@ def create_app(config=None):
 
     app.jinja_env.globals["csrf_token"] = csrf_token
 
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        if request.method == "POST":
+            supplied = request.form.get("csrf_token", "")
+            if not supplied or not secrets.compare_digest(supplied, session.get("csrf_token", "")):
+                abort(400, "Invalid CSRF token")
+            now = datetime.utcnow()
+            client_key = request.remote_addr or "unknown"
+            with app.extensions["login_lock"]:
+                failures = [
+                    value for value in app.extensions["login_failures"].get(client_key, [])
+                    if value > now - timedelta(minutes=5)
+                ]
+                app.extensions["login_failures"][client_key] = failures
+            if len(failures) >= 5:
+                abort(429, "Too many login attempts; try again later")
+            user = auth_store().authenticate(
+                request.form.get("username", ""), request.form.get("password", "")
+            )
+            if user:
+                with app.extensions["login_lock"]:
+                    app.extensions["login_failures"].pop(client_key, None)
+                token = secrets.token_urlsafe(32)
+                session.clear()
+                session["authenticated_user"] = user
+                session["csrf_token"] = token
+                session.permanent = True
+                return redirect(safe_next(request.form.get("next")) or url_for("findings"))
+            with app.extensions["login_lock"]:
+                app.extensions["login_failures"].setdefault(client_key, []).append(now)
+            flash("Invalid username or password.")
+        return render_template("login.html", next=safe_next(request.args.get("next")) or "")
+
+    @app.post("/logout")
+    def logout():
+        supplied = request.form.get("csrf_token", "")
+        if not supplied or not secrets.compare_digest(supplied, session.get("csrf_token", "")):
+            abort(400, "Invalid CSRF token")
+        session.clear()
+        return redirect(url_for("login"))
+
     def require_confirmed_post():
         supplied = request.form.get("csrf_token", "")
         if not supplied or not secrets.compare_digest(supplied, session.get("csrf_token", "")):
@@ -58,6 +131,11 @@ def create_app(config=None):
     @app.get("/")
     def dashboard():
         return render_template("dashboard.html", summary=repository().summary())
+
+    @app.get("/findings")
+    def findings():
+        records, summary = repository().findings()
+        return render_template("findings.html", records=records, summary=summary)
 
     @app.get("/queues")
     def queues():

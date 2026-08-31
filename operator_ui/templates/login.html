@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Sign in · Sales Intelligence{% endblock %}
+{% block content %}
+<section class="login-shell">
+  <div class="login-card">
+    <p class="eyebrow">Private findings portal</p>
+    <h1>Sign in</h1>
+    <p class="lede">Authorized access only. Findings and operational records remain server-side.</p>
+    <form method="post" action="{{ url_for('login') }}" class="stacked-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="next" value="{{ next }}">
+      <label>Username <input name="username" autocomplete="username" required autofocus></label>
+      <label>Password <input type="password" name="password" autocomplete="current-password" required></label>
+      <button type="submit">Sign in</button>
+    </form>
+  </div>
+</section>
+{% endblock %}
