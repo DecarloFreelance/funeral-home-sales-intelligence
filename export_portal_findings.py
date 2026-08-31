@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the minimal private V15 snapshot consumed by the online portal."""
+"""Build the minimal private V16 snapshot consumed by the online portal."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ import json
 from pathlib import Path
 
 
-SOURCE = Path("data/generated/directory_955/full_955_enrichment_v15/full_955_enrichment.json")
-SUMMARY = Path("data/generated/directory_955/full_955_enrichment_v15/summary.json")
+SOURCE = Path("data/generated/directory_955/full_955_enrichment_v16/full_955_enrichment.json")
+SUMMARY = Path("data/generated/directory_955/full_955_enrichment_v16/summary.json")
 OUTPUT = Path("instance/portal_findings.json")
 MAPPINGS = Path("data/generated/directory_955/verified_crawlset/business_website_mappings.json")
 MAX_RENDER_SECRET_BYTES = 1_000_000
@@ -48,7 +48,7 @@ def build(source: Path, summary_path: Path, mappings_path: Path | None = None) -
             "decision_makers": [compact_evidence(item) for item in enrichment.get("decision_makers") or []],
             "has_any_contact": bool(enrichment.get("has_any_contact")),
         })
-    return {"version": "V15", "records": output, "summary": summary}
+    return {"version": "V16", "records": output, "summary": summary}
 
 
 def write_snapshot(source: Path, summary: Path, output: Path, mappings: Path | None = MAPPINGS) -> int:

@@ -4,6 +4,30 @@ Last reconciled: 2026-08-24
 
 ## Directory 955 precision enrichment (2026-08-31)
 
+- [x] **GAP-2026-058 (CRITICAL): quarantine non-person staff artifacts in a
+  versioned V16 precision correction.** Evidence: the deployed V15 findings
+  view exposes organization names, navigation labels, licence categories, and
+  role fragments as people, including `Norton Rose Fulbright LLP`, `About Us`,
+  `Crematorium Operator`, `Who We Are`, and chapel names. A local audit found
+  these artifacts across at least 30 canonical businesses. Impact: inflated
+  staff and decision-maker counts make the client-facing deliverable unsafe even
+  where coverage exists. Responsible subsystem: strict staff extraction and
+  canonical materialization. Acceptance: leave V15 and CRM byte-for-byte
+  unchanged; create an auditable, deterministic V16 that removes only an exact
+  evidence-reviewed denylist, preserves all contacts and defensible people,
+  rebuilds decision makers from retained staff, retains 955 unique records,
+  records every rejected row and reason, updates the private portal snapshot,
+  proves adversarial retention/removal and byte-identical reruns, and passes the
+  complete suite with zero network, CRM, or outreach activity. **VALIDATED:**
+  V16 quarantines 89 exact non-person rows across 49 businesses, normalizes four
+  explicitly named people, and reduces the misleading totals from 718 to 629
+  staff and 272 to 204 decision makers. It retains 955 unique records, 318
+  businesses with a safe contact, all 273 emails and 616 phones, and the two
+  conservative Roadhouse decision makers. Targeted precision, authentication,
+  Render, and PostgreSQL tests pass; the full 193-test suite passes; V15 and CRM
+  hashes are unchanged; and network requests, CRM writes, outreach actions, and
+  Supabase imports remain zero.
+
 - [x] **GAP-2026-047 (HIGH): recover the second explicit-location batch from
   P5 shared-domain review.** Evidence: 24 of the 97 remaining records have cached
   first-party pages pairing a target location name and street address with a

@@ -73,11 +73,20 @@ class OperatorRepository:
                 summary if isinstance(summary, dict) else {},
             )
         records = self._json(
-            "generated/directory_955/full_955_enrichment_v15/full_955_enrichment.json", []
+            "generated/directory_955/full_955_enrichment_v16/full_955_enrichment.json", []
         )
         summary = self._json(
-            "generated/directory_955/full_955_enrichment_v15/summary.json", {}
+            "generated/directory_955/full_955_enrichment_v16/summary.json", {}
         )
+        # Read-only compatibility for development/test data roots not yet
+        # materialized to V16. Production supplies an explicit V16 snapshot.
+        if not records:
+            records = self._json(
+                "generated/directory_955/full_955_enrichment_v15/full_955_enrichment.json", []
+            )
+            summary = self._json(
+                "generated/directory_955/full_955_enrichment_v15/summary.json", {}
+            )
         if not isinstance(records, list):
             records = []
         if not isinstance(summary, dict):
