@@ -18,7 +18,7 @@ MAX_RENDER_SECRET_BYTES = 1_000_000
 def compact_evidence(item: dict) -> dict:
     return {
         key: item.get(key)
-        for key in ("value", "name", "title", "decision_maker", "source_url", "evidence_class")
+        for key in ("value", "name", "title", "decision_maker", "source_url", "evidence_class", "evidence_line", "evidence_marker")
         if item.get(key) not in (None, "")
     }
 

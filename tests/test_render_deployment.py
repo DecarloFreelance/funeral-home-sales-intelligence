@@ -52,6 +52,18 @@ class RenderDeploymentTests(unittest.TestCase):
             self.assertEqual(payload["records"][0]["website"], "https://official.example/")
             self.assertEqual(payload["records"][1]["website"], "")
 
+    def test_portal_snapshot_preserves_contact_context_for_inline_display(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); source, summary = self.fixture(root)
+            records = json.loads(source.read_text())
+            records[0]["branch_safe_enrichment"]["phones"] = [{
+                "value": "+12268876262", "source_url": "https://example.test/contact",
+                "evidence_class": "branch-safe evidence", "evidence_line": "Contact Us · London office",
+            }]
+            source.write_text(json.dumps(records))
+            payload = build(source, summary, None)
+            self.assertEqual(payload["records"][0]["phones"][0]["evidence_line"], "Contact Us · London office")
+
     def test_repository_surfaces_snapshot_version_for_truthful_frontend_label(self):
         from operator_ui.repository import OperatorRepository
         with tempfile.TemporaryDirectory() as temporary:
