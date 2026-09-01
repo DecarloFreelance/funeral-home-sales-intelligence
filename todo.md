@@ -4,6 +4,33 @@ Last reconciled: 2026-08-24
 
 ## Directory 955 precision enrichment (2026-08-31)
 
+- [x] **GAP-2026-061 (HIGH): derive Findings counters from the rendered
+  canonical snapshot with explicit predicates.** Evidence: V17 has 318
+  businesses with an email or phone but 319 with an email, phone, or branch-safe
+  staff record because CFI-0144 is staff-only; the dashboard reads precomputed
+  summary values rather than its 955 rendered rows. The curated decision-maker
+  list contains 104 businesses and 204 people, while the non-destructive database
+  retains historical rows (112 businesses/275 people) and therefore cannot be
+  used as an unscoped V17 snapshot counter. Impact: operators can interpret the
+  correct 319 and 104 counters as stale or irreconcilable. Responsible subsystem:
+  private Findings presentation. Acceptance: define safe contact as displayed
+  email, phone, or staff evidence; define with decision maker as a business with
+  at least one displayed curated decision maker; recompute all cards from the
+  exact filtered-independent rendered snapshot; expose named decision-maker
+  total separately; make contact filtering use the same predicate; and prove
+  stale summary/flag and staff-only adversarial cases cannot skew the UI.
+  **VALIDATED:** the artifact, private V17 snapshot, rendered cards, and
+  PostgreSQL `source_records.payload` independently reconcile to 955 canonical
+  businesses, 319 with branch-safe email/phone/staff evidence, 133 with staff,
+  104 with at least one curated decision maker, 629 named staff, and 204 named
+  decision makers. CFI-0144 is the sole staff-only business explaining the
+  difference from 318 email/phone businesses. Raw child tables remain explicitly
+  non-authoritative for snapshot metrics because their non-destructive history
+  contains 722 people across 139 businesses and 275 decision makers across 112.
+  The dashboard now derives cards and contact filters from displayed records;
+  adversarial stale-summary and contradictory-flag tests pass, focused portal
+  tests pass 14/14, and the full suite passes 315/315. No data was changed.
+
 - [ ] **GAP-2026-060 (HIGH): publish V17 in the authenticated Render portal
   with composable search filters and spreadsheet export.** Evidence: the live
   portal snapshot/exporter and findings labels are fixed to V16; its only search

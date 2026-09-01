@@ -91,11 +91,12 @@ def create_app(config=None):
             abort(400, "Unsupported province filter")
         filtered = []
         for row in records:
+            has_safe_contact = bool(row.get("emails") or row.get("phones") or row.get("staff"))
             searchable = " ".join(str(row.get(key) or "") for key in ("directory_record_id", "company", "city", "province")).casefold()
             matches = (
                 (not query or query in searchable)
                 and (not province or str(row.get("province") or "").upper() == province)
-                and (not contact or bool(row.get("has_any_contact")) == (contact == "yes"))
+                and (not contact or has_safe_contact == (contact == "yes"))
                 and (not website or bool(row.get("website")) == (website == "yes"))
                 and (not decision_maker or bool(row.get("decision_makers")) == (decision_maker == "yes"))
             )
@@ -104,6 +105,18 @@ def create_app(config=None):
         filters = {"q": query, "province": province, "contact": contact,
                    "website": website, "decision_maker": decision_maker}
         return filtered, provinces, filters
+
+    def findings_metrics(records):
+        return {
+            "canonical_businesses": len(records),
+            "businesses_with_any_safe_contact": sum(
+                bool(row.get("emails") or row.get("phones") or row.get("staff")) for row in records
+            ),
+            "businesses_with_staff": sum(bool(row.get("staff")) for row in records),
+            "businesses_with_decision_maker": sum(bool(row.get("decision_makers")) for row in records),
+            "named_staff": sum(len(row.get("staff") or []) for row in records),
+            "named_decision_makers": sum(len(row.get("decision_makers") or []) for row in records),
+        }
 
     def csv_cell(value):
         text = str(value or "")
@@ -178,6 +191,7 @@ def create_app(config=None):
         filtered, provinces, filters = filtered_findings(records)
         export_url = url_for("export_findings", **{key: value for key, value in filters.items() if value})
         return render_template("findings.html", records=filtered, total_records=len(records), summary=summary,
+                               metrics=findings_metrics(records),
                                provinces=provinces, filters=filters, export_url=export_url)
 
     @app.get("/findings/export.csv")

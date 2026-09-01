@@ -148,6 +148,27 @@ class OperatorAuthenticationTests(unittest.TestCase):
         self.assertEqual(self.client.get("/findings?province=XX").status_code, 400)
         self.assertEqual(self.client.get("/findings/export.csv?contact=maybe").status_code, 400)
 
+    def test_findings_counters_ignore_stale_summary_and_use_displayed_evidence(self):
+        directory = self.data / "generated/directory_955/full_955_enrichment_v17"
+        directory.mkdir(parents=True)
+        records = [
+            {"directory_record_id": "CFI-0001", "company": "Staff Only", "city": "Calgary", "province": "AB", "branch_safe_enrichment": {"emails": [], "phones": [], "staff": [{"name": "Alex Owner", "title": "Owner"}], "decision_makers": [{"name": "Alex Owner", "title": "Owner"}], "has_any_contact": False}},
+            {"directory_record_id": "CFI-0002", "company": "Stale Flag", "city": "Ottawa", "province": "ON", "branch_safe_enrichment": {"emails": [], "phones": [], "staff": [], "decision_makers": [], "has_any_contact": True}},
+        ]
+        (directory / "full_955_enrichment.json").write_text(json.dumps(records))
+        (directory / "summary.json").write_text(json.dumps({"after": {"businesses_with_any_safe_contact": 999, "businesses_with_decision_maker": 999, "named_staff": 999}}))
+        self.login()
+        response = self.client.get("/findings")
+        body = response.get_data(as_text=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("999", body)
+        self.assertIn("Safe contact or staff</span><strong>1</strong>", body)
+        self.assertIn("With decision maker</span><strong>1</strong>", body)
+        self.assertIn("Named decision makers</span><strong>1</strong>", body)
+        self.assertIn("Named staff</span><strong>1</strong>", body)
+        self.assertIn("Staff Only", self.client.get("/findings?contact=yes").get_data(as_text=True))
+        self.assertNotIn("Stale Flag", self.client.get("/findings?contact=yes").get_data(as_text=True))
+
 
 if __name__ == "__main__":
     unittest.main()

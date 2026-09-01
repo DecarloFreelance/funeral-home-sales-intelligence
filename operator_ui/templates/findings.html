@@ -6,11 +6,11 @@
   <p class="lede">Showing {{ records|length }} of {{ total_records }} canonical businesses.</p>
 </section>
 <section class="cards compact">
-  {% set after = summary.get('after', {}) %}
-  <article class="card"><span>Safe contact</span><strong>{{ after.get('businesses_with_any_safe_contact', 0) }}</strong></article>
-  <article class="card"><span>With staff</span><strong>{{ after.get('businesses_with_staff', 0) }}</strong></article>
-  <article class="card"><span>With decision maker</span><strong>{{ after.get('businesses_with_decision_maker', 0) }}</strong></article>
-  <article class="card"><span>Named staff</span><strong>{{ after.get('named_staff', 0) }}</strong></article>
+  <article class="card"><span>Safe contact or staff</span><strong>{{ metrics.businesses_with_any_safe_contact }}</strong><small>businesses</small></article>
+  <article class="card"><span>With staff</span><strong>{{ metrics.businesses_with_staff }}</strong><small>businesses</small></article>
+  <article class="card"><span>With decision maker</span><strong>{{ metrics.businesses_with_decision_maker }}</strong><small>businesses</small></article>
+  <article class="card"><span>Named staff</span><strong>{{ metrics.named_staff }}</strong><small>people</small></article>
+  <article class="card"><span>Named decision makers</span><strong>{{ metrics.named_decision_makers }}</strong><small>people</small></article>
 </section>
 <section class="panel">
   <form class="finding-filters" method="get" action="{{ url_for('findings') }}">
