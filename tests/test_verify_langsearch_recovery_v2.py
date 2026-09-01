@@ -5,9 +5,26 @@ from pathlib import Path
 from unittest.mock import patch
 
 import verify_langsearch_recovery_v2 as verifier
+from verify_955_websites import province_present, verification_score
 
 
 class VerifyLangSearchRecoveryV2Tests(unittest.TestCase):
+    def test_ontario_code_does_not_match_common_word_on(self):
+        self.assertFalse(province_present("ON", "Plan ahead on your schedule in Tacoma"))
+        self.assertTrue(province_present("ON", "Serving families across Ontario"))
+
+    def test_exact_generic_name_without_geography_is_not_verified(self):
+        result = verification_score(
+            {"company": "Scott Funeral Home", "city": "Mississauga", "province": "ON"},
+            {"name": "Scott Funeral Home", "snippet": "", "url": "https://scottfuneralhometacoma.com/"},
+            {"html": "<title>Scott Funeral Home</title><p>Funeral services in Tacoma</p>",
+             "final_url": "https://scottfuneralhometacoma.com/"},
+            {"score": 90, "reasons": []},
+        )
+        self.assertFalse(result["province_match"])
+        self.assertFalse(result["city_match"])
+        self.assertFalse(result["verified"])
+
     def test_uses_cached_results_and_persists_verified_source(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp); queue = root / "queue.json"; search = root / "search.json"; out = root / "out"

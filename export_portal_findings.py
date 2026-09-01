@@ -11,7 +11,7 @@ from pathlib import Path
 SOURCE = Path("data/generated/directory_955/full_955_enrichment_v17/full_955_enrichment.json")
 SUMMARY = Path("data/generated/directory_955/full_955_enrichment_v17/summary.json")
 OUTPUT = Path("instance/portal_findings.json")
-MAPPINGS = Path("data/generated/directory_955/verified_crawlset/business_website_mappings.json")
+MAPPINGS = Path("data/generated/directory_955/legacy_mapping_recheck_v1/verification_v2/verified_websites.json")
 MAX_RENDER_SECRET_BYTES = 1_000_000
 
 
@@ -31,7 +31,11 @@ def build(source: Path, summary_path: Path, mappings_path: Path | None = None) -
     mappings = {}
     if mappings_path and mappings_path.is_file():
         mapping_rows = json.loads(mappings_path.read_text(encoding="utf-8"))
-        mappings = {row["directory_record_id"]: row for row in mapping_rows}
+        mappings = {
+            row["directory_record_id"]: row
+            for row in mapping_rows
+            if row.get("status") in {"VERIFIED", "VERIFIED_HIGH"}
+        }
     output = []
     for row in records:
         enrichment = row.get("branch_safe_enrichment") or {}

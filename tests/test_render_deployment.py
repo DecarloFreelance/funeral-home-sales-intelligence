@@ -40,6 +40,18 @@ class RenderDeploymentTests(unittest.TestCase):
             self.assertNotIn("source_text_sha256", one.read_text())
             self.assertEqual(oct(one.stat().st_mode & 0o777), "0o600")
 
+    def test_portal_mapping_overlay_uses_only_fresh_verified_rows(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); source, summary = self.fixture(root)
+            mappings = root / "mappings.json"
+            mappings.write_text(json.dumps([
+                {"directory_record_id": "CFI-0001", "website": "https://official.example/", "status": "VERIFIED_HIGH"},
+                {"directory_record_id": "CFI-0002", "website": "https://company.ca.getstat.site/", "status": "REVIEW"},
+            ]))
+            payload = build(source, summary, mappings)
+            self.assertEqual(payload["records"][0]["website"], "https://official.example/")
+            self.assertEqual(payload["records"][1]["website"], "")
+
     def test_repository_surfaces_snapshot_version_for_truthful_frontend_label(self):
         from operator_ui.repository import OperatorRepository
         with tempfile.TemporaryDirectory() as temporary:

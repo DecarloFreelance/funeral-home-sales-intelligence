@@ -60,6 +60,21 @@ def _record_key(record):
     return (entity, record.get("url"))
 
 
+def _reconcile_report_pages(report, records):
+    """Make report page totals describe the deduplicated persisted evidence."""
+    counts = Counter(key[0] for key in {_record_key(item) for item in records if item.get("url")})
+    leads = []
+    for lead in report.get("leads") or []:
+        domain = str(lead.get("domain") or "").lower().removeprefix("www.")
+        pages = counts.get(domain, 0)
+        leads.append({
+            **lead,
+            "pages": pages,
+            "status": "SUCCESS" if pages else "FAILED",
+        })
+    return _summarize(leads)
+
+
 def crawl_queue(
     input_path: Path,
     output_path: Path,
@@ -125,6 +140,10 @@ def crawl_queue(
             for key in [key for key in current_records if key[0] == entity]:
                 del current_records[key]
             current_records.update({_record_key(item): item for item in lead_records if item.get("url")})
+        unique_lead_records = {
+            _record_key(item): item for item in lead_records if item.get("url")
+        }
+        lead_report = {**lead_report, "pages": len(unique_lead_records)}
         current_report = merge_crawl_reports(current_report, {"leads": [lead_report]})
         _atomic_json(output_path, list(current_records.values()))
         if report_path is not None:
@@ -153,6 +172,7 @@ def crawl_queue(
         if append and report_path.exists():
             existing_report = json.loads(report_path.read_text(encoding="utf-8"))
             report = merge_crawl_reports(existing_report, report)
+        report = _reconcile_report_pages(report, records)
         _atomic_json(report_path, report)
 
     return report

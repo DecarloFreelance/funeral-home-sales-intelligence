@@ -4,6 +4,42 @@ Last reconciled: 2026-08-24
 
 ## Directory 955 precision enrichment (2026-08-31)
 
+- [ ] **GAP-2026-063 (HIGH): re-verify legacy website mappings before bounded
+  contact/staff crawling.** Evidence: the legacy `verified_crawlset` labels 530
+  mappings as verified, yet the current registrable-domain identity guard
+  rejects 226 of them and exposes deceptive third-party hosts including
+  `*.getstat.site`, `*.updowntoday.com`, `*.siteindices.com`, `*.atlaq.com`, and
+  an obituary publisher; only 53 of its 352 domains have cached crawl evidence.
+  Impact: crawling or rendering that stale set as first-party could ingest and
+  display third-party evidence. Responsible subsystem: website verification,
+  crawl preparation, strict extraction, and canonical materialization.
+  Acceptance: deterministically quarantine every mapping that fails the current
+  identity guard without fetching it; live-verify the remaining candidates with
+  bounded SSRF-safe requests; crawl only fresh verified origins and priority
+  contact/about/staff/location paths; retain source/final URL and verification
+  provenance; apply branch-safe contact and curated decision-maker rules;
+  materialize a new immutable version without changing V17, CRM, or outreach;
+  remove unsafe legacy mappings from portal presentation; and pass adversarial,
+  targeted, persistence, and full-suite validation.
+  **CRAWL CHECKPOINT VALIDATED / EXTRACTION REVIEW PENDING:** the deterministic
+  preflight quarantines 226/530 stale mappings without fetching; corrected live
+  verification accepts 254 mappings across 203 domains and leaves 50
+  review/unresolved. The bounded crawler retained 592 unique pages across 201
+  domains, with two zero-page domains (`conleyfuneralhome.ca`,
+  `kowalchuks.net`), no cross-domain final URLs, and explicit current-verifier
+  provenance. Strict extraction produced review candidates for 235 businesses
+  with contact values, 49 with named staff, and 42 with candidate decision
+  makers; 86 shared-domain business rows remain attribution-sensitive and no
+  extracted value has been promoted to canonical data. A province-code defect
+  that treated ordinary `on` as Ontario and allowed a Tacoma false match is
+  fixed with adversarial coverage; reports now count deduplicated stored pages.
+  The private portal snapshot now overlays only fresh verified mappings (342
+  website-bearing businesses, 264 unique URLs, zero blocked hosts), rather than
+  the unsafe 571-row legacy overlay. Focused tests pass 33/33, portal tests pass
+  16/16, and the full suite passes 327/327. CRM/outreach writes remain zero.
+  Remaining work: branch/location attribution review, conservative V18
+  materialization, persistence/deployment validation, and Render secret update.
+
 - [x] **GAP-2026-062 (HIGH): expose reviewed website addresses in Findings.**
   Evidence: the private V17 portal snapshot contains 571 safe HTTP(S) website
   mappings across 955 businesses, including all 25 new LangSearch recoveries,

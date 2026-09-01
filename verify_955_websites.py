@@ -95,6 +95,14 @@ USER_AGENT = (
     "+public-business-verification)"
 )
 
+CANADIAN_PROVINCE_NAMES = {
+    "AB": "Alberta", "BC": "British Columbia", "MB": "Manitoba",
+    "NB": "New Brunswick", "NL": "Newfoundland and Labrador",
+    "NS": "Nova Scotia", "NT": "Northwest Territories", "NU": "Nunavut",
+    "ON": "Ontario", "PE": "Prince Edward Island", "QC": "Quebec",
+    "SK": "Saskatchewan", "YT": "Yukon",
+}
+
 _thread_local = threading.local()
 
 
@@ -184,6 +192,16 @@ def phrase_present(company, text):
         return False
 
     return company_norm in text_norm
+
+
+def province_present(province, text):
+    """Match province identity without treating short codes as common words."""
+    raw = str(province or "").strip()
+    if not raw:
+        return False
+    canonical = CANADIAN_PROVINCE_NAMES.get(raw.upper(), raw)
+    normalized = normalize(canonical)
+    return bool(normalized and re.search(rf"\b{re.escape(normalized)}\b", normalize(text)))
 
 
 def offline_candidate_score(row, candidate):
@@ -445,14 +463,7 @@ def verification_score(row, candidate, fetched, offline):
     city_norm = normalize(city)
     city_match = bool(city_norm and city_norm in evidence_norm)
 
-    province_norm = normalize(province)
-    province_match = bool(
-        province_norm
-        and re.search(
-            rf"\b{re.escape(province_norm)}\b",
-            evidence_norm,
-        )
-    )
+    province_match = province_present(province, evidence_text)
 
     funeral_match = any(
         term in evidence_norm
@@ -519,7 +530,6 @@ def verification_score(row, candidate, fetched, offline):
         city_match
         or province_match
         or host_overlap >= 0.50
-        or exact_company
     )
 
     verified = (

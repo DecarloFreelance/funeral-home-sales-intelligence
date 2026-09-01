@@ -39,6 +39,29 @@ class CompletingCrawler:
 
 
 class WebsiteCrawlerRecoveryTests(unittest.TestCase):
+    def test_report_counts_deduplicated_final_urls(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            queue, output, report_path = root / "queue.json", root / "pages.json", root / "report.json"
+            queue.write_text(json.dumps([{"domain": "one.example", "url": "https://one.example/"}]))
+
+            class RedirectDuplicatesCrawler:
+                def crawl_queue(self, leads, on_lead=None, checkpoint=None):
+                    records = [
+                        {"url": "https://one.example/contact", "discovery": {"queue_domain": "one.example"}},
+                        {"url": "https://one.example/contact", "discovery": {"queue_domain": "one.example"}},
+                    ]
+                    item_report = {**report("one.example"), "pages": 2}
+                    checkpoint(records, item_report)
+                    self.last_report = {"leads": [item_report]}
+                    return records
+
+            with patch("website_crawler.PriorityPageCrawler", return_value=RedirectDuplicatesCrawler()):
+                summary = crawl_queue(queue, output, append=True, report_path=report_path)
+            self.assertEqual(len(json.loads(output.read_text())), 1)
+            self.assertEqual(summary["pages"], 1)
+            self.assertEqual(summary["leads"][0]["pages"], 1)
+
     def test_interruption_checkpoints_and_resume_skips_completed_domain(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
