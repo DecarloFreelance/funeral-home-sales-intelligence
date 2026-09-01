@@ -87,8 +87,8 @@ def main():
         print("This replaces that named secret file and requires an explicit deploy afterward.")
         if input("Type UPLOAD to continue: ") != "UPLOAD":
             raise SystemExit("Upload cancelled")
-        _status, payload = request(f"/services/{args.service_id}/secret-files/{args.file_name}", key, "PUT", {"content": content})
-        print(json.dumps(payload, indent=2))
+        status, _payload = request(f"/services/{args.service_id}/secret-files/{args.file_name}", key, "PUT", {"content": content})
+        print(json.dumps({"uploaded": True, "http_status": status, "file_name": args.file_name, "bytes": len(content.encode("utf-8"))}, indent=2))
     else:
         body = {}
         if args.commit_id: body["commitId"] = args.commit_id
