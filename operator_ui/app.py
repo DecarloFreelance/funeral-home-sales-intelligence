@@ -64,7 +64,7 @@ def create_app(config=None):
 
     @app.before_request
     def require_login():
-        if not app.config["AUTH_REQUIRED"] or request.endpoint in {"login", "static", "healthz", "review_drafts_api"}:
+        if not app.config["AUTH_REQUIRED"] or request.endpoint in {"login", "static", "healthz", "review_drafts_api", "approve_review_draft_api"}:
             return None
         if session.get("authenticated_user"):
             return None
