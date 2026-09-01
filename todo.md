@@ -52,6 +52,20 @@ materialization or deployment.
   update ignore/documentation rules, prevent secret/private commits, and run
   diff, secret, and generated-path audits before the next checkpoint.
 
+- [x] **GAP-2026-073 (MEDIUM): add bounded recovery-task coordination.**
+  Evidence: GAP-066 through GAP-072 have explicit dependencies, but the
+  existing `AgentOrchestrator` coordinates records only and cannot report
+  cross-task readiness. Add a versioned task manifest and durable, read-only
+  coordinator status so a supervising agent can delegate only unblocked work.
+  Acceptance: dependency validation rejects unknown tasks, initial ready and
+  blocked sets are deterministic, state cannot introduce unknown statuses, and
+  the coordinator performs no network, database, Render, CRM, or outreach
+  writes. **VALIDATED:** `automation/task_manifest.json` and
+  `automation/task_coordinator.py` provide the GAP-066--072 graph and status
+  CLI; focused orchestration tests pass. External collaboration-agent
+  delegation remains outside repository runtime and requires the supervising
+  agent/operator.
+
 - [ ] **GAP-2026-065 (HIGH): recover the 613 missing websites with LangSearch
   discovery followed by first-party verification.** Evidence: V18 Findings
   currently shows 342/955 businesses with websites, leaving 613 gaps (514

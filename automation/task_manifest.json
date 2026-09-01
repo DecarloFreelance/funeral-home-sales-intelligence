@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "tasks": [
+    {"id": "GAP-2026-066", "title": "Verify LangSearch candidates", "owner": "verification", "depends_on": []},
+    {"id": "GAP-2026-067", "title": "Crawl verified websites", "owner": "crawler", "depends_on": ["GAP-2026-066"]},
+    {"id": "GAP-2026-068", "title": "Materialize V19 enrichment", "owner": "materializer", "depends_on": ["GAP-2026-066", "GAP-2026-067"]},
+    {"id": "GAP-2026-069", "title": "Import and reconcile V19", "owner": "persistence", "depends_on": ["GAP-2026-066", "GAP-2026-067", "GAP-2026-068"]},
+    {"id": "GAP-2026-070", "title": "Publish V19 to Render", "owner": "operator", "depends_on": ["GAP-2026-068", "GAP-2026-069"]},
+    {"id": "GAP-2026-071", "title": "Improve Findings contact presentation", "owner": "ui", "depends_on": []},
+    {"id": "GAP-2026-072", "title": "Reconcile repository artifact hygiene", "owner": "repository", "depends_on": []}
+  ]
+}
