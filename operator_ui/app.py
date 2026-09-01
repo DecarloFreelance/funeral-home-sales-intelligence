@@ -335,6 +335,27 @@ def create_app(config=None):
         drafts = review_drafts()
         return {"drafts": drafts, "count": len(drafts)}
 
+    @app.post("/api/review-drafts/approve")
+    def approve_review_draft_api():
+        expected = os.environ.get("REVIEW_DRAFTS_TOKEN", "").strip()
+        if not expected or request.headers.get("Authorization") != f"Bearer {expected}":
+            return {"error": "review drafts token required"}, 401
+        body = request.get_json(silent=True) or {}
+        ids = [str(value) for value in [body.get("draft_id"), body.get("merge_with")] if value]
+        drafts = [item for item in review_drafts() if item.get("draft_id") in ids]
+        if len(drafts) != 2 or len({item.get("directory_record_id") for item in drafts}) != 1:
+            return {"error": "exactly two drafts for the same business are required"}, 400
+        merged = dict(drafts[0]); other = drafts[1]
+        for key in ("phones", "emails", "staff"):
+            merged[key] = drafts[0].get(key, []) + other.get(key, [])
+        if not merged.get("website"): merged["website"] = other.get("website", "")
+        merged["status"] = "APPROVED"; merged["merged_draft_ids"] = ids
+        path = review_db()
+        with sqlite3.connect(path) as connection:
+            connection.executemany("UPDATE drafts SET payload=? WHERE draft_id=?", [(json.dumps({**item, "status": "SUPERSEDED", "superseded_by": merged["draft_id"]}, ensure_ascii=False), item["draft_id"]) for item in drafts])
+            connection.execute("INSERT OR REPLACE INTO drafts (draft_id, payload) VALUES (?, ?)", (merged["draft_id"], json.dumps(merged, ensure_ascii=False)))
+        return {"approved": merged}
+
     @app.post("/imports/preview")
     def import_preview():
         require_confirmed_post()

@@ -84,6 +84,8 @@ def main():
     secret.add_argument("local_path", type=Path)
     drafts = sub.add_parser("review-drafts", help="query review-only manual enrichment drafts")
     drafts.add_argument("service_url", help="for example https://funeral-home-findings.onrender.com")
+    approve = sub.add_parser("approve-review-draft")
+    approve.add_argument("service_url"); approve.add_argument("draft_id"); approve.add_argument("--merge-with", required=True)
     args = parser.parse_args()
     if args.command == "setup":
         setup(); return
@@ -115,6 +117,11 @@ def main():
                 print(json.dumps(json.loads(response.read().decode("utf-8")), indent=2, ensure_ascii=False))
         except HTTPError as error:
             raise SystemExit(f"Review API returned HTTP {error.code}: {error.read().decode('utf-8', errors='replace')[:300]}")
+    elif args.command == "approve-review-draft":
+        token = read_setting("REVIEW_DRAFTS_TOKEN") or getpass.getpass("Review drafts token: ").strip()
+        req = Request(args.service_url.rstrip("/") + "/api/review-drafts/approve", data=json.dumps({"draft_id": args.draft_id, "merge_with": args.merge_with}).encode(), method="POST", headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"})
+        with urlopen(req, timeout=30) as response:
+            print(json.dumps(json.loads(response.read().decode()), indent=2, ensure_ascii=False))
     else:
         body = {}
         if args.commit_id: body["commitId"] = args.commit_id
