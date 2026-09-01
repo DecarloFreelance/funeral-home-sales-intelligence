@@ -40,6 +40,14 @@ class RenderDeploymentTests(unittest.TestCase):
             self.assertNotIn("source_text_sha256", one.read_text())
             self.assertEqual(oct(one.stat().st_mode & 0o777), "0o600")
 
+    def test_repository_surfaces_snapshot_version_for_truthful_frontend_label(self):
+        from operator_ui.repository import OperatorRepository
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); findings = root / "findings.json"
+            findings.write_text(json.dumps({"version": "V16", "records": [], "summary": {}}))
+            _records, summary = OperatorRepository(root, findings_path=findings).findings()
+            self.assertEqual(summary["version"], "V16")
+
     def test_production_wsgi_fails_closed_without_secrets(self):
         environment = {key: value for key, value in os.environ.items() if not key.startswith("OPERATOR_UI_") and key != "PORTAL_FINDINGS_PATH"}
         result = subprocess.run(

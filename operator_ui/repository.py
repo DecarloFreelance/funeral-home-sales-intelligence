@@ -68,6 +68,8 @@ class OperatorRepository:
                 return [], {}
             records = payload.get("records") if isinstance(payload, dict) else []
             summary = payload.get("summary") if isinstance(payload, dict) else {}
+            if isinstance(summary, dict) and isinstance(payload, dict) and payload.get("version"):
+                summary = {**summary, "version": payload["version"]}
             return (
                 records if isinstance(records, list) else [],
                 summary if isinstance(summary, dict) else {},
