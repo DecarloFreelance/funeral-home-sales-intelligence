@@ -249,7 +249,54 @@ def create_app(config=None):
 
     @app.get("/imports")
     def imports():
-        return render_template("imports.html", preview=None)
+        records, _summary = repository().findings()
+        businesses = sorted(records, key=lambda row: (str(row.get("company") or "").casefold(), str(row.get("directory_record_id") or "")))
+        return render_template("imports.html", preview=None, businesses=businesses)
+
+    @app.post("/imports/manual")
+    def manual_import():
+        require_confirmed_post()
+        record_id = request.form.get("directory_record_id", "").strip()
+        record = repository().finding(record_id)
+        if not record:
+            abort(400, "Select a valid canonical business")
+        website = request.form.get("website", "").strip()
+        if website:
+            website = _canonical_page_url(website)
+            if not website:
+                abort(400, "Website must be a valid HTTP or HTTPS URL")
+        def rows(prefix, fields):
+            values = [request.form.getlist(f"{prefix}_{field}") for field in fields]
+            return [dict(zip(fields, item)) for item in zip(*values) if any(item)]
+        phones = rows("phone", ("value", "person", "source_url", "notes"))
+        emails = rows("email", ("value", "person", "source_url", "notes"))
+        staff = rows("staff", ("name", "role", "source_url", "notes"))
+        if not website and not phones and not emails and not staff:
+            abort(400, "Enter at least one enrichment value")
+        draft = {
+            "draft_id": secrets.token_urlsafe(16), "status": "REVIEW",
+            "created_at": datetime.utcnow().isoformat() + "Z",
+            "directory_record_id": record_id, "company": record.get("company"),
+            "city": record.get("city"), "province": record.get("province"),
+            "website": website, "phones": phones, "emails": emails, "staff": staff,
+        }
+        path = (Path(app.config["DATA_ROOT"]).resolve() / "generated/manual_imports/review_queue.json").resolve()
+        if Path(app.config["DATA_ROOT"]).resolve() not in path.parents:
+            abort(500, "Invalid review queue path")
+        existing = []
+        if path.exists():
+            try:
+                existing = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                abort(500, "Review queue is unreadable")
+        if not isinstance(existing, list):
+            abort(500, "Review queue must be a JSON list")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_suffix(".json.tmp")
+        temporary.write_text(json.dumps(existing + [draft], indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        temporary.replace(path)
+        flash(f"Saved manual enrichment for {record.get('company')} for review.")
+        return redirect(url_for("imports"))
 
     @app.post("/imports/preview")
     def import_preview():

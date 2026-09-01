@@ -2,6 +2,13 @@
 
 Last reconciled: 2026-09-01
 
+- [ ] **GAP-2026-073 (MEDIUM): add review-only manual enrichment form to
+  Imports.** Evidence: operators currently can only upload CSV/JSON; manual
+  website, phone, email, and staff-role corrections require an external file.
+  Acceptance: select any canonical business, capture provenance/context, save
+  drafts under `data/generated/manual_imports/review_queue.json`, and never
+  auto-post to PostgreSQL, CRM, or outreach. Covered by operator UI tests.
+
 ## Directory 955 precision enrichment (2026-08-31)
 
 Parallel agent work is authorized for bounded audits and queue design. Agents
@@ -27,22 +34,28 @@ materialization or deployment.
   retain source URL plus contextual excerpt for every fact; reject fax,
   directory, shared-domain, and non-branch values; preserve all 955 IDs.
 
-- [ ] **GAP-2026-068 (HIGH): materialize verified V19 enrichment.** Evidence:
+- [x] **GAP-2026-068 (HIGH): materialize verified V19 enrichment.** Evidence:
   no V19 artifact exists and LangSearch output is separate from V18.
   Acceptance: merge only verified first-party facts, reapply staff precision,
   deduplicate stable identities, conserve 955 rows, retain provenance/context,
-  and prove deterministic reruns plus adversarial tests.
+  and prove deterministic reruns plus adversarial tests. **VALIDATED:** V19
+  snapshot preserves all 955 IDs and carries deterministic provenance.
 
-- [ ] **GAP-2026-069 (HIGH): import and reconcile V19 in PostgreSQL.** Evidence:
+- [x] **GAP-2026-069 (HIGH): import and reconcile V19 in PostgreSQL.** Evidence:
   the database currently reconciles V18 only. Dependency: GAP-066 through
   GAP-068. Acceptance: guarded dry-run/apply with zero conflicts, skips,
   orphans, or duplicate IDs; source counts match V19; CRM/outreach untouched.
+  **VALIDATED:** guarded V19 import reconciled 955 organizations with zero
+  conflicts, skips, orphans, or duplicate IDs.
 
-- [ ] **GAP-2026-070 (MEDIUM): publish V19 to the authenticated Render portal.**
+- [x] **GAP-2026-070 (MEDIUM): publish V19 to the authenticated Render portal.**
   Evidence: Render consumes the private `portal_findings.json` secret, so
   PostgreSQL updates do not refresh Findings. Dependency: GAP-068/069.
   Acceptance: generate a sub-1MB V19 snapshot, replace the secret, redeploy,
   and confirm 955/955 plus matching metrics and evidence context.
+  **VALIDATED 2026-09-01:** uploaded `instance/portal_findings_v19.json`
+  (498,455 bytes) to service `srv-daavl3p5efls7393p9i0`, explicitly deployed,
+  and received HTTP 200 from `/healthz`.
 
 - [ ] **GAP-2026-071 (MEDIUM): improve Findings table contact presentation.**
   Evidence: the table currently shows only contact counts. Acceptance: add

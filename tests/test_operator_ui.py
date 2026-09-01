@@ -34,6 +34,27 @@ class OperatorUiTests(unittest.TestCase):
             response = self.client.get(path)
             self.assertEqual(response.status_code, 200, path)
 
+    def test_manual_import_saves_review_draft_without_posting(self):
+        self.write_json("generated/directory_955/full_955_enrichment_v17/full_955_enrichment.json", [{
+            "directory_record_id": "CFI-0001", "company": "Example Home", "city": "Town", "province": "ON",
+            "website": "", "website_status": "no_signal", "branch_safe_enrichment": {"emails": [], "phones": [], "staff": [], "decision_makers": []},
+        }])
+        page = self.client.get("/imports")
+        with self.client.session_transaction() as session:
+            token = session["csrf_token"]
+        response = self.client.post("/imports/manual", data={
+            "csrf_token": token, "confirm": "yes", "directory_record_id": "CFI-0001",
+            "website": "https://example.ca", "phone_value": ["+14165551234", ""],
+            "phone_person": ["Office", ""], "phone_source_url": ["https://example.ca/contact", ""], "phone_notes": ["main line", ""],
+            "email_value": ["", ""], "email_person": ["", ""], "email_source_url": ["", ""], "email_notes": ["", ""],
+            "staff_name": ["Jane Smith", "", ""], "staff_role": ["Owner", "", ""],
+            "staff_source_url": ["https://example.ca/team", "", ""], "staff_notes": ["team page", "", ""],
+        })
+        self.assertEqual(response.status_code, 302)
+        drafts = json.loads((self.data / "generated/manual_imports/review_queue.json").read_text())
+        self.assertEqual(drafts[0]["status"], "REVIEW")
+        self.assertEqual(drafts[0]["staff"][0]["role"], "Owner")
+
     def test_dashboard_and_queue_render_fixture_counts(self):
         self.write_json("crawl_queue.json", [{"company": "Example Home", "domain": "example.com"}])
         self.write_json("research_queue.json", [{"domain": "missing.example"}])
