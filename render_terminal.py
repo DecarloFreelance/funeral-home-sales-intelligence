@@ -26,6 +26,16 @@ def read_key():
                 return line.split("=", 1)[1].strip()
     return ""
 
+def read_setting(name):
+    value = os.environ.get(name, "").strip()
+    if value:
+        return value
+    if SECRETS.exists():
+        for line in SECRETS.read_text(encoding="utf-8").splitlines():
+            if line.startswith(name + "="):
+                return line.split("=", 1)[1].strip()
+    return ""
+
 
 def request(path, key, method="GET", body=None):
     data = json.dumps(body).encode() if body is not None else None
@@ -46,10 +56,14 @@ def request(path, key, method="GET", body=None):
 
 def setup():
     print("Render API keys are secret; they will not be printed or committed.")
-    key = getpass.getpass("Render API key: ").strip()
+    key = read_key() or getpass.getpass("Render API key: ").strip()
     if not key:
         raise SystemExit("No API key entered")
-    SECRETS.write_text(f"RENDER_API_KEY={key}\n", encoding="utf-8")
+    token = getpass.getpass("Review drafts token (optional): ").strip()
+    lines = [f"RENDER_API_KEY={key}"]
+    if token:
+        lines.append(f"REVIEW_DRAFTS_TOKEN={token}")
+    SECRETS.write_text("\n".join(lines) + "\n", encoding="utf-8")
     SECRETS.chmod(stat.S_IRUSR | stat.S_IWUSR)
     status, payload = request("/services?limit=1", key)
     print(json.dumps({"authenticated": status == 200, "services_returned": len(payload) if isinstance(payload, list) else len(payload.get("items", []))}, indent=2))
@@ -68,11 +82,13 @@ def main():
     secret.add_argument("service_id")
     secret.add_argument("file_name", help="for example portal_findings.json")
     secret.add_argument("local_path", type=Path)
+    drafts = sub.add_parser("review-drafts", help="query review-only manual enrichment drafts")
+    drafts.add_argument("service_url", help="for example https://funeral-home-findings.onrender.com")
     args = parser.parse_args()
     if args.command == "setup":
         setup(); return
     key = read_key()
-    if not key:
+    if args.command != "review-drafts" and not key:
         raise SystemExit("No Render key configured. Run: python render_terminal.py setup")
     if args.command == "services":
         _status, payload = request("/services?limit=100", key)
@@ -89,6 +105,16 @@ def main():
             raise SystemExit("Upload cancelled")
         status, _payload = request(f"/services/{args.service_id}/secret-files/{args.file_name}", key, "PUT", {"content": content})
         print(json.dumps({"uploaded": True, "http_status": status, "file_name": args.file_name, "bytes": len(content.encode("utf-8"))}, indent=2))
+    elif args.command == "review-drafts":
+        token = read_setting("REVIEW_DRAFTS_TOKEN") or getpass.getpass("Review drafts token: ").strip()
+        if not token:
+            raise SystemExit("No review drafts token configured")
+        req = Request(args.service_url.rstrip("/") + "/api/review-drafts", headers={"Accept": "application/json", "Authorization": f"Bearer {token}"})
+        try:
+            with urlopen(req, timeout=30) as response:
+                print(json.dumps(json.loads(response.read().decode("utf-8")), indent=2, ensure_ascii=False))
+        except HTTPError as error:
+            raise SystemExit(f"Review API returned HTTP {error.code}: {error.read().decode('utf-8', errors='replace')[:300]}")
     else:
         body = {}
         if args.commit_id: body["commitId"] = args.commit_id

@@ -6,6 +6,7 @@ import json
 from datetime import datetime, timedelta
 import threading
 import os
+import sqlite3
 from urllib.parse import urlsplit
 
 from flask import Flask, Response, abort, flash, redirect, render_template, request, session, url_for
@@ -63,7 +64,7 @@ def create_app(config=None):
 
     @app.before_request
     def require_login():
-        if not app.config["AUTH_REQUIRED"] or request.endpoint in {"login", "static", "healthz"}:
+        if not app.config["AUTH_REQUIRED"] or request.endpoint in {"login", "static", "healthz", "review_drafts_api"}:
             return None
         if session.get("authenticated_user"):
             return None
@@ -77,6 +78,30 @@ def create_app(config=None):
         return OperatorRepository(
             app.config["DATA_ROOT"], app.config.get("CRM_DB"), app.config.get("FINDINGS_PATH")
         )
+
+    def review_db():
+        path = (Path(app.config["DATA_ROOT"]).resolve() / "generated/manual_imports/review_queue.sqlite").resolve()
+        root = Path(app.config["DATA_ROOT"]).resolve()
+        if root not in path.parents:
+            abort(500, "Invalid review database path")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with sqlite3.connect(path) as connection:
+            connection.execute("CREATE TABLE IF NOT EXISTS drafts (draft_id TEXT PRIMARY KEY, payload TEXT NOT NULL)")
+            legacy = root / "generated/manual_imports/review_queue.json"
+            if connection.execute("SELECT 1 FROM drafts LIMIT 1").fetchone() is None and legacy.is_file():
+                try:
+                    items = json.loads(legacy.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    items = []
+                if isinstance(items, list):
+                    connection.executemany("INSERT OR IGNORE INTO drafts (draft_id, payload) VALUES (?, ?)", [(item.get("draft_id", secrets.token_urlsafe(16)), json.dumps(item, ensure_ascii=False)) for item in items if isinstance(item, dict)])
+        return path
+
+    def review_drafts():
+        path = review_db()
+        with sqlite3.connect(path) as connection:
+            rows = connection.execute("SELECT payload FROM drafts ORDER BY rowid").fetchall()
+        return [json.loads(row[0]) for row in rows]
 
     def display_website(row):
         value = str(row.get("website") or "").strip()
@@ -280,23 +305,22 @@ def create_app(config=None):
             "city": record.get("city"), "province": record.get("province"),
             "website": website, "phones": phones, "emails": emails, "staff": staff,
         }
-        path = (Path(app.config["DATA_ROOT"]).resolve() / "generated/manual_imports/review_queue.json").resolve()
-        if Path(app.config["DATA_ROOT"]).resolve() not in path.parents:
-            abort(500, "Invalid review queue path")
-        existing = []
-        if path.exists():
-            try:
-                existing = json.loads(path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
-                abort(500, "Review queue is unreadable")
-        if not isinstance(existing, list):
-            abort(500, "Review queue must be a JSON list")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        temporary = path.with_suffix(".json.tmp")
-        temporary.write_text(json.dumps(existing + [draft], indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-        temporary.replace(path)
+        path = review_db()
+        with sqlite3.connect(path) as connection:
+            connection.execute("INSERT INTO drafts (draft_id, payload) VALUES (?, ?)", (draft["draft_id"], json.dumps(draft, ensure_ascii=False)))
+        legacy = path.with_suffix(".json")
+        legacy.write_text(json.dumps(review_drafts(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         flash(f"Saved manual enrichment for {record.get('company')} for review.")
         return redirect(url_for("imports"))
+
+    @app.get("/api/review-drafts")
+    def review_drafts_api():
+        expected = os.environ.get("REVIEW_DRAFTS_TOKEN", "").strip()
+        supplied = request.headers.get("Authorization", "")
+        if not expected or supplied != f"Bearer {expected}":
+            return {"error": "review drafts token required"}, 401
+        drafts = review_drafts()
+        return {"drafts": drafts, "count": len(drafts)}
 
     @app.post("/imports/preview")
     def import_preview():
