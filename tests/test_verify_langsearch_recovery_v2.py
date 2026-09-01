@@ -37,6 +37,16 @@ class VerifyLangSearchRecoveryV2Tests(unittest.TestCase):
             self.assertEqual(summary["verified_records"], 1)
             self.assertEqual(json.loads((out / "verified_source.json").read_text())[0]["directory_record_id"], "CFI-0001")
 
+    def test_accepts_current_resolver_search_results_field(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); queue = root / "queue.json"; search = root / "search.json"; out = root / "out"
+            queue.write_text(json.dumps([{"directory_record_id": "CFI-0001", "directory_index": 0, "company": "Example Funeral Home", "city": "Town", "province": "ON"}]))
+            search.write_text(json.dumps([{"directory_record_id": "CFI-0001", "status": "OK", "search_results": [{"url": "https://example.test/"}]}]))
+            returned = {"directory_record_id": "CFI-0001", "directory_index": 0, "company": "Example Funeral Home", "city": "Town", "province": "ON", "status": "VERIFIED_HIGH", "website": "https://example.test/", "confidence": "HIGH", "verification_score": .95, "evidence": {"host_overlap": 1.0, "reasons": []}}
+            with patch.object(verifier, "verify_record", return_value=returned) as mocked:
+                verifier.verify(queue, search, out, workers=1)
+            self.assertEqual(mocked.call_args.args[1]["candidate_results"], [{"url": "https://example.test/"}])
+
     def test_matching_third_party_text_cannot_become_verified_website(self):
         result = {"status": "VERIFIED_HIGH", "company": "Example Funeral Home", "website": "https://directory.invalid/listing", "domain": "directory.invalid", "confidence": "HIGH", "evidence": {"host": "directory.invalid", "host_overlap": 0, "reasons": ["exact_company_phrase_on_page"]}}
         guarded = verifier.enforce_first_party(result)

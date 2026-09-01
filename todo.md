@@ -12,7 +12,10 @@ materialization or deployment.
 - [ ] **GAP-2026-066 (HIGH): verify successful LangSearch candidates as
   first-party websites.** Evidence: the V3 queue contains 364 successful
   records with 3,443 candidate URLs, while 249 records are rate-limit errors;
-  search results are not trusted enrichment. Acceptance: verify redirects,
+  search results are not trusted enrichment. A handoff defect was found on
+  2026-09-01: the verifier read legacy `results`, while the resolver emits
+  `search_results`, causing a false 0-verified/364-unresolved report. The
+  verifier now accepts both fields and has a regression test. Acceptance: verify redirects,
   registrable domains, company/location identity, funeral relevance, and
   excluded-host rules; preserve candidate/refusal evidence; produce a
   deterministic verified/review/unresolved split with no database, CRM, or

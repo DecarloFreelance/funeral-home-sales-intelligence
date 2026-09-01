@@ -166,7 +166,10 @@ def verify(queue_path: Path, search_path: Path, output: Path, *, workers: int = 
         if search.get("status") != "OK" or record_id not in by_id or record_id in results:
             continue
         row = by_id[record_id]
-        pending.append((row, {**search, "candidate_results": first_party_candidates(row, search.get("results") or [])}))
+        # The current LangSearch resolver stores the API payload as
+        # ``search_results``; accept the legacy ``results`` name as well.
+        raw_candidates = search.get("search_results") or search.get("results") or []
+        pending.append((row, {**search, "candidate_results": first_party_candidates(row, raw_candidates)}))
     if limit:
         pending = pending[:limit]
     if audit_only:
