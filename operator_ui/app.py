@@ -101,7 +101,20 @@ def create_app(config=None):
         path = review_db()
         with sqlite3.connect(path) as connection:
             rows = connection.execute("SELECT payload FROM drafts ORDER BY rowid").fetchall()
-        return [json.loads(row[0]) for row in rows]
+            drafts = [json.loads(row[0]) for row in rows]
+            known = {item.get("draft_id") for item in drafts if isinstance(item, dict)}
+            legacy = path.with_suffix(".json")
+            if legacy.is_file():
+                try:
+                    items = json.loads(legacy.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    items = []
+                if isinstance(items, list):
+                    missing = [item for item in items if isinstance(item, dict) and item.get("draft_id") not in known]
+                    if missing:
+                        connection.executemany("INSERT OR IGNORE INTO drafts (draft_id, payload) VALUES (?, ?)", [(item.get("draft_id", secrets.token_urlsafe(16)), json.dumps(item, ensure_ascii=False)) for item in missing])
+                        drafts.extend(missing)
+        return drafts
 
     def display_website(row):
         value = str(row.get("website") or "").strip()
