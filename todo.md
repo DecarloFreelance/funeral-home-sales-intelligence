@@ -4,6 +4,25 @@ Last reconciled: 2026-08-24
 
 ## Directory 955 precision enrichment (2026-08-31)
 
+- [x] **GAP-2026-064 (HIGH): run branch attribution against the current
+  identity-verified mapping set and materialize V18.** Evidence: the branch
+  attribution stage rejected the corrected 254-row `legacy_mapping_crawl_v2`
+  output because it required the obsolete 530-row legacy set; the corrected
+  crawl contains 592 pages across 203 verified domains and 86 shared-domain
+  branch rows requiring attribution. Impact: verified websites and explicit
+  branch contacts/staff could not be promoted from the reviewed crawl, leaving
+  the Findings gaps unchanged. Responsible subsystem: branch attribution and
+  canonical materialization. Acceptance: accept versioned unique mapping sets,
+  cache page text for bounded execution, preserve ambiguous shared-domain
+  evidence, add only identity-verified websites and branch-attributed values,
+  conserve 955 rows, and prove deterministic/no-CRM behavior.
+  **VALIDATED:** attribution now accepts the 254-row verifier output, rejects
+  duplicate IDs, and completes in a bounded run. V18 adds 224 verified website
+  mappings and branch-attributed evidence to 23 businesses, producing 342
+  website-bearing and 322 safe-contact businesses across 955 unique rows;
+  85 ambiguous shared-domain rows remain unresolved. Focused tests pass 6/6;
+  no CRM or outreach writes occurred.
+
 - [ ] **GAP-2026-063 (HIGH): re-verify legacy website mappings before bounded
   contact/staff crawling.** Evidence: the legacy `verified_crawlset` labels 530
   mappings as verified, yet the current registrable-domain identity guard
