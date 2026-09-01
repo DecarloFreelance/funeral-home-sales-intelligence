@@ -23,7 +23,7 @@ def compact_evidence(item: dict) -> dict:
     }
 
 
-def build(source: Path, summary_path: Path, mappings_path: Path | None = None) -> dict:
+def build(source: Path, summary_path: Path, mappings_path: Path | None = None, version: str = "V17") -> dict:
     records = json.loads(source.read_text(encoding="utf-8"))
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     if len(records) != 955 or len({row.get("directory_record_id") for row in records}) != 955:
@@ -52,11 +52,11 @@ def build(source: Path, summary_path: Path, mappings_path: Path | None = None) -
             "decision_makers": [compact_evidence(item) for item in enrichment.get("decision_makers") or []],
             "has_any_contact": bool(enrichment.get("has_any_contact")),
         })
-    return {"version": "V17", "records": output, "summary": summary}
+    return {"version": version, "records": output, "summary": summary}
 
 
-def write_snapshot(source: Path, summary: Path, output: Path, mappings: Path | None = MAPPINGS) -> int:
-    payload = json.dumps(build(source, summary, mappings), ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
+def write_snapshot(source: Path, summary: Path, output: Path, mappings: Path | None = MAPPINGS, version: str = "V17") -> int:
+    payload = json.dumps(build(source, summary, mappings, version), ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
     size = len(payload.encode())
     if size > MAX_RENDER_SECRET_BYTES:
         raise ValueError(f"Portal snapshot exceeds Render's 1 MB secret-file limit: {size}")
@@ -72,8 +72,9 @@ def main() -> None:
     parser.add_argument("--summary", type=Path, default=SUMMARY)
     parser.add_argument("--output", type=Path, default=OUTPUT)
     parser.add_argument("--mappings", type=Path, default=MAPPINGS)
+    parser.add_argument("--version", default="V17")
     args = parser.parse_args()
-    print(json.dumps({"records": 955, "bytes": write_snapshot(args.source, args.summary, args.output, args.mappings), "output": str(args.output)}))
+    print(json.dumps({"records": 955, "bytes": write_snapshot(args.source, args.summary, args.output, args.mappings, args.version), "output": str(args.output)}))
 
 
 if __name__ == "__main__":
