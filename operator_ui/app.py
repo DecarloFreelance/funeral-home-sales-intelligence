@@ -344,9 +344,9 @@ def create_app(config=None):
         body = request.get_json(silent=True) or {}
         ids = [str(value) for value in [body.get("draft_id"), body.get("merge_with")] if value]
         drafts = [item for item in review_drafts() if item.get("draft_id") in ids]
-        if len(drafts) != 2 or len({item.get("directory_record_id") for item in drafts}) != 1:
-            return {"error": "exactly two drafts for the same business are required"}, 400
-        merged = dict(drafts[0]); other = drafts[1]
+        if len(drafts) != len(ids) or len({item.get("directory_record_id") for item in drafts}) != 1 or len(drafts) not in {1, 2}:
+            return {"error": "one or two drafts for the same business are required"}, 400
+        merged = dict(drafts[0]); other = drafts[1] if len(drafts) == 2 else {}
         for key in ("phones", "emails", "staff"):
             merged[key] = drafts[0].get(key, []) + other.get(key, [])
         if not merged.get("website"): merged["website"] = other.get("website", "")

@@ -85,7 +85,7 @@ def main():
     drafts = sub.add_parser("review-drafts", help="query review-only manual enrichment drafts")
     drafts.add_argument("service_url", help="for example https://funeral-home-findings.onrender.com")
     approve = sub.add_parser("approve-review-draft")
-    approve.add_argument("service_url"); approve.add_argument("draft_id"); approve.add_argument("--merge-with", required=True)
+    approve.add_argument("service_url"); approve.add_argument("draft_id"); approve.add_argument("--merge-with")
     args = parser.parse_args()
     if args.command == "setup":
         setup(); return
