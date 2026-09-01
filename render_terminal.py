@@ -64,6 +64,10 @@ def main():
     deploy.add_argument("service_id")
     deploy.add_argument("--commit", dest="commit_id")
     deploy.add_argument("--clear-cache", action="store_true")
+    secret = sub.add_parser("secret-file", help="upload one Render secret file (explicit write)")
+    secret.add_argument("service_id")
+    secret.add_argument("file_name", help="for example portal_findings.json")
+    secret.add_argument("local_path", type=Path)
     args = parser.parse_args()
     if args.command == "setup":
         setup(); return
@@ -72,6 +76,18 @@ def main():
         raise SystemExit("No Render key configured. Run: python render_terminal.py setup")
     if args.command == "services":
         _status, payload = request("/services?limit=100", key)
+        print(json.dumps(payload, indent=2))
+    elif args.command == "secret-file":
+        if not args.local_path.is_file():
+            raise SystemExit(f"Secret file not found: {args.local_path}")
+        content = args.local_path.read_text(encoding="utf-8")
+        if not content:
+            raise SystemExit("Refusing to upload an empty secret file")
+        print(f"Uploading {args.file_name} ({len(content.encode('utf-8'))} bytes) to Render service {args.service_id}.")
+        print("This replaces that named secret file and requires an explicit deploy afterward.")
+        if input("Type UPLOAD to continue: ") != "UPLOAD":
+            raise SystemExit("Upload cancelled")
+        _status, payload = request(f"/services/{args.service_id}/secret-files/{args.file_name}", key, "PUT", {"content": content})
         print(json.dumps(payload, indent=2))
     else:
         body = {}
