@@ -6,6 +6,8 @@ import json
 from copy import deepcopy
 from pathlib import Path
 
+from sanitize_staff_precision_v16 import REJECT, RENAME
+
 
 BASE = Path("data/generated/directory_955")
 SOURCE = BASE / "full_955_enrichment_v17/full_955_enrichment.json"
@@ -75,6 +77,26 @@ def materialize(output=OUTPUT):
             if added:
                 record_added = True
                 evidence_changes.append({"directory_record_id": record_id, "field": field, "added": added})
+
+        # Branch overlays are produced by a separate extractor and therefore
+        # must pass the same evidence-reviewed precision boundary as V16.
+        # Apply exact, record-scoped quarantine and name normalization only;
+        # do not infer or discard any other person records here.
+        kept_staff = []
+        for person in enrichment.get("staff", []):
+            name = person.get("name", "") if isinstance(person, dict) else ""
+            if name in REJECT.get(record_id, set()):
+                continue
+            rename_key = (record_id, name)
+            if rename_key in RENAME:
+                person = deepcopy(person)
+                person["name"] = RENAME[rename_key]
+            kept_staff.append(person)
+        enrichment["staff"] = kept_staff
+        enrichment["decision_makers"] = [
+            person for person in kept_staff
+            if isinstance(person, dict) and person.get("decision_maker") is True
+        ]
 
         for field in ("emails", "phones", "staff", "decision_makers"):
             enrichment[f"has_{field[:-1]}"] = bool(enrichment.get(field))

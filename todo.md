@@ -4,6 +4,27 @@ Last reconciled: 2026-08-24
 
 ## Directory 955 precision enrichment (2026-08-31)
 
+Parallel agent work is authorized for bounded audits and queue design. Agents
+must return evidence, avoid CRM/outreach writes, and make changes only within
+their assigned subsystem; the primary agent reconciles all findings before
+materialization or deployment.
+
+- [ ] **GAP-2026-065 (HIGH): recover the 613 missing websites with LangSearch
+  discovery followed by first-party verification.** Evidence: V18 Findings
+  currently shows 342/955 businesses with websites, leaving 613 gaps (514
+  have no website, contact, staff, or decision-maker evidence at all). Impact:
+  without a verified origin, downstream contact and staff extraction cannot
+  start safely. Responsible subsystem: LangSearch discovery, registrable-domain
+  verification, bounded crawler, and branch attribution. Acceptance: enqueue
+  the 613 gaps (prioritizing the 514 zero-evidence rows), issue deterministic
+  LangSearch queries using exact company/city/province, cache every result and
+  retry state, reject third-party/deceptive hosts, live-verify only
+  first-party candidates with SSRF/redirect guards, crawl contact/about/team/
+  location paths, retain source/final URL and provenance, and leave ambiguous
+  shared-domain values in review. Preserve 955 rows, apply the staff precision
+  denylist before materialization, run adversarial/targeted/full validation,
+  and perform zero CRM or outreach writes.
+
 - [x] **GAP-2026-064 (HIGH): run branch attribution against the current
   identity-verified mapping set and materialize V18.** Evidence: the branch
   attribution stage rejected the corrected 254-row `legacy_mapping_crawl_v2`
@@ -21,7 +42,11 @@ Last reconciled: 2026-08-24
   mappings and branch-attributed evidence to 23 businesses, producing 342
   website-bearing and 322 safe-contact businesses across 955 unique rows;
   85 ambiguous shared-domain rows remain unresolved. Focused tests pass 6/6;
-  no CRM or outreach writes occurred.
+  no CRM or outreach writes occurred. PostgreSQL V18 import completed with
+  zero conflicts/skips; organizations (955), contacts (911), and source
+  records (955) reconcile exactly. Validation integrity is clean; 64 retained
+  historical people and 42 retained historical evidence sources explain the
+  non-authoritative database totals of 723 and 1,062.
 
 - [ ] **GAP-2026-063 (HIGH): re-verify legacy website mappings before bounded
   contact/staff crawling.** Evidence: the legacy `verified_crawlset` labels 530

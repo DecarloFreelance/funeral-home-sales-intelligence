@@ -28,3 +28,20 @@ def test_v18_materialization_is_conservative_and_conserves_rows():
     assert summary["newly_verified_websites"] == 224
     assert summary["records_with_branch_evidence_added"] == 23
 
+
+def test_v18_materialization_reapplies_staff_precision_boundary():
+    path = Path("data/generated/directory_955/full_955_enrichment_v18/full_955_enrichment.json")
+    rows = json.loads(path.read_text())
+    by_id = {row["directory_record_id"]: row for row in rows}
+
+    # These labels were quarantined in V16 and must not return through the
+    # later branch-attribution overlay.
+    assert "Crematorium Operator" not in {
+        person["name"] for person in by_id["CFI-0069"]["branch_safe_enrichment"]["staff"]
+    }
+    assert "Who We Are" not in {
+        person["name"] for person in by_id["CFI-0921"]["branch_safe_enrichment"]["staff"]
+    }
+    assert "Office Administrator" not in {
+        person["name"] for person in by_id["CFI-0921"]["branch_safe_enrichment"]["staff"]
+    }
