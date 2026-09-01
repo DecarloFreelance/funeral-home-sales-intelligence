@@ -12,6 +12,7 @@ venv/
 .env
 .env.*
 !.env.example
+.render.env
 dev/espocrm/.env
 instance/
 
