@@ -89,7 +89,12 @@ def create_app(config=None):
         return value
 
     def display_findings(records):
-        return [{**row, "display_website": display_website(row)} for row in records]
+        output = []
+        for row in records:
+            website = display_website(row)
+            host = (urlsplit(website).hostname or "").removeprefix("www.") if website else ""
+            output.append({**row, "display_website": website, "display_website_host": host})
+        return output
 
     def filtered_findings(records):
         query = request.args.get("q", "").strip().casefold()[:200]
@@ -233,7 +238,9 @@ def create_app(config=None):
         record = repository().finding(record_id)
         if record is None:
             abort(404)
-        return render_template("finding_detail.html", record={**record, "display_website": display_website(record)})
+        website = display_website(record)
+        return render_template("finding_detail.html", record={**record, "display_website": website,
+                               "display_website_host": (urlsplit(website).hostname or "").removeprefix("www.") if website else ""})
 
     @app.get("/queues")
     def queues():

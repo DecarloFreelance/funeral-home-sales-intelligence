@@ -17,7 +17,11 @@ Last reconciled: 2026-08-24
   **VALIDATED:** the authenticated table renders clickable addresses for all 571
   businesses with safe mappings (503 unique URLs), including the 25 V17
   LangSearch recoveries, and shows a 571-business website counter. URL/domain
-  text search and filtered CSV use the same presentation-safe value. Malformed,
+  text search and filtered CSV use the same presentation-safe value. Table links
+  use compact domain labels with the complete URL retained as their target and
+  tooltip; fixed responsive column proportions keep contacts, staff, and
+  decision makers visible instead of allowing long URLs to push them off-screen.
+  A 1440×1000 headless-browser rendering confirmed all six columns. Malformed,
   credentialed, and non-HTTP(S) targets render as absent and cannot enter export;
   focused portal tests pass 15/15 and the full suite passes 316/316.
 

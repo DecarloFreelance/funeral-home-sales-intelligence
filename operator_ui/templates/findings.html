@@ -32,7 +32,7 @@
       <tr data-search="{{ (record.directory_record_id ~ ' ' ~ record.company ~ ' ' ~ record.city ~ ' ' ~ record.province)|lower }}">
         <td><a href="{{ url_for('finding_detail', record_id=record.directory_record_id) }}"><strong>{{ record.company }}</strong></a><small>{{ record.directory_record_id }}</small></td>
         <td>{{ record.city }}, {{ record.province }}</td>
-        <td>{% if record.display_website %}<a href="{{ record.display_website }}" rel="noopener noreferrer" target="_blank">{{ record.display_website }}</a>{% else %}—{% endif %}</td>
+        <td class="website-cell">{% if record.display_website %}<a href="{{ record.display_website }}" rel="noopener noreferrer" target="_blank" title="{{ record.display_website }}">{{ record.display_website_host }}</a>{% else %}—{% endif %}</td>
         <td>{{ record.emails|length }} email · {{ record.phones|length }} phone</td>
         <td>{{ record.staff|length }}{% if record.staff %}<details><summary>View</summary>{% for person in record.staff %}<div>{{ person.name }}{% if person.title %} — {{ person.title }}{% endif %}</div>{% endfor %}</details>{% endif %}</td>
         <td>{% for person in record.decision_makers %}<div>{{ person.name }}{% if person.title %}<small>{{ person.title }}</small>{% endif %}</div>{% else %}—{% endfor %}</td>

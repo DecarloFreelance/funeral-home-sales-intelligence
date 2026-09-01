@@ -140,6 +140,7 @@ class OperatorAuthenticationTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"=Unsafe Home", response.data)
         self.assertIn(b"https://unsafe.test/", response.data)
+        self.assertIn(b">unsafe.test</a>", response.data)
         self.assertNotIn(b"Ontario Home", response.data)
         self.assertIn(b"=Unsafe Home", self.client.get("/findings?q=unsafe.test").data)
         exported = self.client.get("/findings/export.csv?province=AB&contact=yes&website=yes&q=unsafe")

@@ -50,6 +50,15 @@ td small { display:block; color:var(--muted); margin-top:.25rem; }
 .filter-actions { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; }
 .filter-actions a { color:var(--accent); }
 .button-link { padding:.55rem .7rem; border-radius:7px; background:var(--accent); color:#fff !important; text-decoration:none; }
+#findings-table { table-layout:fixed; min-width:1050px; }
+#findings-table th:nth-child(1) { width:20%; }
+#findings-table th:nth-child(2) { width:12%; }
+#findings-table th:nth-child(3) { width:18%; }
+#findings-table th:nth-child(4) { width:13%; }
+#findings-table th:nth-child(5) { width:17%; }
+#findings-table th:nth-child(6) { width:20%; }
+#findings-table td { overflow-wrap:anywhere; }
+.website-cell a { display:block; overflow-wrap:anywhere; }
 details { margin-top:.35rem; }
 details summary { color:var(--accent); cursor:pointer; }
 .evidence-item { display:grid; gap:.2rem; padding:.65rem 0; border-bottom:1px solid var(--line); }
