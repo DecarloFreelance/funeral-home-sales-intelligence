@@ -4,6 +4,44 @@ Last reconciled: 2026-08-24
 
 ## Directory 955 precision enrichment (2026-08-31)
 
+- [x] **GAP-2026-059 (HIGH): complete hardened LangSearch recovery and
+  materialize verified V17 evidence.** Evidence: the restartable 425-record
+  queue has 276 unique cached `OK` searches and 149 pending; the original
+  verification admitted two deceptive `*.ca.domreaper.com` hosts, and after the
+  registrable-domain fix production contains nine verified records while a
+  current-guard-valid bounded CFI-0407 success remains isolated because a later
+  retry received HTTP 403. Impact: safe first-party website/contact evidence is
+  stranded and stale verification could either omit valid evidence or promote
+  attacker-controlled subdomains. Responsible subsystem: LangSearch recovery,
+  first-party verification/crawling, and canonical materialization. Acceptance:
+  preserve V16 and CRM; reconcile CFI-0407 with explicit provenance; finish all
+  425 cached searches; verify and crawl only hardened first-party identities;
+  recover only location-safe contacts/staff; reproducibly materialize V17;
+  reject known third parties and duplicates; pass targeted, adversarial,
+  persistence, and full-suite validation; record hashes and deltas; and perform
+  zero CRM writes and outreach actions. **VALIDATED:** all 425 unique queue
+  records are cached `OK` with zero pending, duplicates, off-queue rows, or
+  rate-limit events. The registrable-domain identity guard and 13 verifier
+  regressions reject deceptive DomReaper subdomains; stored current-guard-valid
+  bounded evidence reconciles CFI-0407 with explicit provenance. Final website
+  verification contains 26 verified and 399 review/unresolved records with no
+  DomReaper, obituary, directory, social, or other guard-failing survivor. The
+  SSRF/redirect-hardened crawl retained 80 pages from 23 of 28 queued records;
+  five domains failed closed. Neil Bardal's observed migration was independently
+  verified and its explicit Winnipeg block yielded one email and one phone;
+  Wojcik's migration remained REVIEW and was not crawled or merged. Immutable
+  V17 adds 25 websites, preserves the reviewed CFI-0756 canonical decision,
+  changes 26 records, and raises safe-contact coverage from 318 to 319 without
+  changing 629 staff or 204 decision makers. Targeted tests pass 31/31,
+  PostgreSQL persistence tests pass 6/6, and the full suite passes 312/312.
+  Live TLS connectivity and a read-only import validation ran; the database
+  remains on its older 889-contact/705-person snapshot and was not written.
+  Ruff was unavailable. V16 and CRM retained SHA-256
+  `78dceed53888b09815af77953cea6e2439021d238d63e70f63a290e3ad806c48`
+  and `c06bee94b72a8bbde83e1755a9897800543f038e255e6e2db72cca744a736b9e`;
+  V17 is `c8c218bb0042c06dcb9196563d4453b439dc82543ab36d3523f10eb906878d1f`.
+  CRM writes and outreach actions were zero.
+
 - [x] **GAP-2026-058 (CRITICAL): quarantine non-person staff artifacts in a
   versioned V16 precision correction.** Evidence: the deployed V15 findings
   view exposes organization names, navigation labels, licence categories, and
