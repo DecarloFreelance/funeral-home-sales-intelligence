@@ -1,6 +1,6 @@
 # Product Task List
 
-Last reconciled: 2026-08-24
+Last reconciled: 2026-09-01
 
 ## Directory 955 precision enrichment (2026-08-31)
 
@@ -8,6 +8,49 @@ Parallel agent work is authorized for bounded audits and queue design. Agents
 must return evidence, avoid CRM/outreach writes, and make changes only within
 their assigned subsystem; the primary agent reconciles all findings before
 materialization or deployment.
+
+- [ ] **GAP-2026-066 (HIGH): verify successful LangSearch candidates as
+  first-party websites.** Evidence: the V3 queue contains 364 successful
+  records with 3,443 candidate URLs, while 249 records are rate-limit errors;
+  search results are not trusted enrichment. Acceptance: verify redirects,
+  registrable domains, company/location identity, funeral relevance, and
+  excluded-host rules; preserve candidate/refusal evidence; produce a
+  deterministic verified/review/unresolved split with no database, CRM, or
+  outreach writes.
+
+- [ ] **GAP-2026-067 (HIGH): crawl verified V3 websites for contact and staff
+  evidence.** Evidence: V18 still has 634 businesses without phones and 791
+  without emails. Acceptance: crawl bounded contact/about/team/location paths;
+  retain source URL plus contextual excerpt for every fact; reject fax,
+  directory, shared-domain, and non-branch values; preserve all 955 IDs.
+
+- [ ] **GAP-2026-068 (HIGH): materialize verified V19 enrichment.** Evidence:
+  no V19 artifact exists and LangSearch output is separate from V18.
+  Acceptance: merge only verified first-party facts, reapply staff precision,
+  deduplicate stable identities, conserve 955 rows, retain provenance/context,
+  and prove deterministic reruns plus adversarial tests.
+
+- [ ] **GAP-2026-069 (HIGH): import and reconcile V19 in PostgreSQL.** Evidence:
+  the database currently reconciles V18 only. Dependency: GAP-066 through
+  GAP-068. Acceptance: guarded dry-run/apply with zero conflicts, skips,
+  orphans, or duplicate IDs; source counts match V19; CRM/outreach untouched.
+
+- [ ] **GAP-2026-070 (MEDIUM): publish V19 to the authenticated Render portal.**
+  Evidence: Render consumes the private `portal_findings.json` secret, so
+  PostgreSQL updates do not refresh Findings. Dependency: GAP-068/069.
+  Acceptance: generate a sub-1MB V19 snapshot, replace the secret, redeploy,
+  and confirm 955/955 plus matching metrics and evidence context.
+
+- [ ] **GAP-2026-071 (MEDIUM): improve Findings table contact presentation.**
+  Evidence: the table currently shows only contact counts. Acceptance: add
+  accessible expandable inline rows showing value, found-in context, source
+  page, and evidence class without exposing private hashes.
+
+- [ ] **GAP-2026-072 (MEDIUM): reconcile repository artifact hygiene.** Evidence:
+  `git status` shows production scripts, backups, generated datasets, and
+  private artifacts mixed as untracked files. Acceptance: classify paths,
+  update ignore/documentation rules, prevent secret/private commits, and run
+  diff, secret, and generated-path audits before the next checkpoint.
 
 - [ ] **GAP-2026-065 (HIGH): recover the 613 missing websites with LangSearch
   discovery followed by first-party verification.** Evidence: V18 Findings
