@@ -139,7 +139,9 @@ class OperatorAuthenticationTests(unittest.TestCase):
         response = self.client.get("/findings?province=AB&contact=yes&website=yes&q=unsafe")
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"=Unsafe Home", response.data)
+        self.assertIn(b"https://unsafe.test/", response.data)
         self.assertNotIn(b"Ontario Home", response.data)
+        self.assertIn(b"=Unsafe Home", self.client.get("/findings?q=unsafe.test").data)
         exported = self.client.get("/findings/export.csv?province=AB&contact=yes&website=yes&q=unsafe")
         self.assertEqual(exported.status_code, 200)
         self.assertIn("text/csv", exported.content_type)
@@ -147,6 +149,25 @@ class OperatorAuthenticationTests(unittest.TestCase):
         self.assertNotIn("Ontario Home", exported.get_data(as_text=True))
         self.assertEqual(self.client.get("/findings?province=XX").status_code, 400)
         self.assertEqual(self.client.get("/findings/export.csv?contact=maybe").status_code, 400)
+
+    def test_findings_never_link_or_export_unsafe_website_schemes(self):
+        directory = self.data / "generated/directory_955/full_955_enrichment_v17"
+        directory.mkdir(parents=True)
+        (directory / "full_955_enrichment.json").write_text(json.dumps([{
+            "directory_record_id": "CFI-0001", "company": "Unsafe Link", "city": "City", "province": "ON",
+            "website": "javascript:alert(1)", "branch_safe_enrichment": {
+                "emails": [], "phones": [], "staff": [], "decision_makers": [], "has_any_contact": False,
+            },
+        }]))
+        (directory / "summary.json").write_text("{}")
+        self.login()
+        listing = self.client.get("/findings")
+        detail = self.client.get("/findings/CFI-0001")
+        exported = self.client.get("/findings/export.csv").get_data(as_text=True)
+        self.assertNotIn(b'href="javascript:', listing.data)
+        self.assertNotIn(b'href="javascript:', detail.data)
+        self.assertNotIn("javascript:alert", exported)
+        self.assertNotIn("Unsafe Link", self.client.get("/findings?website=yes").get_data(as_text=True))
 
     def test_findings_counters_ignore_stale_summary_and_use_displayed_evidence(self):
         directory = self.data / "generated/directory_955/full_955_enrichment_v17"

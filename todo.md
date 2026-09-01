@@ -4,6 +4,23 @@ Last reconciled: 2026-08-24
 
 ## Directory 955 precision enrichment (2026-08-31)
 
+- [x] **GAP-2026-062 (HIGH): expose reviewed website addresses in Findings.**
+  Evidence: the private V17 portal snapshot contains 571 safe HTTP(S) website
+  mappings across 955 businesses, including all 25 new LangSearch recoveries,
+  but the table renders only the phrase `Reviewed website available`; URLs are
+  visible only after opening each record. Impact: operators cannot inspect,
+  search, copy, or efficiently use the recovered website evidence. Responsible
+  subsystem: authenticated Findings presentation/export. Acceptance: show the
+  actual safe URL as a clickable table column; add a website-coverage counter;
+  include URLs in text search and filtered CSV; reject non-HTTP(S), credentialed,
+  or malformed link targets; preserve authentication; and add adversarial tests.
+  **VALIDATED:** the authenticated table renders clickable addresses for all 571
+  businesses with safe mappings (503 unique URLs), including the 25 V17
+  LangSearch recoveries, and shows a 571-business website counter. URL/domain
+  text search and filtered CSV use the same presentation-safe value. Malformed,
+  credentialed, and non-HTTP(S) targets render as absent and cannot enter export;
+  focused portal tests pass 15/15 and the full suite passes 316/316.
+
 - [x] **GAP-2026-061 (HIGH): derive Findings counters from the rendered
   canonical snapshot with explicit predicates.** Evidence: V17 has 318
   businesses with an email or phone but 319 with an email, phone, or branch-safe

@@ -7,7 +7,7 @@
 </section>
 <div class="detail-grid">
   <section><h2>Reviewed website</h2>
-    {% if record.website %}<p><a href="{{ record.website }}" rel="noopener noreferrer">{{ record.website }}</a></p><p class="status">{{ record.website_verification or 'reviewed mapping' }}</p>
+    {% if record.display_website %}<p><a href="{{ record.display_website }}" rel="noopener noreferrer" target="_blank">{{ record.display_website }}</a></p><p class="status">{{ record.website_verification or 'reviewed mapping' }}</p>
     {% else %}<p class="empty">No reviewed website mapping.</p>{% endif %}
   </section>
   <section><h2>Safe emails</h2>{% for item in record.emails %}<div class="evidence-item"><strong>{{ item.value }}</strong>{% if item.source_url %}<a href="{{ item.source_url }}" rel="noopener noreferrer">Source</a>{% endif %}<small>{{ item.evidence_class or 'branch-safe evidence' }}</small></div>{% else %}<p class="empty">No branch-safe email found.</p>{% endfor %}</section>

@@ -78,6 +78,19 @@ def create_app(config=None):
             app.config["DATA_ROOT"], app.config.get("CRM_DB"), app.config.get("FINDINGS_PATH")
         )
 
+    def display_website(row):
+        value = str(row.get("website") or "").strip()
+        try:
+            parts = urlsplit(value)
+        except ValueError:
+            return ""
+        if parts.scheme.lower() not in {"http", "https"} or not parts.hostname or parts.username or parts.password:
+            return ""
+        return value
+
+    def display_findings(records):
+        return [{**row, "display_website": display_website(row)} for row in records]
+
     def filtered_findings(records):
         query = request.args.get("q", "").strip().casefold()[:200]
         province = request.args.get("province", "").strip().upper()
@@ -92,12 +105,12 @@ def create_app(config=None):
         filtered = []
         for row in records:
             has_safe_contact = bool(row.get("emails") or row.get("phones") or row.get("staff"))
-            searchable = " ".join(str(row.get(key) or "") for key in ("directory_record_id", "company", "city", "province")).casefold()
+            searchable = " ".join(str(row.get(key) or "") for key in ("directory_record_id", "company", "city", "province", "display_website")).casefold()
             matches = (
                 (not query or query in searchable)
                 and (not province or str(row.get("province") or "").upper() == province)
                 and (not contact or has_safe_contact == (contact == "yes"))
-                and (not website or bool(row.get("website")) == (website == "yes"))
+                and (not website or bool(row.get("display_website")) == (website == "yes"))
                 and (not decision_maker or bool(row.get("decision_makers")) == (decision_maker == "yes"))
             )
             if matches:
@@ -116,6 +129,7 @@ def create_app(config=None):
             "businesses_with_decision_maker": sum(bool(row.get("decision_makers")) for row in records),
             "named_staff": sum(len(row.get("staff") or []) for row in records),
             "named_decision_makers": sum(len(row.get("decision_makers") or []) for row in records),
+            "businesses_with_website": sum(bool(row.get("display_website")) for row in records),
         }
 
     def csv_cell(value):
@@ -188,6 +202,7 @@ def create_app(config=None):
     @app.get("/findings")
     def findings():
         records, summary = repository().findings()
+        records = display_findings(records)
         filtered, provinces, filters = filtered_findings(records)
         export_url = url_for("export_findings", **{key: value for key, value in filters.items() if value})
         return render_template("findings.html", records=filtered, total_records=len(records), summary=summary,
@@ -197,6 +212,7 @@ def create_app(config=None):
     @app.get("/findings/export.csv")
     def export_findings():
         records, _summary = repository().findings()
+        records = display_findings(records)
         filtered, _provinces, _filters = filtered_findings(records)
         stream = io.StringIO(newline="")
         writer = csv.writer(stream)
@@ -204,7 +220,7 @@ def create_app(config=None):
                          "Phones", "Staff", "Decision Makers"])
         for row in filtered:
             writer.writerow([csv_cell(row.get("directory_record_id")), csv_cell(row.get("company")),
-                             csv_cell(row.get("city")), csv_cell(row.get("province")), csv_cell(row.get("website")),
+                             csv_cell(row.get("city")), csv_cell(row.get("province")), csv_cell(row.get("display_website")),
                              csv_cell("; ".join(str(item.get("value") or "") for item in row.get("emails") or [])),
                              csv_cell("; ".join(str(item.get("value") or "") for item in row.get("phones") or [])),
                              csv_cell("; ".join(str(item.get("name") or "") for item in row.get("staff") or [])),
@@ -217,7 +233,7 @@ def create_app(config=None):
         record = repository().finding(record_id)
         if record is None:
             abort(404)
-        return render_template("finding_detail.html", record=record)
+        return render_template("finding_detail.html", record={**record, "display_website": display_website(record)})
 
     @app.get("/queues")
     def queues():

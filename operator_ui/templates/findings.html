@@ -11,6 +11,7 @@
   <article class="card"><span>With decision maker</span><strong>{{ metrics.businesses_with_decision_maker }}</strong><small>businesses</small></article>
   <article class="card"><span>Named staff</span><strong>{{ metrics.named_staff }}</strong><small>people</small></article>
   <article class="card"><span>Named decision makers</span><strong>{{ metrics.named_decision_makers }}</strong><small>people</small></article>
+  <article class="card"><span>With website</span><strong>{{ metrics.businesses_with_website }}</strong><small>businesses</small></article>
 </section>
 <section class="panel">
   <form class="finding-filters" method="get" action="{{ url_for('findings') }}">
@@ -25,13 +26,14 @@
   </form>
   {% if records %}
   <div class="table-wrap"><table id="findings-table">
-    <thead><tr><th>Business</th><th>Location</th><th>Safe contacts</th><th>Staff</th><th>Decision makers</th></tr></thead>
+    <thead><tr><th>Business</th><th>Location</th><th>Website</th><th>Safe contacts</th><th>Staff</th><th>Decision makers</th></tr></thead>
     <tbody>
       {% for record in records %}
       <tr data-search="{{ (record.directory_record_id ~ ' ' ~ record.company ~ ' ' ~ record.city ~ ' ' ~ record.province)|lower }}">
         <td><a href="{{ url_for('finding_detail', record_id=record.directory_record_id) }}"><strong>{{ record.company }}</strong></a><small>{{ record.directory_record_id }}</small></td>
         <td>{{ record.city }}, {{ record.province }}</td>
-        <td>{{ record.emails|length }} email · {{ record.phones|length }} phone{% if record.website %}<small>Reviewed website available</small>{% endif %}</td>
+        <td>{% if record.display_website %}<a href="{{ record.display_website }}" rel="noopener noreferrer" target="_blank">{{ record.display_website }}</a>{% else %}—{% endif %}</td>
+        <td>{{ record.emails|length }} email · {{ record.phones|length }} phone</td>
         <td>{{ record.staff|length }}{% if record.staff %}<details><summary>View</summary>{% for person in record.staff %}<div>{{ person.name }}{% if person.title %} — {{ person.title }}{% endif %}</div>{% endfor %}</details>{% endif %}</td>
         <td>{% for person in record.decision_makers %}<div>{{ person.name }}{% if person.title %}<small>{{ person.title }}</small>{% endif %}</div>{% else %}—{% endfor %}</td>
       </tr>
