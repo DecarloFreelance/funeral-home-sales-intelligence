@@ -4,6 +4,33 @@ Last reconciled: 2026-08-24
 
 ## Directory 955 precision enrichment (2026-08-31)
 
+- [ ] **GAP-2026-060 (HIGH): publish V17 in the authenticated Render portal
+  with composable search filters and spreadsheet export.** Evidence: the live
+  portal snapshot/exporter and findings labels are fixed to V16; its only search
+  is an in-browser text substring filter, with no province/contact/website/
+  decision-maker filtering and no authenticated CSV export. Impact: operators
+  cannot reliably segment the 955 records or move a filtered cohort into Google
+  Sheets or Excel, and the deployed private snapshot cannot expose validated V17
+  recovery. Responsible subsystem: private portal snapshot, findings routes/UI,
+  and Render deployment. Acceptance: build a private V17 snapshot; add escaped,
+  allowlisted, composable server-side filters; export exactly the filtered rows
+  as UTF-8 CSV compatible with Sheets/Excel; preserve authentication and formula
+  injection safety; test adversarial query/export inputs; validate the full
+  suite; update the established Render data source without exposing secrets; and
+  deploy and verify the authenticated frontend.
+  **IMPLEMENTED / DEPLOYMENT PENDING:** authenticated findings now support
+  composable text, province, safe-contact, website, and decision-maker filters;
+  the filtered cohort exports as UTF-8 CSV with spreadsheet-formula injection
+  neutralized. The private exporter now deterministically builds a 955-record
+  V17 snapshot (466,487 bytes, mode 0600). Focused portal tests pass 31/31 and
+  the full suite passes 313/313. The established transactional PostgreSQL import
+  applied V17 with zero cross-source conflicts and integrity checks report no
+  duplicates, orphans, or evidence-less contacts/people; its non-destructive
+  policy retains historical people/evidence, so database totals are 722 people
+  and 1,054 evidence sources rather than exact V17 snapshot totals. No Render
+  API/CLI credential is configured locally, so replacing the mounted private
+  findings secret remains an external deployment step after Git auto-deploy.
+
 - [x] **GAP-2026-059 (HIGH): complete hardened LangSearch recovery and
   materialize verified V17 evidence.** Evidence: the restartable 425-record
   queue has 276 unique cached `OK` searches and 149 pending; the original

@@ -2,8 +2,8 @@
 {% block title %}Findings · Sales Intelligence{% endblock %}
 {% block content %}
 <section class="page-heading">
-  <div><p class="eyebrow">Canonical enrichment V16</p><h1>Directory findings</h1></div>
-  <p class="lede">Read-only evidence summary. {{ records|length }} canonical businesses.</p>
+  <div><p class="eyebrow">Canonical enrichment {{ summary.get('version', 'V17') }}</p><h1>Directory findings</h1></div>
+  <p class="lede">Showing {{ records|length }} of {{ total_records }} canonical businesses.</p>
 </section>
 <section class="cards compact">
   {% set after = summary.get('after', {}) %}
@@ -13,9 +13,16 @@
   <article class="card"><span>Named staff</span><strong>{{ after.get('named_staff', 0) }}</strong></article>
 </section>
 <section class="panel">
-  <label class="search-label">Filter findings
-    <input id="finding-search" type="search" placeholder="Company, city, province, ID…" autocomplete="off">
-  </label>
+  <form class="finding-filters" method="get" action="{{ url_for('findings') }}">
+    <label class="search-label">Search
+      <input name="q" type="search" value="{{ filters.q }}" placeholder="Company, city, province, ID…" autocomplete="off">
+    </label>
+    <label>Province<select name="province"><option value="">All provinces</option>{% for province in provinces %}<option value="{{ province }}"{% if filters.province == province %} selected{% endif %}>{{ province }}</option>{% endfor %}</select></label>
+    <label>Safe contact<select name="contact"><option value="">Any</option><option value="yes"{% if filters.contact == 'yes' %} selected{% endif %}>Has contact</option><option value="no"{% if filters.contact == 'no' %} selected{% endif %}>No contact</option></select></label>
+    <label>Website<select name="website"><option value="">Any</option><option value="yes"{% if filters.website == 'yes' %} selected{% endif %}>Has website</option><option value="no"{% if filters.website == 'no' %} selected{% endif %}>No website</option></select></label>
+    <label>Decision maker<select name="decision_maker"><option value="">Any</option><option value="yes"{% if filters.decision_maker == 'yes' %} selected{% endif %}>Has decision maker</option><option value="no"{% if filters.decision_maker == 'no' %} selected{% endif %}>No decision maker</option></select></label>
+    <div class="filter-actions"><button type="submit">Apply filters</button><a href="{{ url_for('findings') }}">Clear</a><a class="button-link" href="{{ export_url }}">Export filtered CSV</a></div>
+  </form>
   {% if records %}
   <div class="table-wrap"><table id="findings-table">
     <thead><tr><th>Business</th><th>Location</th><th>Safe contacts</th><th>Staff</th><th>Decision makers</th></tr></thead>
@@ -31,15 +38,6 @@
       {% endfor %}
     </tbody>
   </table></div>
-  {% else %}<p class="empty">No V16 findings artifact is available.</p>{% endif %}
+  {% else %}<p class="empty">No findings match these filters.</p>{% endif %}
 </section>
-<script>
-  const search = document.getElementById('finding-search');
-  if (search) search.addEventListener('input', () => {
-    const query = search.value.trim().toLowerCase();
-    document.querySelectorAll('#findings-table tbody tr').forEach(row => {
-      row.hidden = query && !row.dataset.search.includes(query);
-    });
-  });
-</script>
 {% endblock %}

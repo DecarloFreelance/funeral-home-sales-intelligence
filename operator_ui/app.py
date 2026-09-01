@@ -1,4 +1,6 @@
 from pathlib import Path
+import csv
+import io
 import secrets
 import json
 from datetime import datetime, timedelta
@@ -6,7 +8,7 @@ import threading
 import os
 from urllib.parse import urlsplit
 
-from flask import Flask, abort, flash, redirect, render_template, request, session, url_for
+from flask import Flask, Response, abort, flash, redirect, render_template, request, session, url_for
 
 from crm.action_queue import create_action
 from crm.execution import complete_action, start_action
@@ -76,6 +78,37 @@ def create_app(config=None):
             app.config["DATA_ROOT"], app.config.get("CRM_DB"), app.config.get("FINDINGS_PATH")
         )
 
+    def filtered_findings(records):
+        query = request.args.get("q", "").strip().casefold()[:200]
+        province = request.args.get("province", "").strip().upper()
+        contact = request.args.get("contact", "").strip().lower()
+        website = request.args.get("website", "").strip().lower()
+        decision_maker = request.args.get("decision_maker", "").strip().lower()
+        if contact not in {"", "yes", "no"} or website not in {"", "yes", "no"} or decision_maker not in {"", "yes", "no"}:
+            abort(400, "Unsupported findings filter")
+        provinces = sorted({str(row.get("province") or "").upper() for row in records if row.get("province")})
+        if province and province not in provinces:
+            abort(400, "Unsupported province filter")
+        filtered = []
+        for row in records:
+            searchable = " ".join(str(row.get(key) or "") for key in ("directory_record_id", "company", "city", "province")).casefold()
+            matches = (
+                (not query or query in searchable)
+                and (not province or str(row.get("province") or "").upper() == province)
+                and (not contact or bool(row.get("has_any_contact")) == (contact == "yes"))
+                and (not website or bool(row.get("website")) == (website == "yes"))
+                and (not decision_maker or bool(row.get("decision_makers")) == (decision_maker == "yes"))
+            )
+            if matches:
+                filtered.append(row)
+        filters = {"q": query, "province": province, "contact": contact,
+                   "website": website, "decision_maker": decision_maker}
+        return filtered, provinces, filters
+
+    def csv_cell(value):
+        text = str(value or "")
+        return "'" + text if text.startswith(("=", "+", "-", "@")) else text
+
     def csrf_token():
         if "csrf_token" not in session:
             session["csrf_token"] = secrets.token_urlsafe(32)
@@ -142,7 +175,28 @@ def create_app(config=None):
     @app.get("/findings")
     def findings():
         records, summary = repository().findings()
-        return render_template("findings.html", records=records, summary=summary)
+        filtered, provinces, filters = filtered_findings(records)
+        export_url = url_for("export_findings", **{key: value for key, value in filters.items() if value})
+        return render_template("findings.html", records=filtered, total_records=len(records), summary=summary,
+                               provinces=provinces, filters=filters, export_url=export_url)
+
+    @app.get("/findings/export.csv")
+    def export_findings():
+        records, _summary = repository().findings()
+        filtered, _provinces, _filters = filtered_findings(records)
+        stream = io.StringIO(newline="")
+        writer = csv.writer(stream)
+        writer.writerow(["Directory ID", "Company", "City", "Province", "Website", "Emails",
+                         "Phones", "Staff", "Decision Makers"])
+        for row in filtered:
+            writer.writerow([csv_cell(row.get("directory_record_id")), csv_cell(row.get("company")),
+                             csv_cell(row.get("city")), csv_cell(row.get("province")), csv_cell(row.get("website")),
+                             csv_cell("; ".join(str(item.get("value") or "") for item in row.get("emails") or [])),
+                             csv_cell("; ".join(str(item.get("value") or "") for item in row.get("phones") or [])),
+                             csv_cell("; ".join(str(item.get("name") or "") for item in row.get("staff") or [])),
+                             csv_cell("; ".join(str(item.get("name") or "") for item in row.get("decision_makers") or []))])
+        return Response("\ufeff" + stream.getvalue(), mimetype="text/csv",
+                        headers={"Content-Disposition": "attachment; filename=funeral-home-findings.csv"})
 
     @app.get("/findings/<record_id>")
     def finding_detail(record_id):

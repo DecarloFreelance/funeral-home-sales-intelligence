@@ -37,7 +37,7 @@ class OperatorAuthenticationTests(unittest.TestCase):
         })
 
     def test_every_data_route_requires_login_and_static_assets_remain_public(self):
-        for path in ("/", "/findings", "/leads", "/quality", "/crm/actions"):
+        for path in ("/", "/findings", "/findings/export.csv", "/leads", "/quality", "/crm/actions"):
             response = self.client.get(path)
             self.assertEqual(response.status_code, 302, path)
             self.assertTrue(response.headers["Location"].startswith("/login?next="))
@@ -125,6 +125,28 @@ class OperatorAuthenticationTests(unittest.TestCase):
         self.assertNotIn(b"<script>alert(1)</script>", detail.data)
         self.assertIn(b"safe@example.test", detail.data)
         self.assertEqual(self.client.get("/findings/CFI-9999").status_code, 404)
+
+    def test_findings_filters_compose_and_csv_export_matches_with_formula_safety(self):
+        directory = self.data / "generated/directory_955/full_955_enrichment_v17"
+        directory.mkdir(parents=True)
+        records = [
+            {"directory_record_id": "CFI-0001", "company": "=Unsafe Home", "city": "Calgary", "province": "AB", "website": "https://unsafe.test/", "branch_safe_enrichment": {"emails": [{"value": "info@unsafe.test"}], "phones": [], "staff": [], "decision_makers": [], "has_any_contact": True}},
+            {"directory_record_id": "CFI-0002", "company": "Ontario Home", "city": "Ottawa", "province": "ON", "website": "", "branch_safe_enrichment": {"emails": [], "phones": [], "staff": [], "decision_makers": [], "has_any_contact": False}},
+        ]
+        (directory / "full_955_enrichment.json").write_text(json.dumps(records))
+        (directory / "summary.json").write_text(json.dumps({"version": "V17"}))
+        self.login()
+        response = self.client.get("/findings?province=AB&contact=yes&website=yes&q=unsafe")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"=Unsafe Home", response.data)
+        self.assertNotIn(b"Ontario Home", response.data)
+        exported = self.client.get("/findings/export.csv?province=AB&contact=yes&website=yes&q=unsafe")
+        self.assertEqual(exported.status_code, 200)
+        self.assertIn("text/csv", exported.content_type)
+        self.assertIn("'=Unsafe Home", exported.get_data(as_text=True))
+        self.assertNotIn("Ontario Home", exported.get_data(as_text=True))
+        self.assertEqual(self.client.get("/findings?province=XX").status_code, 400)
+        self.assertEqual(self.client.get("/findings/export.csv?contact=maybe").status_code, 400)
 
 
 if __name__ == "__main__":
