@@ -83,6 +83,7 @@ def materialize(output=OUTPUT):
         # Apply exact, record-scoped quarantine and name normalization only;
         # do not infer or discard any other person records here.
         kept_staff = []
+        seen_staff = set()
         for person in enrichment.get("staff", []):
             name = person.get("name", "") if isinstance(person, dict) else ""
             if name in REJECT.get(record_id, set()):
@@ -91,6 +92,20 @@ def materialize(output=OUTPUT):
             if rename_key in RENAME:
                 person = deepcopy(person)
                 person["name"] = RENAME[rename_key]
+            # Normalization can make two extractor rows identical (for
+            # example, ``Meet Victoria Byers`` becomes ``Victoria Byers``).
+            # Keep one deterministic row so downstream person IDs cannot
+            # collide within an organization.
+            if isinstance(person, dict):
+                identity = (
+                    str(person.get("name") or "").strip(),
+                    str(person.get("title") or "").strip(),
+                    str(person.get("source_url") or "").strip(),
+                    str(person.get("evidence_line") or person.get("evidence_marker") or "").strip(),
+                )
+                if identity in seen_staff:
+                    continue
+                seen_staff.add(identity)
             kept_staff.append(person)
         enrichment["staff"] = kept_staff
         enrichment["decision_makers"] = [

@@ -46,7 +46,11 @@ materialization or deployment.
   zero conflicts/skips; organizations (955), contacts (911), and source
   records (955) reconcile exactly. Validation integrity is clean; 64 retained
   historical people and 42 retained historical evidence sources explain the
-  non-authoritative database totals of 723 and 1,062.
+  non-authoritative database totals of 723 and 1,062. A rerun initially exposed
+  one deterministic person-ID collision caused by the precision rename
+  (`Meet Victoria Byers` -> `Victoria Byers`) duplicating an existing row;
+  materialization now deduplicates normalized staff identities before export,
+  and the focused regression suite passes 5/5.
 
 - [ ] **GAP-2026-063 (HIGH): re-verify legacy website mappings before bounded
   contact/staff crawling.** Evidence: the legacy `verified_crawlset` labels 530

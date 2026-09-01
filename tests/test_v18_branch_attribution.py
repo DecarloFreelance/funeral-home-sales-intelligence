@@ -45,3 +45,15 @@ def test_v18_materialization_reapplies_staff_precision_boundary():
     assert "Office Administrator" not in {
         person["name"] for person in by_id["CFI-0921"]["branch_safe_enrichment"]["staff"]
     }
+
+
+def test_v18_staff_is_unique_after_name_normalization():
+    rows = json.loads(Path("data/generated/directory_955/full_955_enrichment_v18/full_955_enrichment.json").read_text())
+    for row in rows:
+        staff = row.get("branch_safe_enrichment", {}).get("staff", [])
+        keys = {
+            (p.get("name", "").strip(), p.get("title", "").strip(),
+             p.get("source_url", "").strip(), p.get("evidence_line", p.get("evidence_marker", "")).strip())
+            for p in staff
+        }
+        assert len(keys) == len(staff), row["directory_record_id"]
