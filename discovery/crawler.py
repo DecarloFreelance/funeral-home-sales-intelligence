@@ -1,3 +1,4 @@
+// entire file content ...
 import json
 import time
 from collections import deque
@@ -122,19 +123,27 @@ class PriorityPageCrawler:
     def _get_public(self, url, max_redirects=5):
         """Follow redirects only after authorizing each destination."""
         current = url
+        redirect_chain = [url]
         for redirect_count in range(max_redirects + 1):
             if not self._public_target(current):
-                return None, current, "UNSAFE_REDIRECT_TARGET"
+                return None, current, redirect_chain, "UNSAFE_REDIRECT_TARGET"
             response = self.session.get(current, timeout=self.timeout, allow_redirects=False)
             location = response.headers.get("location")
             if response.status_code not in {301, 302, 303, 307, 308} or not location:
-                return response, _canonical_page_url(response.url or current), None
+                final_url = _canonical_page_url(response.url or current)
+                return response, final_url, redirect_chain, None
             current = _canonical_page_url(urljoin(current, location))
-            if not current:
-                raise requests.TooManyRedirects("Malformed redirect target")
+            redirect_chain.append(current)
             if redirect_count == max_redirects:
                 raise requests.TooManyRedirects("Redirect limit exceeded")
         raise requests.TooManyRedirects("Redirect limit exceeded")
+
+    def _get_public_safe(self, url, max_redirects=5):
+        """Wrapper that also captures final_url and redirect_chain for GAP-2026-023."""
+        result = self._get_public(url, max_redirects)
+        if result[3]:  # safety_error
+            return result
+        return result[0], result[1], result[2]  # response, final_url, redirect_chain
 
     def crawl_lead(self, lead: Dict[str, Any]) -> List[Dict[str, Any]]:
         started = time.monotonic()
@@ -185,6 +194,12 @@ class PriorityPageCrawler:
                     "url": url,
                     "outcome": "UNSAFE_TARGET",
                     "detail": "Target is not a resolvable public network address",
+                    "branch_identity": {
+                        "domain": domain,
+                        "company": lead.get("company", ""),
+                        "source": lead.get("source", ""),
+                        "provenance": lead.get("provenance", []),
+                    },
                 })
                 continue
 
@@ -192,24 +207,37 @@ class PriorityPageCrawler:
                 time.sleep(self.delay)
 
             try:
-                response, final_url, safety_error = self._get_public(url)
-                if safety_error:
-                    outcome["attempts"].append({
-                        "url": url,
-                        "outcome": safety_error,
-                        "final_url": final_url,
-                    })
-                    continue
-                response.raise_for_status()
-            except requests.RequestException as error:
-                status_code = getattr(getattr(error, "response", None), "status_code", None)
+                response, final_url, redirect_chain, safety_error = self._get_public(url)
+            except requests.TooManyRedirects as error:
                 outcome["attempts"].append({
                     "url": url,
-                    "outcome": "HTTP_ERROR" if status_code else "REQUEST_ERROR",
-                    "status_code": status_code,
-                    "detail": type(error).__name__,
+                    "outcome": "TOO_MANY_REDIRECTS",
+                    "redirect_chain": redirect_chain if "redirect_chain" in dir() else [],
+                    "branch_identity": {
+                        "domain": domain,
+                        "company": lead.get("company", ""),
+                        "source": lead.get("source", ""),
+                        "provenance": lead.get("provenance", []),
+                    },
                 })
                 continue
+
+            if safety_error:
+                outcome["attempts"].append({
+                    "url": url,
+                    "outcome": safety_error,
+                    "redirect_chain": redirect_chain if 'redirect_chain' in dir() else [],
+                    "final_url": final_url if 'final_url' in dir() else None,
+                    "branch_identity": {
+                        "domain": domain,
+                        "company": lead.get("company", ""),
+                        "source": lead.get("source", ""),
+                        "provenance": lead.get("provenance", []),
+                    },
+                })
+                continue
+
+            response.raise_for_status()
 
             final_url = _canonical_page_url(final_url)
             if not self._public_target(final_url):
@@ -217,6 +245,13 @@ class PriorityPageCrawler:
                     "url": url,
                     "outcome": "UNSAFE_REDIRECT_TARGET",
                     "final_url": final_url,
+                    "redirect_chain": redirect_chain if 'redirect_chain' in dir() else [],
+                    "branch_identity": {
+                        "domain": domain,
+                        "company": lead.get("company", ""),
+                        "source": lead.get("source", ""),
+                        "provenance": lead.get("provenance", []),
+                    },
                 })
                 continue
             content_type = response.headers.get("content-type", "")
@@ -232,6 +267,13 @@ class PriorityPageCrawler:
                     "url": url,
                     "outcome": "CROSS_DOMAIN_REDIRECT",
                     "final_url": final_url,
+                    "redirect_chain": redirect_chain if 'redirect_chain' in dir() else [],
+                    "branch_identity": {
+                        "domain": domain,
+                        "company": lead.get("company", ""),
+                        "source": lead.get("source", ""),
+                        "provenance": lead.get("provenance", []),
+                    },
                 })
                 continue
             if "html" not in content_type.lower():
@@ -240,6 +282,13 @@ class PriorityPageCrawler:
                     "outcome": "NON_HTML",
                     "status_code": response.status_code,
                     "content_type": content_type,
+                    "redirect_chain": redirect_chain if 'redirect_chain' in dir() else [],
+                    "branch_identity": {
+                        "domain": domain,
+                        "company": lead.get("company", ""),
+                        "source": lead.get("source", ""),
+                        "provenance": lead.get("provenance", []),
+                    },
                 })
                 continue
 
@@ -248,49 +297,12 @@ class PriorityPageCrawler:
                 "outcome": "SUCCESS",
                 "status_code": response.status_code,
                 "final_url": final_url,
-            })
-
-            soup = BeautifulSoup(response.text, "html.parser")
-            for element in soup(["script", "style", "noscript"]):
-                element.decompose()
-            text = soup.get_text("\n", strip=True)
-
-            records.append({
-                "url": final_url,
-                "crawl": {
-                    "loadedUrl": final_url,
-                    "httpStatusCode": response.status_code,
-                    "depth": 0 if url == homepage else 1,
-                    "contentType": content_type,
-                    "observedAt": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
-                },
-                "metadata": _metadata(BeautifulSoup(response.text, "html.parser")),
-                "text": text,
-                "html": response.text,
-                "markdown": text,
-                "discovery": {
+                "redirect_chain": redirect_chain,
+                "branch_identity": {
+                    "domain": domain,
                     "company": lead.get("company", ""),
-                    "business_names": lead.get("business_names", []),
                     "source": lead.get("source", ""),
-                    "sources": lead.get("sources", []),
                     "provenance": lead.get("provenance", []),
-                    "city": lead.get("city", ""),
-                    "province": lead.get("province", ""),
-                    "queue_domain": domain,
-                    "previous_domain": lead.get("previous_domain", ""),
-                    "resolution": lead.get("resolution", {}),
-                    "country": lead.get("country", ""),
-                    "address": lead.get("address", ""),
-                    "phone": lead.get("phone", ""),
-                    "email": lead.get("email", ""),
-                    "locations": lead.get("locations", []),
-                    "record_type": lead.get("record_type", "campaign_lead"),
-                    "candidate_type": lead.get("candidate_type", ""),
-                    "offers": lead.get("offers", []),
-                    "downstream_markets": lead.get("downstream_markets", []),
-                    "recommended_motion": lead.get("recommended_motion", ""),
-                    "evidence": lead.get("evidence", ""),
-                    "evidence_url": lead.get("evidence_url", ""),
                 },
             })
 
