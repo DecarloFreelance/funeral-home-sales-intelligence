@@ -1,0 +1,31 @@
+domain,company,province,city,website,phone,email,revenue_tier,sales_priority,quality_findings,outreach_ready
+beaverlodgefuneralservice.com,,AB,Beaverlodge,,780.354.2988,wecare@beaverlodgefuneralservice.com,Tier 1,73.3,0,True
+bowvalleyfuneral.ca,,AB,Canmore,,403-688-1031,,Tier 2,56.6,0,True
+burgarfuneralhome.com,,AB,Camrose,,(780) 672-2121,,Tier 2,57.2,1,True
+cochranecountryfuneral.ca,,,,,403.932.1039,,Tier 2,55.7,1,False
+cooksouthland.com,,AB,Medicine Hat,,(403) 527-6455,info@cooksouthland.com,Tier 2,59.5,0,True
+cornerstonefuneralhome.com,,AB,Lethbridge,,403-381-7777,,Tier 2,61.4,1,True
+countryhillscrematorium.ca,,,,,403.274.0576,info@countryhillscrematorium.ca,Tier 2,43.9,0,True
+draytonmemorial.ca,,AB,Drayton Valley,,587.673.1688,,Tier 2,52.4,1,False
+essentialcremations.com,,AB,Grande Prairie,,780-539-2383,info@essentialcremations.com,Tier 2,54.4,0,True
+evergreenfh.ca,,AB,Lethbridge,,403.329.4934,info@evergreenfh.ca,Tier 2,43.9,0,True
+fmfuneralhome.com,,AB,Fort McMurray,,780.799.3388,,Tier 2,56.4,1,False
+foothillsmemorialchapel.com,,AB,Edson,,1-780-865-1234,office@foothillsmemorialchapel.com,Tier 3,35.5,0,True
+fostermcgarvey.com,,AB,St. Albert,,780.419.6666,info@fostermcgarvey.com,Tier 2,58.9,0,True
+gracegardensfuneralchapel.com,,AB,St. Paul,,780.645.2677,,Tier 2,59.9,1,False
+gracememorial.com,,AB,Medicine Hat,,403-905-0440,info@gracememorial.com,Tier 2,43.9,0,True
+gregorysfuneralhomes.com,,AB,Provost,,780-753-3512,office@gregorysfuneralhomes.com,Tier 2,46.2,0,True
+hannafuneral.ca,,AB,Hanna,,403.854.5956,,Tier 2,57.2,1,True
+mccawfuneralservice.com,,AB,Lloydminster,,780-875-5512,info@mccawfuneralservice.com,Tier 1,62.7,1,True
+missionview.ca,,AB,Lac La Biche,,780-623-1815,info@missionview.ca,Tier 2,65.3,0,True
+oliversfuneralhome.com,,,,,780-532-6230,info@oliversfuneralhome.com,Tier 2,57.5,1,False
+parkmemorial.com,,AB,Edmonton,,780.895.2157,info@parkmemorial.com,Tier 1,54.9,0,True
+peacevalleyfuneral.ca,,AB,Fairview,,780.835.3306,info@peacevalleyfuneral.ca,Tier 2,47.5,0,True
+piersons.ca,,AB,Calgary,,403-235-3602,info@piersons.ca,Tier 1,64.3,0,True
+rafuneralservices.com,,AB,Fort McMurray,,780.790.1220,,Tier 2,39.0,1,True
+reflectionsfuneral.com,,AB,Vermilion,,780.581.1550,office@reflectionsfuneral.com,Tier 2,50.3,0,True
+saamis.com,,AB,Medicine Hat,,(403) 528-2599,inquiry@saamis.com,Tier 2,58.8,0,True
+salmonandsons.ca,,AB,Lethbridge,,403.381.0590,info@salmonandsons.ca,Tier 2,56.3,0,True
+southlandfuneral.com,,AB,Taber,,403.223.8778,info@southlandfuneral.com,Tier 2,43.7,0,True
+sunsetltd.ca,,AB,Linden,,403.442.2200,info@sunsetltd.ca,Tier 2,50.3,0,True
+westlockfuneralhome.com,,AB,Westlock,,1-780-349-3474,,Tier 2,57.1,1,False

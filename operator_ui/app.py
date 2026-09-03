@@ -624,8 +624,107 @@ def create_app(config=None):
         flash(f"Completed action for {domain}.")
         return redirect(url_for("crm_actions"))
 
+    
+
+    @app.route('/api/leads/enriched')
+    def api_enriched_leads():
+        """Serve enriched leads with province data."""
+        import json
+        import os
+        from pathlib import Path
+        
+        data_file = Path(app.config['DATA_ROOT']) / 'ui_data_streamlined.json'
+        
+        if not data_file.exists():
+            return jsonify({'error': 'Data file not found'}), 404
+        
+        with open(data_file, 'r') as f:
+            data = json.load(f)
+        
+        province = request.args.get('province', '')
+        tier = request.args.get('tier', '')
+        status = request.args.get('status', '')
+        search = request.args.get('search', '')
+        limit = int(request.args.get('limit', 100))
+        offset = int(request.args.get('offset', 0))
+        
+        leads = data.get('leads', [])
+        
+        if province:
+            leads = [l for l in leads if l.get('province') == province]
+        if tier:
+            leads = [l for l in leads if l.get('revenue_tier') == tier]
+        if status == 'ready':
+            leads = [l for l in leads if l.get('outreach_ready')]
+        elif status == 'review':
+            leads = [l for l in leads if not l.get('outreach_ready')]
+        if search:
+            search_lower = search.lower()
+            leads = [l for l in leads if 
+                     search_lower in l.get('domain', '').lower() or 
+                     search_lower in l.get('company', '').lower()]
+        
+        total = len(leads)
+        leads = leads[offset:offset + limit]
+        
+        return jsonify({
+            'success': True,
+            'data': leads,
+            'total': total,
+            'stats': data.get('stats', {}),
+            'filters': {
+                'province': province,
+                'tier': tier,
+                'status': status,
+                'search': search
+            }
+        })
+
+    @app.route('/api/leads/stats')
+    def api_leads_stats():
+        """Serve lead statistics."""
+        import json
+        from pathlib import Path
+        
+        data_file = Path(app.config['DATA_ROOT']) / 'ui_data_streamlined.json'
+        
+        if not data_file.exists():
+            return jsonify({'error': 'Data file not found'}), 404
+        
+        with open(data_file, 'r') as f:
+            data = json.load(f)
+        
+        return jsonify({
+            'success': True,
+            'stats': data.get('stats', {}),
+            'timestamp': datetime.now().isoformat()
+        })
+
+    @app.route('/api/provinces')
+    def api_provinces():
+        """Serve list of provinces with lead counts."""
+        import json
+        from pathlib import Path
+        
+        data_file = Path(app.config['DATA_ROOT']) / 'ui_data_streamlined.json'
+        
+        if not data_file.exists():
+            return jsonify({'error': 'Data file not found'}), 404
+        
+        with open(data_file, 'r') as f:
+            data = json.load(f)
+        
+        stats = data.get('stats', {})
+        province_counts = stats.get('province_counts', {})
+        
+        return jsonify({
+            'success': True,
+            'provinces': stats.get('provinces', []),
+            'counts': province_counts
+        })
+
+
+        return app
     return app
-
-
 if __name__ == "__main__":
     create_app().run(host="127.0.0.1", port=5000, debug=False)
