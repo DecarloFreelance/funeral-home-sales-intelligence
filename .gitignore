@@ -17,11 +17,6 @@ dev/espocrm/.env
 instance/
 
 # Generated data
-data/results.json
-data/generated/**
-!data/generated/.gitkeep
-data/private/**
-!data/private/.gitkeep
 logs/
 reports/
 
@@ -35,28 +30,12 @@ email.txt
 # Archive backups
 archive/
 Todd_Life_Celebrants_Digital_Outreach_Project.zip
-data/crm.sqlite
-data/crawl_queue.json
-data/discovered_leads.json
-data/discovered_leads.json.tmp
-data/discovered_results.json
-data/discovered_leads_report.json
-data/research_queue.json
-data/resolved_retry_queue.json
-data/resolution_summary.json
-data/resolved_retry_report.json
-data/package_buyer_candidates.json
-data/client_*.json
-data/platform_candidate_*.json
-data/platform_candidate_*.csv
-data/platform_candidate_*.txt
-data/platform_candidate_emails/
-data/discovery_sources/*.csv
-data/discovery_sources/*.json
-!data/discovery_sources/.gitkeep
 
 # Legacy/misnamed generated scoring artifact
-/data/scores.csv
 /.ai_context.md
 /continue.md
 /nvchat.py
+
+# kalcode local cache
+.kalcode/
+.aider*
