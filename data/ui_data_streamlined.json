@@ -342,32 +342,10 @@
       "has_website": false
     },
     {
-      "domain": "arnfuneralhome",
-      "company": "Arn Funeral Home",
-      "province": "ON",
-      "city": "Dutton",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "www.arnasonfuneralhome.com",
       "company": "Arnason Funeral Home",
       "province": "MB",
       "city": "Ashern",
-      "website": "https://www.arnasonfuneralhome.com/",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "www.arnasonfuneralhome.com",
-      "company": "Arnason Funeral Home",
-      "province": "MB",
-      "city": "Lundar",
       "website": "https://www.arnasonfuneralhome.com/",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -507,28 +485,6 @@
       "has_website": false
     },
     {
-      "domain": "bailey\u2019sfuneralhome",
-      "company": "Bailey\u2019s Funeral Home",
-      "province": "SK",
-      "city": "Melville",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "bailey\u2019sfuneralhome",
-      "company": "Bailey\u2019s Funeral Home",
-      "province": "SK",
-      "city": "Yorkton",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "ballardminorfuneralhomesltd",
       "company": "Ballard Minor Funeral Homes Ltd.",
       "province": "ON",
@@ -639,17 +595,6 @@
       "has_website": false
     },
     {
-      "domain": "basicfuneralsandcremationchoices",
-      "company": "Basic Funerals and Cremation Choices",
-      "province": "ON",
-      "city": "Ottawa",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "basicfuneralsandcremationchoices-jennettmemorialcentre",
       "company": "Basic Funerals and Cremation Choices - Jennett Memorial Centre",
       "province": "ON",
@@ -672,65 +617,10 @@
       "has_website": false
     },
     {
-      "domain": "baygardensfuneralhome",
-      "company": "Bay Gardens Funeral Home",
-      "province": "ON",
-      "city": "Hamilton",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "beau\u201clac\u201dfuneralhome&crematoriumltd",
       "company": "Beau \u201cLac\u201d Funeral Home & Crematorium Ltd.",
       "province": "SK",
       "city": "Big River",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "beau\u201clac\u201dfuneralhome&crematoriumltd",
-      "company": "Beau \u201cLac\u201d Funeral Home & Crematorium Ltd.",
-      "province": "SK",
-      "city": "Leask",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "beau\u201clac\u201dfuneralhome&crematoriumltd",
-      "company": "Beau \u201cLac\u201d Funeral Home & Crematorium Ltd.",
-      "province": "SK",
-      "city": "Prince Albert",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "beau\u201clac\u201dfuneralhome&crematoriumltd",
-      "company": "Beau \u201cLac\u201d Funeral Home & Crematorium Ltd.",
-      "province": "SK",
-      "city": "Shellbrook",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "beau\u201clac\u201dfuneralhome&crematoriumltd",
-      "company": "Beau \u201cLac\u201d Funeral Home & Crematorium Ltd.",
-      "province": "SK",
-      "city": "Spiritwood",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -815,17 +705,6 @@
       "has_website": false
     },
     {
-      "domain": "bernardofuneralhomeltd",
-      "company": "Bernardo Funeral Home Ltd.",
-      "province": "ON",
-      "city": "Toronto",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "biemanfuneralhomelimited",
       "company": "Bieman Funeral Home Limited",
       "province": "ON",
@@ -852,17 +731,6 @@
       "company": "Binkley\u2019s Funeral Service (MC) Ltd.",
       "province": "SK",
       "city": "Leader",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "binkley\u2019sfuneralservice(mc)ltd",
-      "company": "Binkley\u2019s Funeral Service (MC) Ltd.",
-      "province": "SK",
-      "city": "Maple Creek",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -940,17 +808,6 @@
       "company": "Blair & Son Funeral Directors Inc.",
       "province": "ON",
       "city": "Perth",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "blair&sonfuneraldirectorsinc",
-      "company": "Blair & Son Funeral Directors Inc.",
-      "province": "ON",
-      "city": "Smiths Falls",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -1123,17 +980,6 @@
       "has_website": false
     },
     {
-      "domain": "brettfuneralchapelsltd",
-      "company": "Brett Funeral Chapels Ltd.",
-      "province": "ON",
-      "city": "Hastings",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "brianewoodfuneralhomeltd",
       "company": "Brian E. Wood Funeral Home Ltd.",
       "province": "ON",
@@ -1244,17 +1090,6 @@
       "has_website": false
     },
     {
-      "domain": "buffamleveillefuneralhomeltd",
-      "company": "Buffam Leveille Funeral Home Ltd.",
-      "province": "ON",
-      "city": "New Liskeard",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "buffaml\u00e9veill\u00e9funeralhomeltd",
       "company": "Buffam L\u00e9veill\u00e9 Funeral Home Ltd.",
       "province": "ON",
@@ -1303,17 +1138,6 @@
       "company": "C.F.SWEENY'S FUNERAL HOME LIMITED",
       "province": "NS",
       "city": "NEW GERMANY",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "cfsweeny'sfuneralhomelimited",
-      "company": "C.F.SWEENY'S FUNERAL HOME LIMITED",
-      "province": "NS",
-      "city": "BRIDGEWATER",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -1420,17 +1244,6 @@
       "has_website": false
     },
     {
-      "domain": "cardinalfuneralhomesltd",
-      "company": "Cardinal Funeral Homes Ltd.",
-      "province": "ON",
-      "city": "Toronto",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "carletonfuneralhome&crematorium",
       "company": "Carleton Funeral Home & Crematorium",
       "province": "NB",
@@ -1464,32 +1277,10 @@
       "has_website": false
     },
     {
-      "domain": "carruthers&davidsonfuneralhomelimited",
-      "company": "Carruthers & Davidson Funeral Home Limited",
-      "province": "ON",
-      "city": "Wasaga Beach",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "www.carscaddenfuneralchapel.com",
       "company": "Carscadden Funeral Chapels Ltd.",
       "province": "MB",
       "city": "Reston",
-      "website": "https://www.carscaddenfuneralchapel.com/",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "www.carscaddenfuneralchapel.com",
-      "company": "Carscadden Funeral Chapels Ltd.",
-      "province": "MB",
-      "city": "Virden",
       "website": "https://www.carscaddenfuneralchapel.com/",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -1684,17 +1475,6 @@
       "has_website": true
     },
     {
-      "domain": "www.clarkesfuneralhome.com",
-      "company": "Clarke's Funeral Home",
-      "province": "MB",
-      "city": "MacGregor",
-      "website": "https://www.clarkesfuneralhome.com/",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
       "domain": "cobb\u2019sfuneralhome",
       "company": "Cobb\u2019s Funeral Home",
       "province": "NB",
@@ -1750,17 +1530,6 @@
       "has_website": false
     },
     {
-      "domain": "colefuneralservices",
-      "company": "Cole Funeral Services",
-      "province": "ON",
-      "city": "Ottawa",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "coleharbourfuneralhome&crematorium",
       "company": "COLE HARBOUR FUNERAL HOME & CREMATORIUM",
       "province": "NS",
@@ -1805,50 +1574,6 @@
       "has_website": false
     },
     {
-      "domain": "conleyfuneralhome",
-      "company": "Conley Funeral Home",
-      "province": "SK",
-      "city": "Raymore",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "conleyfuneralhome",
-      "company": "Conley Funeral Home",
-      "province": "SK",
-      "city": "Strasbourg",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "conleyfuneralhome",
-      "company": "Conley Funeral Home",
-      "province": "SK",
-      "city": "Wolseley",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "conleyfuneralhome",
-      "company": "Conley Funeral Home",
-      "province": "SK",
-      "city": "Wynyard",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "consideratecremation&burialservicesinc",
       "company": "Considerate Cremation & Burial Services Inc.",
       "province": "ON",
@@ -1886,28 +1611,6 @@
       "company": "Coop\u00e9rative Fun\u00e9raire du District de Sudbury",
       "province": "ON",
       "city": "Hanmer",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "coop\u00e9rativefun\u00e9rairedudistrictdesudbury",
-      "company": "Coop\u00e9rative Fun\u00e9raire du District de Sudbury",
-      "province": "ON",
-      "city": "Sudbury",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "coop\u00e9rativefun\u00e9rairedudistrictdesudbury",
-      "company": "Coop\u00e9rative Fun\u00e9raire du District de Sudbury",
-      "province": "ON",
-      "city": "Chelmsford",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -1992,17 +1695,6 @@
       "has_website": false
     },
     {
-      "domain": "cremation&celebrations",
-      "company": "Cremation & Celebrations",
-      "province": "ON",
-      "city": "Grand Bend",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "cremationsocietyofwindsorandessexcountyinc",
       "company": "Cremation Society of Windsor and Essex County Inc.",
       "province": "ON",
@@ -2040,28 +1732,6 @@
       "company": "Cropo Funeral & Cremation Services",
       "province": "MB",
       "city": "Winnipeg",
-      "website": "https://cropo.com/",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "cropo.com",
-      "company": "Cropo Funeral & Cremation Services",
-      "province": "MB",
-      "city": "Winnipeg",
-      "website": "https://cropo.com/",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "cropo.com",
-      "company": "Cropo Funeral & Cremation Services",
-      "province": "MB",
-      "city": "St. Andrews",
       "website": "https://cropo.com/",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -2278,76 +1948,10 @@
       "has_website": false
     },
     {
-      "domain": "denning'sltd",
-      "company": "Denning's Ltd.",
-      "province": "ON",
-      "city": "Forest",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "denning'sltd",
-      "company": "Denning's Ltd.",
-      "province": "ON",
-      "city": "Strathroy",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "denning'sltd",
-      "company": "Denning's Ltd.",
-      "province": "ON",
-      "city": "Watford",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "dennishaverstockfuneralhomeslimited",
       "company": "DENNIS HAVERSTOCK FUNERAL HOMES LIMITED",
       "province": "NS",
       "city": "ST. PETER'S",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "dennishaverstockfuneralhomeslimited",
-      "company": "DENNIS HAVERSTOCK FUNERAL HOMES LIMITED",
-      "province": "NS",
-      "city": "CANSO",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "dennishaverstockfuneralhomeslimited",
-      "company": "DENNIS HAVERSTOCK FUNERAL HOMES LIMITED",
-      "province": "NS",
-      "city": "PORT HAWKESBURY",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "dennishaverstockfuneralhomeslimited",
-      "company": "DENNIS HAVERSTOCK FUNERAL HOMES LIMITED",
-      "province": "NS",
-      "city": "GUYSBOROUGH",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -2392,17 +1996,6 @@
       "company": "Dodsworth & Brown Funeral Home",
       "province": "ON",
       "city": "Ancaster",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "dodsworth&brownfuneralhome",
-      "company": "Dodsworth & Brown Funeral Home",
-      "province": "ON",
-      "city": "Burlington",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -2597,17 +2190,6 @@
       "has_website": false
     },
     {
-      "domain": "eastcoastcremationsandfuneralconsultinglimit",
-      "company": "EAST COAST CREMATIONS AND FUNERAL CONSULTING LIMIT",
-      "province": "NS",
-      "city": "WINDSOR",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "easthavenfuneralhomeinc",
       "company": "East Haven Funeral Home Inc.",
       "province": "NL",
@@ -2645,17 +2227,6 @@
       "company": "eco Cremation & Burial Services Inc.",
       "province": "ON",
       "city": "St. Catharines",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "ecocremation&burialservicesinc",
-      "company": "eco Cremation & Burial Services Inc.",
-      "province": "ON",
-      "city": "Mississauga",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -2773,17 +2344,6 @@
       "has_website": false
     },
     {
-      "domain": "essentialscremationandburialservicesinc",
-      "company": "Essentials Cremation and Burial Services Inc.",
-      "province": "ON",
-      "city": "Welland",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "eston-snipelakefuneralchapel",
       "company": "Eston-Snipe Lake Funeral Chapel",
       "province": "SK",
@@ -2828,17 +2388,6 @@
       "has_website": false
     },
     {
-      "domain": "eternalmemoriesfuneralserviceandcrematoriuminc",
-      "company": "Eternal Memories Funeral Service and Crematorium Inc.",
-      "province": "SK",
-      "city": "North Battleford",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "ethicaldeathcare.com",
       "company": "Ethical Death Care",
       "province": "MB",
@@ -2861,43 +2410,10 @@
       "has_website": false
     },
     {
-      "domain": "ettingerfuneralhome",
-      "company": "ETTINGER FUNERAL HOME",
-      "province": "NS",
-      "city": "ELMSDALE",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "everestofthunderbay",
       "company": "Everest of Thunder Bay",
       "province": "ON",
       "city": "Geraldton",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "everestofthunderbay",
-      "company": "Everest of Thunder Bay",
-      "province": "ON",
-      "city": "Thunder Bay",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "everestofthunderbay",
-      "company": "Everest of Thunder Bay",
-      "province": "ON",
-      "city": "Thunder Bay",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -2949,54 +2465,10 @@
       "has_website": false
     },
     {
-      "domain": "falconerfuneralhomes",
-      "company": "Falconer Funeral Homes",
-      "province": "ON",
-      "city": "Clinton",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "familiesfirstfuneralhome&tributecentre",
       "company": "Families First Funeral Home & Tribute Centre",
       "province": "ON",
       "city": "Windsor",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "familiesfirstfuneralhome&tributecentre",
-      "company": "Families First Funeral Home & Tribute Centre",
-      "province": "ON",
-      "city": "Amherstburg",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "familiesfirstfuneralhome&tributecentre",
-      "company": "Families First Funeral Home & Tribute Centre",
-      "province": "ON",
-      "city": "Windsor",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "familiesfirstfuneralhome&tributecentre",
-      "company": "Families First Funeral Home & Tribute Centre",
-      "province": "ON",
-      "city": "Lasalle",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -3052,17 +2524,6 @@
       "company": "Fawcett Funeral Home Limited",
       "province": "ON",
       "city": "Collingwood",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "fawcettfuneralhomelimited",
-      "company": "Fawcett Funeral Home Limited",
-      "province": "ON",
-      "city": "Creemore",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -3235,17 +2696,6 @@
       "has_website": false
     },
     {
-      "domain": "fillmore&whitmanfuneralhome",
-      "company": "FILLMORE & WHITMAN FUNERAL HOME",
-      "province": "NS",
-      "city": "SYDNEY MINES",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "firstmemorialfuneralservices-fairviewchapel",
       "company": "First Memorial Funeral Services - Fairview Chapel",
       "province": "ON",
@@ -3283,17 +2733,6 @@
       "company": "Fletcher Funeral Chapel and Cremation Services",
       "province": "SK",
       "city": "Radville",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "fletcherfuneralchapelandcremationservices",
-      "company": "Fletcher Funeral Chapel and Cremation Services",
-      "province": "SK",
-      "city": "Weyburn",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -3510,17 +2949,6 @@
       "has_website": false
     },
     {
-      "domain": "salonsfunerairesirvine&irvinefuneralhomes",
-      "company": "Salons Funeraires Irvine & Irvine Funeral Homes",
-      "province": "ON",
-      "city": "Iroquois Falls",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "maisonfun\u00e9rairekellyfuneralhome-orl\u00e9ans",
       "company": "Maison Fun\u00e9raire Kelly Funeral Home-Orl\u00e9ans",
       "province": "ON",
@@ -3547,17 +2975,6 @@
       "company": "Salons Fun\u00e9raires Laurent Hill Funeral Homes",
       "province": "ON",
       "city": "Casselman",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "salonsfun\u00e9raireslaurenthillfuneralhomes",
-      "company": "Salons Fun\u00e9raires Laurent Hill Funeral Homes",
-      "province": "ON",
-      "city": "Embrun",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -3642,17 +3059,6 @@
       "has_website": false
     },
     {
-      "domain": "salonfun\u00e9raireth\u00e9or\u00eat-bourgeoisfuneralhomeinc",
-      "company": "Salon Fun\u00e9raire Th\u00e9or\u00eat-Bourgeois Funeral Home Inc.",
-      "province": "ON",
-      "city": "Verner",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "funk\u2019sfuneralhomeltd",
       "company": "Funk\u2019s Funeral Home Ltd.",
       "province": "SK",
@@ -3701,17 +3107,6 @@
       "company": "G.W. GIFFIN FUNERAL HOME LIMITED",
       "province": "NS",
       "city": "CROSS ROADS COUNTRY HARBOUR",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "gwgiffinfuneralhomelimited",
-      "company": "G.W. GIFFIN FUNERAL HOME LIMITED",
-      "province": "NS",
-      "city": "SHERBROOKE",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -3785,39 +3180,6 @@
       "has_website": false
     },
     {
-      "domain": "gereinfuneralserviceltd",
-      "company": "Gerein Funeral Service Ltd.",
-      "province": "SK",
-      "city": "Cut Knife",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "gereinfuneralserviceltd",
-      "company": "Gerein Funeral Service Ltd.",
-      "province": "SK",
-      "city": "Unity",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "gereinfuneralserviceltd",
-      "company": "Gerein Funeral Service Ltd.",
-      "province": "SK",
-      "city": "Wilkie",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "giffen-mackfuneralhome&cremationcentre",
       "company": "Giffen-Mack Funeral Home & Cremation Centre",
       "province": "ON",
@@ -3844,17 +3206,6 @@
       "company": "Gilbart Funeral Home Ltd.",
       "province": "MB",
       "city": "Selkirk",
-      "website": "https://www.gilbartfuneralhome.com/",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "www.gilbartfuneralhome.com",
-      "company": "Gilbart Funeral Home Ltd.",
-      "province": "MB",
-      "city": "Gimli",
       "website": "https://www.gilbartfuneralhome.com/",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -3932,50 +3283,6 @@
       "company": "Glendinning Funeral Home Ltd.",
       "province": "ON",
       "city": "Tavistock",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "glendinningfuneralhomeltd",
-      "company": "Glendinning Funeral Home Ltd.",
-      "province": "ON",
-      "city": "Ingersoll",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "glendinningfuneralhomeltd",
-      "company": "Glendinning Funeral Home Ltd.",
-      "province": "ON",
-      "city": "Port Rowan",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "glendinningfuneralhomeltd",
-      "company": "Glendinning Funeral Home Ltd.",
-      "province": "ON",
-      "city": "Woodstock",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "glendinningfuneralhomeltd",
-      "company": "Glendinning Funeral Home Ltd.",
-      "province": "ON",
-      "city": "Plattsville",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -4126,17 +3433,6 @@
       "has_website": false
     },
     {
-      "domain": "green'sfuneralhome",
-      "company": "Green's Funeral Home",
-      "province": "NL",
-      "city": "Harbour Grace",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "guylo\u2019reganfuneralhomeltd",
       "company": "Guy L O\u2019Regan Funeral Home Ltd",
       "province": "NB",
@@ -4174,28 +3470,6 @@
       "company": "H.M. HUSKILSON'S FUNERAL HOMES AND CREMATORIUM LIM",
       "province": "NS",
       "city": "YARMOUTH",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "hmhuskilson'sfuneralhomesandcrematoriumlim",
-      "company": "H.M. HUSKILSON'S FUNERAL HOMES AND CREMATORIUM LIM",
-      "province": "NS",
-      "city": "SHELBURNE",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "hmhuskilson'sfuneralhomesandcrematoriumlim",
-      "company": "H.M. HUSKILSON'S FUNERAL HOMES AND CREMATORIUM LIM",
-      "province": "NS",
-      "city": "BRASS HILL",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -4247,32 +3521,10 @@
       "has_website": false
     },
     {
-      "domain": "hallfuneralservicesinc",
-      "company": "Hall Funeral Services Inc.",
-      "province": "SK",
-      "city": "Redvers",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "hannahfuneralhomesltd",
       "company": "Hannah Funeral Homes Ltd.",
       "province": "ON",
       "city": "Napanee",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "hannahfuneralhomesltd",
-      "company": "Hannah Funeral Homes Ltd.",
-      "province": "ON",
-      "city": "Tamworth",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -4328,39 +3580,6 @@
       "company": "Haskett Funeral Homes Ltd.",
       "province": "ON",
       "city": "Dashwood",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "haskettfuneralhomesltd",
-      "company": "Haskett Funeral Homes Ltd.",
-      "province": "ON",
-      "city": "Exeter",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "haskettfuneralhomesltd",
-      "company": "Haskett Funeral Homes Ltd.",
-      "province": "ON",
-      "city": "Lucan",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "haskettfuneralhomesltd",
-      "company": "Haskett Funeral Homes Ltd.",
-      "province": "ON",
-      "city": "Seaforth",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -4500,28 +3719,6 @@
       "has_website": false
     },
     {
-      "domain": "heritagefuneralhomesinc",
-      "company": "Heritage Funeral Homes Inc.",
-      "province": "ON",
-      "city": "Palmerston",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "heritagefuneralhomesinc",
-      "company": "Heritage Funeral Homes Inc.",
-      "province": "ON",
-      "city": "Arthur",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "heritagefuneralhomeltd",
       "company": "Heritage Funeral Home Ltd.",
       "province": "SK",
@@ -4592,17 +3789,6 @@
       "company": "Highland Funeral Home",
       "province": "ON",
       "city": "Toronto",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "highlandfuneralhome",
-      "company": "Highland Funeral Home",
-      "province": "ON",
-      "city": "Markham",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -4779,50 +3965,6 @@
       "company": "Hulse, Playfair & McGarry Inc.",
       "province": "ON",
       "city": "Winchester",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "hulseplayfair&mcgarryinc",
-      "company": "Hulse, Playfair & McGarry Inc.",
-      "province": "ON",
-      "city": "Ottawa",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "hulseplayfair&mcgarryinc",
-      "company": "Hulse, Playfair & McGarry Inc.",
-      "province": "ON",
-      "city": "Kemptville",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "hulseplayfair&mcgarryinc",
-      "company": "Hulse, Playfair & McGarry Inc.",
-      "province": "ON",
-      "city": "Ottawa",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "hulseplayfair&mcgarryinc",
-      "company": "Hulse, Playfair & McGarry Inc.",
-      "province": "ON",
-      "city": "Ottawa",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -5050,17 +4192,6 @@
       "has_website": false
     },
     {
-      "domain": "jwilsonallenfuneralhomelimited",
-      "company": "J. WILSON ALLEN FUNERAL HOME LIMITED",
-      "province": "NS",
-      "city": "KENNETCOOK",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "jack&thompsonfuneralhomeinc",
       "company": "Jack & Thompson Funeral Home Inc.",
       "province": "ON",
@@ -5127,17 +4258,6 @@
       "has_website": true
     },
     {
-      "domain": "www.willmorchapel.com",
-      "company": "Jamieson's Funeral Services",
-      "province": "MB",
-      "city": "Glenboro",
-      "website": "https://www.willmorchapel.com/",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
       "domain": "janissefuneralhome",
       "company": "Janisse Funeral Home",
       "province": "ON",
@@ -5197,17 +4317,6 @@
       "company": "Jenkens Funeral Home Cremation and Reception Centre",
       "province": "ON",
       "city": "Thunder Bay",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "jerrettfuneralhomes",
-      "company": "Jerrett Funeral Homes",
-      "province": "ON",
-      "city": "Toronto",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -5325,32 +4434,10 @@
       "has_website": false
     },
     {
-      "domain": "kane-jerrettfuneralhomes",
-      "company": "Kane-Jerrett Funeral Homes",
-      "province": "ON",
-      "city": "Thornhill",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "kaulbachfamilyfuneralhomeandcremationservice",
       "company": "KAULBACH FAMILY FUNERAL HOME AND CREMATION SERVICE",
       "province": "NS",
       "city": "ANNAPOLIS ROYAL",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "kaulbachfamilyfuneralhomeandcremationservice",
-      "company": "KAULBACH FAMILY FUNERAL HOME AND CREMATION SERVICE",
-      "province": "NS",
-      "city": "BRIDGETOWN",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -5373,39 +4460,6 @@
       "company": "Kelly Funeral Home",
       "province": "ON",
       "city": "Ottawa",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "kellyfuneralhome",
-      "company": "Kelly Funeral Home",
-      "province": "ON",
-      "city": "Ottawa",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "kellyfuneralhome",
-      "company": "Kelly Funeral Home",
-      "province": "ON",
-      "city": "Ottawa",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "kellyfuneralhome",
-      "company": "Kelly Funeral Home",
-      "province": "ON",
-      "city": "Nepean",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -5450,28 +4504,6 @@
       "company": "Kendrick Funeral Home Ltd.",
       "province": "ON",
       "city": "Kingsville",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "kendrickfuneralhomeltd",
-      "company": "Kendrick Funeral Home Ltd.",
-      "province": "ON",
-      "city": "Chatham",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "kendrickfuneralhomeltd",
-      "company": "Kendrick Funeral Home Ltd.",
-      "province": "ON",
-      "city": "Wheatley",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -5633,17 +4665,6 @@
       "has_website": true
     },
     {
-      "domain": "www.korbanchapel.com",
-      "company": "Korban Funeral Chapel",
-      "province": "MB",
-      "city": "Winnipeg",
-      "website": "https://www.korbanchapel.com/",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
       "domain": "interlakecremation.ca",
       "company": "Kotaska Cremation Services",
       "province": "MB",
@@ -5798,17 +4819,6 @@
       "has_website": false
     },
     {
-      "domain": "leefuneralhomeandcrematorium",
-      "company": "Lee Funeral Home and Crematorium",
-      "province": "SK",
-      "city": "Regina Pl",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "legacyfuneralandcremationservicesinc",
       "company": "Legacy Funeral and Cremation Services Inc.",
       "province": "ON",
@@ -5846,17 +4856,6 @@
       "company": "Leson\u2019s Funeral Home",
       "province": "SK",
       "city": "Canora Pr",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "lifetransitionsburialandcremationserviceinc",
-      "company": "Life Transitions Burial and Cremation Service Inc.",
-      "province": "ON",
-      "city": "Chatham",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -5930,17 +4929,6 @@
       "has_website": false
     },
     {
-      "domain": "lougheedfuneralhome",
-      "company": "Lougheed Funeral Home",
-      "province": "ON",
-      "city": "Sudbury",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "lounsburyfuneralhome",
       "company": "Lounsbury Funeral Home",
       "province": "ON",
@@ -5956,17 +4944,6 @@
       "company": "Low & Low Limited",
       "province": "ON",
       "city": "Uxbridge",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "low&lowlimited",
-      "company": "Low & Low Limited",
-      "province": "ON",
-      "city": "Port Perry",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -6073,17 +5050,6 @@
       "has_website": false
     },
     {
-      "domain": "maccoubreyfuneralhomelimited",
-      "company": "MacCoubrey Funeral Home Limited",
-      "province": "ON",
-      "city": "Cobourg",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "macdiarmid'sfuneralhomelimited",
       "company": "MACDIARMID'S FUNERAL HOME LIMITED",
       "province": "NS",
@@ -6121,17 +5087,6 @@
       "company": "MacKenzie Funeral Service Ltd.",
       "province": "MB",
       "city": "Stonewall",
-      "website": "https://mackenziefh.com/",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "mackenziefh.com",
-      "company": "MacKenzie Funeral Service Ltd.",
-      "province": "MB",
-      "city": "Teulon",
       "website": "https://mackenziefh.com/",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -6304,17 +5259,6 @@
       "has_website": false
     },
     {
-      "domain": "markjutzifuneralhomeltd",
-      "company": "Mark Jutzi Funeral Home Ltd.",
-      "province": "ON",
-      "city": "New Hamburg",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "markey-dermodyfuneralhome",
       "company": "Markey-Dermody Funeral Home",
       "province": "ON",
@@ -6341,39 +5285,6 @@
       "company": "Marsden McLaughlin Funeral Homes Ltd.",
       "province": "ON",
       "city": "Williamsburg",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "marsdenmclaughlinfuneralhomesltd",
-      "company": "Marsden McLaughlin Funeral Homes Ltd.",
-      "province": "ON",
-      "city": "Iroquois",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "marsdenmclaughlinfuneralhomesltd",
-      "company": "Marsden McLaughlin Funeral Homes Ltd.",
-      "province": "ON",
-      "city": "Cardinal",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "marsdenmclaughlinfuneralhomesltd",
-      "company": "Marsden McLaughlin Funeral Homes Ltd.",
-      "province": "ON",
-      "city": "Chesterville",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -6469,32 +5380,10 @@
       "has_website": false
     },
     {
-      "domain": "matthewsfuneralhome",
-      "company": "Matthews Funeral Home",
-      "province": "SK",
-      "city": "Whitewood Pr",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "mauricejverhoevefuneralhomes-burialandcremationservicesinc",
       "company": "Maurice J. Verhoeve Funeral Homes - Burial and Cremation Services Inc.",
       "province": "ON",
       "city": "Tillsonburg",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "mauricejverhoevefuneralhomes-burialandcremationservicesinc",
-      "company": "Maurice J. Verhoeve Funeral Homes - Burial and Cremation Services Inc.",
-      "province": "ON",
-      "city": "Langton",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -6634,17 +5523,6 @@
       "has_website": false
     },
     {
-      "domain": "mcguintyfuneralhomelimited",
-      "company": "McGuinty Funeral Home Limited",
-      "province": "ON",
-      "city": "North Bay",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "mcintosh-anderson-kellamfuneralhomeltd",
       "company": "McIntosh-Anderson-Kellam Funeral Home Ltd.",
       "province": "ON",
@@ -6671,28 +5549,6 @@
       "company": "McKinlay Funeral Home",
       "province": "ON",
       "city": "Chatham",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "mckinlayfuneralhome",
-      "company": "McKinlay Funeral Home",
-      "province": "ON",
-      "city": "Ridgetown",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "mckinlayfuneralhome",
-      "company": "McKinlay Funeral Home",
-      "province": "ON",
-      "city": "Blenheim",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -6869,17 +5725,6 @@
       "company": "Milestone Funeral Homes Inc.",
       "province": "ON",
       "city": "Parham",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "milestonefuneralhomesinc",
-      "company": "Milestone Funeral Homes Inc.",
-      "province": "ON",
-      "city": "Northbrook",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -7107,28 +5952,6 @@
       "has_website": false
     },
     {
-      "domain": "munro&morrisfuneralhomesltd",
-      "company": "Munro & Morris Funeral Homes Ltd.",
-      "province": "ON",
-      "city": "Maxville",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "munro&morrisfuneralhomesltd",
-      "company": "Munro & Morris Funeral Homes Ltd.",
-      "province": "ON",
-      "city": "Alexandria",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "murphyfuneralhome",
       "company": "Murphy Funeral Home",
       "province": "ON",
@@ -7166,28 +5989,6 @@
       "company": "Narfason Family Funeral Services",
       "province": "SK",
       "city": "Foam Lake Re",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "narfasonfamilyfuneralservices",
-      "company": "Narfason Family Funeral Services",
-      "province": "SK",
-      "city": "Wadena Re",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "narfasonfamilyfuneralservices",
-      "company": "Narfason Family Funeral Services",
-      "province": "SK",
-      "city": "Wynyard Ri",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -7233,17 +6034,6 @@
       "province": "MB",
       "city": "Winnipeg",
       "website": "https://nbardal.mb.ca/",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "www.neilbardalfuneralhome.com",
-      "company": "Neil Bardal Funeral Centre",
-      "province": "MB",
-      "city": "Gimli",
-      "website": "https://www.neilbardalfuneralhome.com/",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
       "staff_count": 0,
@@ -7551,17 +6341,6 @@
       "company": "Opatovsky Funeral Home Ltd.",
       "province": "ON",
       "city": "Sundridge",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "opatovskyfuneralhomeltd",
-      "company": "Opatovsky Funeral Home Ltd.",
-      "province": "ON",
-      "city": "Burks Falls",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -8097,32 +6876,10 @@
       "has_website": false
     },
     {
-      "domain": "rhporterfuneralhomeslimited",
-      "company": "R. H. PORTER FUNERAL HOMES LIMITED",
-      "province": "NS",
-      "city": "NEW GLASGOW",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "raesfs.ca",
       "company": "Rae's Funeral Service",
       "province": "MB",
       "city": "Erickson",
-      "website": "https://raesfs.ca/",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "raesfs.ca",
-      "company": "Rae's Funeral Service",
-      "province": "MB",
-      "city": "Shoal Lake",
       "website": "https://raesfs.ca/",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -8185,17 +6942,6 @@
       "has_website": false
     },
     {
-      "domain": "reidfuneralhomelimited",
-      "company": "Reid Funeral Home Limited",
-      "province": "ON",
-      "city": "Essex",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "reid\u2019sfuneralhome",
       "company": "Reid\u2019s Funeral Home",
       "province": "NB",
@@ -8244,17 +6990,6 @@
       "company": "Riverside Funeral Home Inc.",
       "province": "ON",
       "city": "Brussels",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "riversidefuneralhomeinc",
-      "company": "Riverside Funeral Home Inc.",
-      "province": "ON",
-      "city": "Blyth",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -8343,72 +7078,6 @@
       "company": "Rushnell Funeral Homes Inc.",
       "province": "ON",
       "city": "Madoc",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "rushnellfuneralhomesinc",
-      "company": "Rushnell Funeral Homes Inc.",
-      "province": "ON",
-      "city": "Marmora",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "rushnellfuneralhomesinc",
-      "company": "Rushnell Funeral Homes Inc.",
-      "province": "ON",
-      "city": "Belleville",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "rushnellfuneralhomesinc",
-      "company": "Rushnell Funeral Homes Inc.",
-      "province": "ON",
-      "city": "Picton",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "rushnellfuneralhomesinc",
-      "company": "Rushnell Funeral Homes Inc.",
-      "province": "ON",
-      "city": "Tweed",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "rushnellfuneralhomesinc",
-      "company": "Rushnell Funeral Homes Inc.",
-      "province": "ON",
-      "city": "Brighton",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "rushnellfuneralhomesinc",
-      "company": "Rushnell Funeral Homes Inc.",
-      "province": "ON",
-      "city": "Trenton",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -8537,39 +7206,6 @@
       "has_website": false
     },
     {
-      "domain": "scottfuneralhome",
-      "company": "Scott Funeral Home",
-      "province": "ON",
-      "city": "Toronto",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "scottfuneralhome",
-      "company": "Scott Funeral Home",
-      "province": "ON",
-      "city": "Woodbridge",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "scottfuneralhome",
-      "company": "Scott Funeral Home",
-      "province": "ON",
-      "city": "Brampton",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "scottfuneralhome&crematorium",
       "company": "Scott Funeral Home & Crematorium",
       "province": "NB",
@@ -8691,17 +7327,6 @@
       "has_website": false
     },
     {
-      "domain": "simplechoicecremation",
-      "company": "Simple Choice Cremation",
-      "province": "ON",
-      "city": "Hamilton",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "simplewishesofthenorthinc",
       "company": "Simple Wishes of the North Inc.",
       "province": "ON",
@@ -8739,17 +7364,6 @@
       "company": "Skwarchuk Funeral Home",
       "province": "ON",
       "city": "Mount Albert",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "skwarchukfuneralhome",
-      "company": "Skwarchuk Funeral Home",
-      "province": "ON",
-      "city": "Bradford",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -8845,17 +7459,6 @@
       "has_website": false
     },
     {
-      "domain": "smith'sfuneralservice(burlington)limited",
-      "company": "Smith's Funeral Service (Burlington) Limited",
-      "province": "ON",
-      "city": "Burlington",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "smith'sfuneralservice(grimsby)limited",
       "company": "Smith's Funeral Service (Grimsby) Limited",
       "province": "ON",
@@ -8883,39 +7486,6 @@
       "province": "MB",
       "city": "Roblin",
       "website": "https://www.sneathstrilchuk.com/",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "www.sneathstrilchuk.com",
-      "company": "Sneath & Strilchuk Funeral Services",
-      "province": "MB",
-      "city": "McCreary",
-      "website": "https://www.sneathstrilchuk.com/",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "www.sneathstrilchuk.com",
-      "company": "Sneath & Strilchuk Funeral Services",
-      "province": "MB",
-      "city": "Dauphin",
-      "website": "https://www.sneathstrilchuk.com/",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "www.sneathstrilchuk.com",
-      "company": "Sneath & Strilchuk Funeral Services",
-      "province": "MB",
-      "city": "Ste. Rose",
-      "website": "https://www.sneathstrilchuk.com/sainte-rose-du-lac",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
       "staff_count": 0,
@@ -9285,28 +7855,6 @@
       "has_website": false
     },
     {
-      "domain": "thesimplealternativefuneralcentres",
-      "company": "The Simple Alternative Funeral Centres",
-      "province": "ON",
-      "city": "Toronto",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "thesimplealternativefuneralcentres",
-      "company": "The Simple Alternative Funeral Centres",
-      "province": "ON",
-      "city": "Mississauga",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "theunitedhebrewmemorialchapelofhamilton",
       "company": "The United Hebrew Memorial Chapel of Hamilton",
       "province": "ON",
@@ -9428,17 +7976,6 @@
       "has_website": false
     },
     {
-      "domain": "thornefuneralhome",
-      "company": "Thorne Funeral Home",
-      "province": "ON",
-      "city": "Sunderland",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "thorntonfuneralcentre",
       "company": "Thornton Funeral Centre",
       "province": "ON",
@@ -9498,28 +8035,6 @@
       "company": "TJ TRACEY CREMATION AND BURIAL SPECIALISTS",
       "province": "NS",
       "city": "HALIFAX",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "tjtraceycremationandburialspecialists",
-      "company": "TJ TRACEY CREMATION AND BURIAL SPECIALISTS",
-      "province": "NS",
-      "city": "SYDNEY",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "tjtraceycremationandburialspecialists",
-      "company": "TJ TRACEY CREMATION AND BURIAL SPECIALISTS",
-      "province": "NS",
-      "city": "GLACE BAY",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -9626,39 +8141,6 @@
       "has_website": false
     },
     {
-      "domain": "tubmanfuneralhomes",
-      "company": "Tubman Funeral Homes",
-      "province": "ON",
-      "city": "Ottawa",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "tubmanfuneralhomes",
-      "company": "Tubman Funeral Homes",
-      "province": "ON",
-      "city": "Ottawa",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "tubmanfuneralhomes",
-      "company": "Tubman Funeral Homes",
-      "province": "ON",
-      "city": "Carp",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "turnerfamilyfuneralhomeltd",
       "company": "Turner Family Funeral Home Ltd.",
       "province": "ON",
@@ -9681,54 +8163,10 @@
       "has_website": false
     },
     {
-      "domain": "turner&porterfuneraldirectorslimited",
-      "company": "Turner & Porter Funeral Directors Limited",
-      "province": "ON",
-      "city": "Toronto",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "turner&porterfuneraldirectorslimited",
-      "company": "Turner & Porter Funeral Directors Limited",
-      "province": "ON",
-      "city": "Toronto",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "turner&porterfuneraldirectorslimited",
-      "company": "Turner & Porter Funeral Directors Limited",
-      "province": "ON",
-      "city": "Mississauga",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "vjmcgillivrayfuneralhomes",
       "company": "V.J. MCGILLIVRAY FUNERAL HOMES",
       "province": "NS",
       "city": "NEW WATERFORD",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "vjmcgillivrayfuneralhomes",
-      "company": "V.J. MCGILLIVRAY FUNERAL HOMES",
-      "province": "NS",
-      "city": "GLACE BAY",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -9811,28 +8249,6 @@
       "record_type": "Branch",
       "staff_count": 0,
       "has_website": false
-    },
-    {
-      "domain": "voyagefuneralhomes.com",
-      "company": "Voyage Funeral Home & Crematorium",
-      "province": "MB",
-      "city": "Winnipeg",
-      "website": "https://voyagefuneralhomes.com/",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "voyagefuneralhomes.com",
-      "company": "Voyage Funeral Home & Crematorium",
-      "province": "MB",
-      "city": "Winnipeg",
-      "website": "https://voyagefuneralhomes.com/",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": true
     },
     {
       "domain": "voyagefuneralhomes.com",
@@ -9956,28 +8372,6 @@
       "has_website": false
     },
     {
-      "domain": "wardfuneralhome",
-      "company": "Ward Funeral Home",
-      "province": "ON",
-      "city": "Woodbridge",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "wardfuneralhome",
-      "company": "Ward Funeral Home",
-      "province": "ON",
-      "city": "Toronto",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "warren\u2019sfuneralhome",
       "company": "Warren\u2019s Funeral Home",
       "province": "SK",
@@ -10011,17 +8405,6 @@
       "has_website": false
     },
     {
-      "domain": "wartmanfuneralhomeinc",
-      "company": "Wartman Funeral Home Inc.",
-      "province": "ON",
-      "city": "Kingston",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "watrousfuneralhomeltd",
       "company": "Watrous Funeral Home Ltd.",
       "province": "SK",
@@ -10048,17 +8431,6 @@
       "company": "Weaver Family Funeral Home (Campbellford) Ltd.",
       "province": "ON",
       "city": "Campbellford",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "weaverfamilyfuneralhome(trenton)ltd",
-      "company": "Weaver Family Funeral Home (Trenton) Ltd.",
-      "province": "ON",
-      "city": "Trenton",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -10154,28 +8526,6 @@
       "has_website": true
     },
     {
-      "domain": "wheatlandfs.com",
-      "company": "Wheatland Funeral Service",
-      "province": "MB",
-      "city": "Pilot Mound",
-      "website": "https://wheatlandfs.com/",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "wheatlandfs.com",
-      "company": "Wheatland Funeral Service",
-      "province": "MB",
-      "city": "Killarney",
-      "website": "https://wheatlandfs.com/",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
       "domain": "whelanfuneralhomeltd",
       "company": "Whelan Funeral Home Ltd.",
       "province": "ON",
@@ -10214,28 +8564,6 @@
       "province": "MB",
       "city": "Carberry",
       "website": "https://www.whitesfh.ca/carberry-mb",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "www.whitesfh.ca",
-      "company": "White's Funeral Home",
-      "province": "MB",
-      "city": "Neepawa",
-      "website": "https://www.whitesfh.ca/neepawa-mb",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "www.whitesfh.ca",
-      "company": "White's Funeral Home",
-      "province": "MB",
-      "city": "Minnedosa",
-      "website": "https://www.whitesfh.ca/",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
       "staff_count": 0,
@@ -10301,39 +8629,6 @@
       "company": "Wilson Funeral Home",
       "province": "ON",
       "city": "Cornwall",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "wilsonfuneralhome",
-      "company": "Wilson Funeral Home",
-      "province": "ON",
-      "city": "Cornwall",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "windsorchapelfuneralhome",
-      "company": "Windsor Chapel Funeral Home",
-      "province": "ON",
-      "city": "Windsor",
-      "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "windsorchapelfuneralhome",
-      "company": "Windsor Chapel Funeral Home",
-      "province": "ON",
-      "city": "Windsor",
       "website": "",
       "source": "canada_funeral_intelligence_directory_markdown",
       "record_type": "Branch",
@@ -10484,34 +8779,1585 @@
       "has_website": false
     },
     {
-      "domain": "zohrfamilyfuneralhomeinc",
-      "company": "Zohr Family Funeral Home Inc.",
+      "domain": "www.mountpleasantfuneral.com",
+      "company": "Mount Pleasant Universal Funeral Home",
+      "province": "BC",
+      "city": "Vancouver",
+      "website": "http://www.mountpleasantfuneral.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.thomsoninthepark.com",
+      "company": "Thomson in the Park Funeral Home & Crematory",
+      "province": "MB",
+      "city": "Winnipeg",
+      "website": "http://www.thomsoninthepark.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.guaymirabel.ca",
+      "company": "Les Salons Funeraires Guay Inc.",
+      "province": "QC",
+      "city": "Mirabel",
+      "website": "http://www.guaymirabel.ca",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.naultetcarondelafabrique.ca",
+      "company": "Maison Funeraire Nault & Caron",
+      "province": "QC",
+      "city": "Jonquiere",
+      "website": "http://www.naultetcarondelafabrique.ca",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.funerariumbeauchampquebec.ca",
+      "company": "Maison Funeraire Racine Robert & Gauthier",
+      "province": "QC",
+      "city": "Aylmer",
+      "website": "http://www.funerariumbeauchampquebec.ca",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.victoryfuneralcentre.ca",
+      "company": "Victory Memorial Park Funeral Centre",
+      "province": "BC",
+      "city": "Surrey",
+      "website": "http://www.victoryfuneralcentre.ca",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.mahercampbellton.com",
+      "company": "Salons Funeraires Maher Funeral Homes",
+      "province": "NB",
+      "city": "Campbellton",
+      "website": "http://www.mahercampbellton.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.arbormemorial.ca",
+      "company": "Victoria Greenlawn Cemetery",
       "province": "ON",
-      "city": "Killaloe",
+      "city": "Oldcastle",
+      "website": "https://www.arbormemorial.ca/en/victoriagreenlawn",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "saskatooncrematoriumltd",
+      "company": "Saskatoon Crematorium, Ltd.",
+      "province": "SK",
+      "city": "Saskatoon",
       "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
       "staff_count": 0,
       "has_website": false
     },
     {
-      "domain": "zohrfamilyfuneralhomeinc",
-      "company": "Zohr Family Funeral Home Inc.",
+      "domain": "www.racinerobertgauthier.com",
+      "company": "Maison Funeraire Racine Robert & Gauthier Funeral Home",
       "province": "ON",
-      "city": "Renfrew",
+      "city": "Ottawa",
+      "website": "http://www.racinerobertgauthier.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "tubmanfuneralhome",
+      "company": "Tubman Funeral Home",
+      "province": "SK",
+      "city": "Fort Qu'appelle",
       "website": "",
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "record_type": "Branch",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
       "staff_count": 0,
       "has_website": false
     },
     {
-      "domain": "rosegardenchapel",
+      "domain": "cremationdirect",
+      "company": "Cremation Direct",
+      "province": "BC",
+      "city": "Chilliwack",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "www.lahaie-sullivan.net",
+      "company": "Lahaie & Sullivan Cornwall Funeral Home",
+      "province": "ON",
+      "city": "Cornwall",
+      "website": "http://www.lahaie-sullivan.net",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "walsercremationandtributecentrelltd",
+      "company": "Walser Cremation and Tribute Centre Lltd.",
+      "province": "ON",
+      "city": "Kitchener",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "www.marlattfhdundas.com",
+      "company": "Marlatt Funeral Home & Cremation Centre",
+      "province": "ON",
+      "city": "Dundas",
+      "website": "http://www.marlattfhdundas.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.southcalgaryfuneralcentre.ca",
+      "company": "South Calgary Funeral Centre & Crematorium",
+      "province": "AB",
+      "city": "Calgary",
+      "website": "http://www.southcalgaryfuneralcentre.ca",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "lamaisondarcheservicescrematory",
+      "company": "La Maison Darche Services Crematory",
+      "province": "QC",
+      "city": "Longueuil",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "www.dignitymemorial.com",
+      "company": "Valley Crematorium",
+      "province": "SK",
+      "city": "Wolseley",
+      "website": "https://www.dignitymemorial.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.arbormemorial.ca",
+      "company": "Regina Funeral Home & Cemetery",
+      "province": "SK",
+      "city": "Regina",
+      "website": "https://www.arbormemorial.ca/en/regina.html",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.firstmemorialsaanich.com",
+      "company": "First Memorial Funeral Services",
+      "province": "BC",
+      "city": "Victoria",
+      "website": "http://www.firstmemorialsaanich.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.fraserviewcrematorium.com",
+      "company": "Fraserview Crematorium",
+      "province": "BC",
+      "city": "Prince George",
+      "website": "http://www.fraserviewcrematorium.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.darchebrossard.ca",
+      "company": "La Maison Darche Services Funeraires",
+      "province": "QC",
+      "city": "Brossard",
+      "website": "http://www.darchebrossard.ca",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "r\u00e9sidencesfun\u00e9rairesgravel&fils",
+      "company": "R\u00e9sidences Fun\u00e9raires Gravel & Fils",
+      "province": "QC",
+      "city": "La Baie",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "www.ccmwfuneralhome.com",
+      "company": "Residences funeraires Collins Clarke MacGillivray White",
+      "province": "QC",
+      "city": "Pointe-Claire",
+      "website": "http://www.ccmwfuneralhome.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "familiesfirstsignaturetributeseventcentre",
+      "company": "Families First Signature Tributes Event Centre",
+      "province": "ON",
+      "city": "Windsor",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "mourningglorycremationcentre",
+      "company": "Mourning Glory Cremation Centre",
+      "province": "SK",
+      "city": "Saskatoon",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "www.mjohnsullivanfuneralhome.com",
+      "company": "Salon Funeraire M. John Sullivan Funeral",
+      "province": "ON",
+      "city": "Cornwall",
+      "website": "http://www.mjohnsullivanfuneralhome.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.hamiltonharronfunerals.com",
+      "company": "Hamilton Harron Funeral Home",
+      "province": "BC",
+      "city": "Vancouver",
+      "website": "http://www.hamiltonharronfunerals.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.vernonfuneralhome.com",
+      "company": "Vernon Funeral Home",
+      "province": "BC",
+      "city": "Vernon",
+      "website": "http://www.vernonfuneralhome.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.rossfuneralservice.com",
+      "company": "Ross Funeral Service",
+      "province": "SK",
+      "city": "Assiniboia",
+      "website": "http://www.rossfuneralservice.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.residencefunerairesmongeau.net",
+      "company": "Residences Funeraires Mongeau",
+      "province": "QC",
+      "city": "St-Pie",
+      "website": "http://www.residencefunerairesmongeau.net",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.pinecrest-remembrance.com",
+      "company": "Pinecrest Remembrance Services",
+      "province": "ON",
+      "city": "Ottawa",
+      "website": "http://www.pinecrest-remembrance.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.rosegardenchapel.com",
       "company": "Rose Garden Chapel",
       "province": "AB",
       "city": "Barrhead",
+      "website": "http://www.rosegardenchapel.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "maisondefunerairedeguay-guaycrematory-northshore",
+      "company": "Maison de Funeraire de Guay - Guay Crematory - North Shore",
+      "province": "QC",
+      "city": "Rosemere",
       "website": "",
-      "source": "afsa_directory",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "familiesfirstfuneralhomeandtributecentre",
+      "company": "Families First Funeral Home and Tribute Centre",
+      "province": "ON",
+      "city": "Windsor",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "servicedecremationdirect",
+      "company": "Service de Cremation Direct",
+      "province": "QC",
+      "city": "Terrebonne",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "www.everdenrust.com",
+      "company": "Everden Rust Funeral Services & Crematorium",
+      "province": "BC",
+      "city": "KELOWNA",
+      "website": "http://www.everdenrust.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.woodlawn-mtcheam.ca",
+      "company": "Woodlawn Mt. Cheam Funeral Home",
+      "province": "BC",
+      "city": "Chilliwack",
+      "website": "http://www.woodlawn-mtcheam.ca",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.fostersgardenchapel.net",
+      "company": "Fosters Garden Chapel & Crematorium",
+      "province": "AB",
+      "city": "Calgary",
+      "website": "http://www.fostersgardenchapel.net",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.sallowsandmcdonaldfuneralhome.com",
+      "company": "Sallows & McDonald - Wilson & Zehner Funeral Home",
+      "province": "SK",
+      "city": "North Battleford",
+      "website": "http://www.sallowsandmcdonaldfuneralhome.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.andrewscommunityfuneralcentre.com",
+      "company": "Andrews Community Funeral Centre - Bramalea Chapel",
+      "province": "ON",
+      "city": "Brampton",
+      "website": "http://www.andrewscommunityfuneralcentre.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.beechwoodottawa.ca",
+      "company": "The Beechwood Cemetery Company",
+      "province": "ON",
+      "city": "Ottawa",
+      "website": "http://www.beechwoodottawa.ca",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.greenacresfuneralhome.com",
+      "company": "Green Acres Funeral Home & Cemetery",
+      "province": "MB",
+      "city": "Winnipeg",
+      "website": "http://www.greenacresfuneralhome.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "westcoastcrematorium",
+      "company": "West Coast Crematorium",
+      "province": "BC",
+      "city": "Burnaby",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "www.dignitymemorial.com",
+      "company": "Gilbert Macintyre & Son - Hart Chapel",
+      "province": "ON",
+      "city": "Guelph",
+      "website": "https://www.dignitymemorial.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.merrittfuneralchapel.com",
+      "company": "Merritt Funeral Chapel",
+      "province": "BC",
+      "city": "Merritt",
+      "website": "http://www.merrittfuneralchapel.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "edmontonservicecentre",
+      "company": "Edmonton Service Centre",
+      "province": "AB",
+      "city": "Edmonton",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "www.memoriesfuneral.com",
+      "company": "Memories Funeral Home",
+      "province": "AB",
+      "city": "Edmonton",
+      "website": "http://www.memoriesfuneral.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.piersons.ca",
+      "company": "Pierson's Funeral Service Ltd.",
+      "province": "AB",
+      "city": "Calgary",
+      "website": "http://www.piersons.ca",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.schoeningfuneralservice.com",
+      "company": "Schoening Funeral Service",
+      "province": "BC",
+      "city": "Kamloops",
+      "website": "http://www.schoeningfuneralservice.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.tubmanvalleycrematorium.com",
+      "company": "Tubman Funeral Home & Valley Crematorium",
+      "province": "SK",
+      "city": "Wolseley",
+      "website": "http://www.tubmanvalleycrematorium.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.ccmwfuneralhome.net",
+      "company": "Residences Funeraires Collins Clarke MacGillivray White Funeral Homes",
+      "province": "QC",
+      "city": "St-Lambert",
+      "website": "http://www.ccmwfuneralhome.net",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.laurenttheriault.ca",
+      "company": "Residences Funeraires Laurent Theriault",
+      "province": "QC",
+      "city": "Verdun",
+      "website": "http://www.laurenttheriault.ca",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.comstockfuneralhome.com",
+      "company": "Comstock Funeral Home & Cremation Centre",
+      "province": "ON",
+      "city": "Peterborough",
+      "website": "http://www.comstockfuneralhome.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.suttonsfuneralhome.com",
+      "company": "Sutton's Campbell River Funeral Home",
+      "province": "BC",
+      "city": "Campbell River",
+      "website": "http://www.suttonsfuneralhome.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.graveletfilschicoutimi.com",
+      "company": "Residences Funeraires Gravel & Fils - Funeraires et crematoire",
+      "province": "QC",
+      "city": "Chicoutimi",
+      "website": "http://www.graveletfilschicoutimi.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.centrefunerairecotedesneiges.com",
+      "company": "Centre Funeraire Cote-Des-Neiges Inc.",
+      "province": "QC",
+      "city": "Montreal",
+      "website": "http://www.centrefunerairecotedesneiges.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "pinegrovecrematorium",
+      "company": "Pine Grove Crematorium",
+      "province": "BC",
+      "city": "Kamloops",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "www.arbormemorial.ca",
+      "company": "Eventide Funeral Home",
+      "province": "AB",
+      "city": "Red Deer",
+      "website": "https://www.arbormemorial.ca/en/eventide.html",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.greenvistationcentre.com",
+      "company": "Green Visitation Centre - Atikokan",
+      "province": "ON",
+      "city": "Atikokan",
+      "website": "http://www.greenvistationcentre.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.carnells.com",
+      "company": "Carnell's Funeral Home, Ltd.",
+      "province": "NL",
+      "city": "St. John's",
+      "website": "http://www.carnells.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.bishopsfuneralhome.com",
+      "company": "Bishop's Funeral Home & Crematorium",
+      "province": "NB",
+      "city": "Fredericton",
+      "website": "http://www.bishopsfuneralhome.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.glenhavenmemorialchapel.com",
+      "company": "Glenhaven Memorial Chapel",
+      "province": "BC",
+      "city": "Vancouver",
+      "website": "http://www.glenhavenmemorialchapel.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.arbormemorial.ca",
+      "company": "Mountain View Cemetery & Funeral Home",
+      "province": "AB",
+      "city": "Calgary",
+      "website": "https://www.arbormemorial.ca/en/mountainview",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.hendersonslangleyfunerals.com",
+      "company": "Henderson's Langley Funeral Home",
+      "province": "BC",
+      "city": "Langley",
+      "website": "http://www.hendersonslangleyfunerals.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.sylviomarceau.net",
+      "company": "Complexe Funeraire Sylvio Marceau",
+      "province": "QC",
+      "city": "Quebec",
+      "website": "http://www.sylviomarceau.net",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.parklandfuneralservices.com",
+      "company": "Parkland Funeral Services",
+      "province": "AB",
+      "city": "Stony Plain",
+      "website": "http://www.parklandfuneralservices.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.victoriaavenuefuneral.com",
+      "company": "Victoria Avenue Funeral Home & Cremation Centre",
+      "province": "SK",
+      "city": "Regina",
+      "website": "http://www.victoriaavenuefuneral.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.hollyburnfunerals.com",
+      "company": "Hollyburn Funeral Home",
+      "province": "BC",
+      "city": "West Vancouver",
+      "website": "http://www.hollyburnfunerals.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.mylalternatives.com",
+      "company": "Kootenay Enterprises Inc.",
+      "province": "BC",
+      "city": "Trail",
+      "website": "http://www.mylalternatives.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "prairierosefunerals.ca",
+      "company": "Prairie Rose Cremation & Funeral Services",
+      "province": "AB",
+      "city": "Airdrie",
+      "website": "https://prairierosefunerals.ca/",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.greenfuneralhomefortfrances.com",
+      "company": "Green Funeral Home",
+      "province": "ON",
+      "city": "Fort Frances",
+      "website": "http://www.greenfuneralhomefortfrances.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.dignitymemorial.com",
+      "company": "Vernon Funeral Home - Cemetery Niches",
+      "province": "BC",
+      "city": "Vernon",
+      "website": "https://www.dignitymemorial.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.pleasantvalleyfh.com",
+      "company": "Pleasant Valley Funeral Home",
+      "province": "BC",
+      "city": "Vernon",
+      "website": "http://www.pleasantvalleyfh.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.hpmcgarry.ca",
+      "company": "McGarry Memorial Chapel & Cremation Services",
+      "province": "QC",
+      "city": "LaPeche (Wakefield)",
+      "website": "http://www.hpmcgarry.ca",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.hendersonsabbotsfordfunerals.com",
+      "company": "Henderson's Fraser Valley Funeral Home",
+      "province": "BC",
+      "city": "Abbotsford",
+      "website": "http://www.hendersonsabbotsfordfunerals.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "earthsoption.com",
+      "company": "Earth's Option Cremation and Burial Services",
+      "province": "BC",
+      "city": "Victoria",
+      "website": "https://earthsoption.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.tsansregret.com",
+      "company": "Residences Funeraires T. Sansregret",
+      "province": "QC",
+      "city": "Montreal",
+      "website": "http://www.tsansregret.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.mountroyalcem.com",
+      "company": "Crematorium Inc.",
+      "province": "QC",
+      "city": "Outremont",
+      "website": "https://www.mountroyalcem.com/index.php/en/",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.orsted-carlylefuneralhome.com",
+      "company": "Orsted-Carlyle Funeral Home",
+      "province": "SK",
+      "city": "Carlyle",
+      "website": "http://www.orsted-carlylefuneralhome.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.valleyviewfuneralhome.com",
+      "company": "Valleyview Funeral Home",
+      "province": "BC",
+      "city": "Kelowna",
+      "website": "http://www.valleyviewfuneralhome.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.arbormemorial.ca",
+      "company": "Leyden's Funeral Home",
+      "province": "AB",
+      "city": "Calgary",
+      "website": "https://www.arbormemorial.ca/en/leydens-calgary",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.dignitymemorial.com",
+      "company": "Hainstocks Funeral Home & Crematory",
+      "province": "AB",
+      "city": "Edmonton",
+      "website": "https://www.dignitymemorial.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "lessalonsfunerairesguayinc",
+      "company": "Les Salons Funeraires Guay Inc",
+      "province": "QC",
+      "city": "Rivi\u00e8re-Rouge",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "www.woodlawnfh-mission.com",
+      "company": "Woodlawn Mission Funeral Home",
+      "province": "BC",
+      "city": "Mission",
+      "website": "http://www.woodlawnfh-mission.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.arbormemorial.ca",
+      "company": "Westlawn Funeral Home & Cemetery",
+      "province": "AB",
+      "city": "Edmonton",
+      "website": "https://www.arbormemorial.ca/en/westlawn.html",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.acadiamckaguesfuneralcentre.com",
+      "company": "Acadia McKague's Funeral Centre",
+      "province": "SK",
+      "city": "Saskatoon",
+      "website": "http://www.acadiamckaguesfuneralcentre.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.firstmemorialportcoquitlam.com",
+      "company": "First Memorial Funeral Services Burkeview Chapel",
+      "province": "BC",
+      "city": "Port Coquitlam",
+      "website": "http://www.firstmemorialportcoquitlam.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.hainstockedmunton.com",
+      "company": "Hainstock's Funeral Home & Crematorium",
+      "province": "AB",
+      "city": "Edmonton",
+      "website": "http://www.hainstockedmunton.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.lakewoodfh.com",
+      "company": "First Memorial Funeral Services Lakewood",
+      "province": "BC",
+      "city": "Prince George",
+      "website": "http://www.lakewoodfh.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "jacquesfuneralhome&crematorium",
+      "company": "Jacques Funeral Home & Crematorium",
+      "province": "AB",
+      "city": "Calgary",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "foster'sgardenchapel&crematory",
+      "company": "Foster's Garden Chapel & Crematory",
+      "province": "AB",
+      "city": "Calgary",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "www.jasnowfuneralhome.com",
+      "company": "JA Snow Funeral Home",
+      "province": "NS",
+      "city": "Halifax",
+      "website": "http://www.jasnowfuneralhome.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.cruikshankhalifaxfuneralhome.com",
+      "company": "Cruikshanks Halifax Funeral Home",
+      "province": "NS",
+      "city": "Halifax",
+      "website": "http://www.cruikshankhalifaxfuneralhome.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.fletcherfuneralchapel.ca",
+      "company": "Fletcher Funeral Chapels",
+      "province": "SK",
+      "city": "Radville",
+      "website": "http://www.fletcherfuneralchapel.ca",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "sydneycrematorium",
+      "company": "Sydney Crematorium",
+      "province": "NS",
+      "city": "Sydney",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "torontocrematorium",
+      "company": "Toronto Crematorium",
+      "province": "ON",
+      "city": "Toronto",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "missionhillcrematorium",
+      "company": "Mission Hill Crematorium",
+      "province": "BC",
+      "city": "Courtenay",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "www.piercysmtwashingtonfuneral.com",
+      "company": "Piercy's-Mt. Washington Funeral Home",
+      "province": "BC",
+      "city": "Courtenay",
+      "website": "http://www.piercysmtwashingtonfuneral.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.dignitymemorial.com",
+      "company": "Fraserview Crematorium - Cemetery Niches",
+      "province": "BC",
+      "city": "Prince George",
+      "website": "https://www.dignitymemorial.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.dignitymemorial.com",
+      "company": "Toronto-Yonge Personal Care Centre",
+      "province": "ON",
+      "city": "Thornhill",
+      "website": "https://www.dignitymemorial.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "capebretoncrematory",
+      "company": "Cape Breton Crematory",
+      "province": "NS",
+      "city": "Sydney",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "www.firstmemorialsurrey.com",
+      "company": "First Memorial Funeral Services Fraser Heights Chapel",
+      "province": "BC",
+      "city": "Surrey",
+      "website": "http://www.firstmemorialsurrey.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.harboursidecrematorium.com",
+      "company": "Harbourside Regional Crematorium",
+      "province": "NS",
+      "city": "Halifax",
+      "website": "http://www.harboursidecrematorium.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.firstmemorialkamloops.com",
+      "company": "First Memorial Funeral Services Kamloops",
+      "province": "BC",
+      "city": "Kamloops",
+      "website": "http://www.firstmemorialkamloops.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.dignitymemorial.com",
+      "company": "Gilbert Macintyre & Son - Dublin Chapel",
+      "province": "ON",
+      "city": "Guelph",
+      "website": "https://www.dignitymemorial.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.salonfunerairehenriguerin.ca",
+      "company": "Salon Funeraire Henri Guerin",
+      "province": "QC",
+      "city": "La Prairie",
+      "website": "http://www.salonfunerairehenriguerin.ca",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "mourninggloryfuneralservices",
+      "company": "Mourning Glory Funeral Services",
+      "province": "SK",
+      "city": "Saskatoon",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "www.cresmountfennellchapel.com",
+      "company": "Cresmount Funeral Home - Fennell Chapel",
+      "province": "ON",
+      "city": "Hamilton",
+      "website": "http://www.cresmountfennellchapel.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.arbormemorial.ca",
+      "company": "Chapel Lawn Memorial Gardens & Funeral Home",
+      "province": "MB",
+      "city": "Winnipeg",
+      "website": "https://www.arbormemorial.ca/en/chapellawn",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.tbdfuneralchapel.com",
+      "company": "Truscott, Brown & Dwyer Funeral Chapel",
+      "province": "ON",
+      "city": "Hamilton",
+      "website": "http://www.tbdfuneralchapel.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "firstmemorialfuneral&crematory",
+      "company": "First Memorial Funeral & Crematory",
+      "province": "BC",
+      "city": "Victoria",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "lamaisondarcheservicesfuneraires&crematorium",
+      "company": "La Maison Darche Services Funeraires & Crematorium",
+      "province": "QC",
+      "city": "Longueuil",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "bell&burnabyfuneralchapel",
+      "company": "Bell & Burnaby Funeral Chapel",
+      "province": "BC",
+      "city": "Burnaby",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "www.assmansfuneralchapel.com",
+      "company": "Assman's Funeral Chapel",
+      "province": "BC",
+      "city": "Prince George",
+      "website": "http://www.assmansfuneralchapel.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.jerrettvaughanchapel.ca",
+      "company": "Jerrett Life Celebration Centre",
+      "province": "ON",
+      "city": "Thornhill",
+      "website": "http://www.jerrettvaughanchapel.ca",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "maher'scrematorium",
+      "company": "Maher's Crematorium",
+      "province": "NB",
+      "city": "Campbellton",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "www.mountpleasantgroup.com",
+      "company": "Mount Pleasant Group",
+      "province": "ON",
+      "city": "Toronto",
+      "website": "http://www.mountpleasantgroup.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "macleanfh.ca",
+      "company": "MacLean Funeral Home - Swan Chapel",
+      "province": "PE",
+      "city": "Charlottetown",
+      "website": "https://macleanfh.ca",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "residencefunerairestlouisterrebonne",
+      "company": "Residence Funeraire St. Louis, Terrebonne",
+      "province": "QC",
+      "city": "Terrebonne",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "www.complexefuneraireberubeetfils.com",
+      "company": "Complexe Funeraire Berube & Fils",
+      "province": "QC",
+      "city": "Alma",
+      "website": "http://www.complexefuneraireberubeetfils.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.arbormemorial.ca",
+      "company": "Bayview Cemetery & Crematorium",
+      "province": "ON",
+      "city": "Burlington",
+      "website": "https://www.arbormemorial.ca/en/bayview",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.parkmemorial.com",
+      "company": "Park Memorial",
+      "province": "AB",
+      "city": "Edmonton",
+      "website": "http://www.parkmemorial.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.arbormemorial.ca",
+      "company": "Rideau Memorial Gardens",
+      "province": "QC",
+      "city": "Dollard des Ormeaux",
+      "website": "https://www.arbormemorial.ca/en/rideau.html",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.aquamations.ca",
+      "company": "Newcastle Funeral Home",
+      "province": "ON",
+      "city": "Newcastle",
+      "website": "http://www.aquamations.ca",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "cremationsocietyofwindsorandessexcountyinc",
+      "company": "Cremation Society of Windsor and Essex County, Inc.",
+      "province": "ON",
+      "city": "Windsor",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "www.brenansfh.com",
+      "company": "Brenan's Funeral Home",
+      "province": "NB",
+      "city": "Saint John",
+      "website": "http://www.brenansfh.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.woodlawnfh-abbotsford.com",
+      "company": "Woodlawn Funeral Home",
+      "province": "BC",
+      "city": "Abbotsford",
+      "website": "http://www.woodlawnfh-abbotsford.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.forestlawn-burnaby.com",
+      "company": "Forest Lawn Funeral Home",
+      "province": "BC",
+      "city": "Burnaby",
+      "website": "http://www.forestlawn-burnaby.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.hainstockleduc.com",
+      "company": "Hainstock & Son Funeral Chapel",
+      "province": "AB",
+      "city": "Leduc",
+      "website": "http://www.hainstockleduc.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.chapelofmemories.ca",
+      "company": "Chapel of Memories Funeral Directors",
+      "province": "BC",
+      "city": "Port Alberni",
+      "website": "http://www.chapelofmemories.ca",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "salonsfunerairesmaherchapel",
+      "company": "Salons funeraires Maher Chapel",
+      "province": "NB",
+      "city": "Campbelton",
+      "website": "http://",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.arbormemorial.ca",
+      "company": "Valley View Memorial Gardens Cemetery, Funeral Home & Crematorium Centre",
+      "province": "BC",
+      "city": "Surrey",
+      "website": "https://www.arbormemorial.ca/en/valleyview",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.hendersonsfunerals.com",
+      "company": "Henderson's Funeral Homes & Crematorium",
+      "province": "BC",
+      "city": "Chilliwack",
+      "website": "http://www.hendersonsfunerals.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.fletcherfuneralchapel.com",
+      "company": "Fletcher Funeral Chapel",
+      "province": "SK",
+      "city": "Weyburn",
+      "website": "http://www.fletcherfuneralchapel.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.riverviewfuneral.com",
+      "company": "First Memorial Funeral Services - Riverview Chapel",
+      "province": "AB",
+      "city": "Fort Saskatchewan",
+      "website": "http://www.riverviewfuneral.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "estevancrematoriuminc",
+      "company": "Estevan Crematorium Inc.",
+      "province": "SK",
+      "city": "Estevan",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "mourninggloryfuneralservices-windsorchapel",
+      "company": "Mourning Glory Funeral Services - Windsor Chapel",
+      "province": "SK",
+      "city": "Saskatoon",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "www.oceanviewfuneral.com",
+      "company": "Ocean View Funeral Home",
+      "province": "BC",
+      "city": "Burnaby",
+      "website": "http://www.oceanviewfuneral.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.familiesfirst.ca",
+      "company": "Families First Funeral Home & Tribute Centre Inc.",
+      "province": "ON",
+      "city": "Windsor",
+      "website": "https://www.familiesfirst.ca",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "maisonfuneraireracinerobert&gauthierbeauchampfuneralhome",
+      "company": "Maison Funeraire Racine, Robert & Gauthier Beauchamp Funeral Home",
+      "province": "QC",
+      "city": "Gatineau",
+      "website": "",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": false
+    },
+    {
+      "domain": "gregoiredesrochers.com",
+      "company": "Gr\u00e9goire Desrochers",
+      "province": "QC",
+      "city": "Victoriaville",
+      "website": "http://gregoiredesrochers.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "www.vancouvercrematorium.com",
+      "company": "Vancouver Memorial Services & Crematorium",
+      "province": "BC",
+      "city": "Vancouver",
+      "website": "http://www.vancouvercrematorium.com",
+      "source": "cana_directory",
+      "record_type": "Funeral Home",
+      "staff_count": 0,
+      "has_website": true
+    },
+    {
+      "domain": "victorymemorialpark&crematorium",
+      "company": "Victory Memorial Park & Crematorium",
+      "province": "BC",
+      "city": "Surrey",
+      "website": "",
+      "source": "cana_directory",
       "record_type": "Funeral Home",
       "staff_count": 0,
       "has_website": false
@@ -10616,17 +10462,6 @@
       "has_website": true
     },
     {
-      "domain": "www.leydens.com",
-      "company": "Leyden's Funeral Home",
-      "province": "AB",
-      "city": "Calgary",
-      "website": "http://www.leydens.com",
-      "source": "afsa_directory",
-      "record_type": "Funeral Home",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
       "domain": "www.arbormemorial.com",
       "company": "Mountain View Funeral Home Calgary",
       "province": "AB",
@@ -10643,17 +10478,6 @@
       "province": "AB",
       "city": "Calgary",
       "website": "http://www.piersons.ca",
-      "source": "afsa_directory",
-      "record_type": "Funeral Home",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "www.fostersgardenchapelcom",
-      "company": "South Calgary Funeral Centre & Crematorium",
-      "province": "AB",
-      "city": "Calgary",
-      "website": "http://www.fostersgardenchapelcom/south",
       "source": "afsa_directory",
       "record_type": "Funeral Home",
       "staff_count": 0,
@@ -10735,28 +10559,6 @@
       "record_type": "Funeral Home",
       "staff_count": 0,
       "has_website": true
-    },
-    {
-      "domain": "www.mementofuneralchapel.com",
-      "company": "Memento Funeral Chapel Ltd.",
-      "province": "AB",
-      "city": "Cold Lake",
-      "website": "http://www.mementofuneralchapel.com",
-      "source": "afsa_directory",
-      "record_type": "Funeral Home",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "parkviewfuneralchapels",
-      "company": "Parkview Funeral Chapels",
-      "province": "AB",
-      "city": "Coronation",
-      "website": "",
-      "source": "afsa_directory",
-      "record_type": "Funeral Home",
-      "staff_count": 0,
-      "has_website": false
     },
     {
       "domain": "affinityfuneralservice",
@@ -10856,28 +10658,6 @@
       "record_type": "Funeral Home",
       "staff_count": 0,
       "has_website": true
-    },
-    {
-      "domain": "hainstock'sfuneralhome&crematorium",
-      "company": "Hainstock's Funeral Home & Crematorium",
-      "province": "AB",
-      "city": "Edmonton",
-      "website": "",
-      "source": "afsa_directory",
-      "record_type": "Funeral Home",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "memoriesfuneralhome",
-      "company": "Memories Funeral Home",
-      "province": "AB",
-      "city": "Edmonton",
-      "website": "",
-      "source": "afsa_directory",
-      "record_type": "Funeral Home",
-      "staff_count": 0,
-      "has_website": false
     },
     {
       "domain": "www.parkmemorial.com",
@@ -11023,17 +10803,6 @@
       "has_website": true
     },
     {
-      "domain": "firstmemorialfuneral.com",
-      "company": "First Memorial Funeral Services - Riverview Chapel",
-      "province": "AB",
-      "city": "Fort Saskatchewan",
-      "website": "http://firstmemorialfuneral.com",
-      "source": "afsa_directory",
-      "record_type": "Funeral Home",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
       "domain": "serenity.ca",
       "company": "Serenity Funeral Services",
       "province": "AB",
@@ -11144,28 +10913,6 @@
       "has_website": true
     },
     {
-      "domain": "www.parkmemorial.com",
-      "company": "Park Memorial Ltd.",
-      "province": "AB",
-      "city": "Lamont",
-      "website": "http://www.parkmemorial.com",
-      "source": "afsa_directory",
-      "record_type": "Funeral Home",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "hainstock&sonfuneralchapel",
-      "company": "Hainstock & Son Funeral Chapel",
-      "province": "AB",
-      "city": "Leduc",
-      "website": "",
-      "source": "afsa_directory",
-      "record_type": "Funeral Home",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "serenityfuneralservice",
       "company": "Serenity Funeral Service",
       "province": "AB",
@@ -11254,28 +11001,6 @@
       "has_website": true
     },
     {
-      "domain": "www.mccawfuneralservice.com",
-      "company": "McCaw Funeral Service Ltd.",
-      "province": "AB",
-      "city": "Lloydminster",
-      "website": "http://www.mccawfuneralservice.com",
-      "source": "afsa_directory",
-      "record_type": "Funeral Home",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "www.parkmemorial.com",
-      "company": "Park Memorial Ltd.",
-      "province": "AB",
-      "city": "Mayerthorpe",
-      "website": "http://www.parkmemorial.com",
-      "source": "afsa_directory",
-      "record_type": "Funeral Home",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
       "domain": "www.cooksouthland.com",
       "company": "Cook Southland Funeral Chapel",
       "province": "AB",
@@ -11335,17 +11060,6 @@
       "company": "Chapel of Memories Ltd. (Peace River)",
       "province": "AB",
       "city": "Peace River",
-      "website": "",
-      "source": "afsa_directory",
-      "record_type": "Funeral Home",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "eden'sfuneralhome",
-      "company": "Eden's Funeral Home",
-      "province": "AB",
-      "city": "Pincher Creek",
       "website": "",
       "source": "afsa_directory",
       "record_type": "Funeral Home",
@@ -11441,39 +11155,6 @@
       "has_website": false
     },
     {
-      "domain": "www.parkmemorial.com",
-      "company": "Park Memorial Ltd.",
-      "province": "AB",
-      "city": "Smoky Lake",
-      "website": "http://www.parkmemorial.com",
-      "source": "afsa_directory",
-      "record_type": "Funeral Home",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "serenityfuneralservices",
-      "company": "Serenity Funeral Services",
-      "province": "AB",
-      "city": "Spruce Grove",
-      "website": "",
-      "source": "afsa_directory",
-      "record_type": "Funeral Home",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
-      "domain": "www.connelly-mckinley.com",
-      "company": "Connelly-McKinley Ltd",
-      "province": "AB",
-      "city": "St. Albert",
-      "website": "http://www.connelly-mckinley.com",
-      "source": "afsa_directory",
-      "record_type": "Funeral Home",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
       "domain": "www.fostermcgarvey.com",
       "company": "Foster and McGarvey Funeral Home",
       "province": "AB",
@@ -11518,17 +11199,6 @@
       "has_website": false
     },
     {
-      "domain": "www.parklandfuneralservices.com",
-      "company": "Parkland Funeral Services",
-      "province": "AB",
-      "city": "Stony Plain",
-      "website": "http://www.parklandfuneralservices.com",
-      "source": "afsa_directory",
-      "record_type": "Funeral Home",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
       "domain": "www.southlandfuneral.com",
       "company": "Southland Funeral Chapel Ltd.",
       "province": "AB",
@@ -11545,17 +11215,6 @@
       "province": "AB",
       "city": "Tofield",
       "website": "http://www.weberfuneralhome.ca",
-      "source": "afsa_directory",
-      "record_type": "Funeral Home",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
-      "domain": "www.sunsetltd.ca",
-      "company": "Sunset Funeral Service Ltd.",
-      "province": "AB",
-      "city": "Trochu",
-      "website": "http://www.sunsetltd.ca",
       "source": "afsa_directory",
       "record_type": "Funeral Home",
       "staff_count": 0,
@@ -11582,17 +11241,6 @@
       "record_type": "Funeral Home",
       "staff_count": 0,
       "has_website": false
-    },
-    {
-      "domain": "www.parkmemorial.com",
-      "company": "Park Memorial Ltd.",
-      "province": "AB",
-      "city": "Vegreville",
-      "website": "http://www.parkmemorial.com",
-      "source": "afsa_directory",
-      "record_type": "Funeral Home",
-      "staff_count": 0,
-      "has_website": true
     },
     {
       "domain": "lakelandfuneralhome",
@@ -11628,17 +11276,6 @@
       "has_website": false
     },
     {
-      "domain": "town&countryfuneralservices",
-      "company": "Town & Country Funeral Services",
-      "province": "AB",
-      "city": "Wabamun",
-      "website": "",
-      "source": "afsa_directory",
-      "record_type": "Funeral Home",
-      "staff_count": 0,
-      "has_website": false
-    },
-    {
       "domain": "www.westlockfuneralhome.com",
       "company": "Westlock Funeral Home Ltd.",
       "province": "AB",
@@ -11661,17 +11298,6 @@
       "has_website": true
     },
     {
-      "domain": "serenity.ca",
-      "company": "Serenity Funeral Services",
-      "province": "AB",
-      "city": "Wetaskiwin",
-      "website": "http://serenity.ca",
-      "source": "afsa_directory",
-      "record_type": "Funeral Home",
-      "staff_count": 0,
-      "has_website": true
-    },
-    {
       "domain": "womboldfuneralhomes.com",
       "company": "Wetaskiwin Funeral Home & Crematorium",
       "province": "AB",
@@ -11684,28 +11310,34 @@
     }
   ],
   "stats": {
-    "total": 1062,
+    "total": 1028,
     "provinces": [
       "AB",
+      "BC",
       "MB",
       "NB",
       "NL",
       "NS",
       "ON",
+      "PE",
+      "QC",
       "SK",
       "YT"
     ],
     "province_counts": {
-      "NS": 88,
-      "ON": 556,
-      "MB": 88,
-      "NB": 52,
-      "SK": 90,
+      "NS": 77,
+      "ON": 483,
+      "MB": 71,
+      "NB": 57,
+      "SK": 85,
       "NL": 80,
       "YT": 1,
-      "AB": 107
+      "BC": 42,
+      "QC": 26,
+      "AB": 105,
+      "PE": 1
     },
-    "has_website": 163,
-    "updated_at": "2026-09-02T22:08:23.975934"
+    "has_website": 242,
+    "updated_at": "2026-09-02T22:10:18.025251"
   }
 }
