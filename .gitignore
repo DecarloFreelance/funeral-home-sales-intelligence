@@ -39,3 +39,4 @@ Todd_Life_Celebrants_Digital_Outreach_Project.zip
 # kalcode local cache
 .kalcode/
 .aider*
+data/discovered_leads.json
