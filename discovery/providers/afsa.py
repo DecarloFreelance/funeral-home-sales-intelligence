@@ -1,4 +1,31 @@
 import re
+
+def _extract_province_improved(text):
+    """Extract province from address or text."""
+    if not text:
+        return None
+    text = str(text).upper().strip()
+    pattern1 = r'\b([A-Z]{2})\s+[A-Z]\d[A-Z]\s*\d[A-Z]\d\b'
+    match = re.search(pattern1, text)
+    if match:
+        return match.group(1)
+    pattern2 = r',\s*([A-Z]{2})\b'
+    match = re.search(pattern2, text)
+    if match:
+        return match.group(1)
+    province_names = {
+        'ALBERTA': 'AB', 'BRITISH COLUMBIA': 'BC', 'MANITOBA': 'MB',
+        'NEW BRUNSWICK': 'NB', 'NEWFOUNDLAND': 'NL', 'NOVA SCOTIA': 'NS',
+        'NORTHWEST TERRITORIES': 'NT', 'NUNAVUT': 'NU', 'ONTARIO': 'ON',
+        'PRINCE EDWARD ISLAND': 'PE', 'QUEBEC': 'QC', 'SASKATCHEWAN': 'SK',
+        'YUKON': 'YT'
+    }
+    for name, code in province_names.items():
+        if name in text:
+            return code
+    return None
+
+
 import time
 from typing import Dict, List
 from urllib.parse import urljoin, urlsplit
@@ -69,11 +96,13 @@ def parse_member_page(html: str, source_url: str) -> List[Dict[str, str]]:
                 break
 
         email_match = EMAIL_PATTERN.search(description.get_text(" ", strip=True))
+        # Extract province from address or city
+        province = _extract_province_improved(address) or _extract_province_improved(city) or "AB"
         records.append({
             "company": company,
             "website": website,
             "city": city,
-            "province": "AB",
+            "province": province,
             "country": "Canada",
             "phone": _label_value(description, "Phone"),
             "email": email_match.group(0) if email_match else "",

@@ -1,8 +1,36 @@
+import re
 import time
 from typing import Dict, List
 from urllib.parse import urlencode, urljoin
 
 import requests
+
+def _extract_province_improved(text):
+    """Extract province from address or text."""
+    if not text:
+        return None
+    text = str(text).upper().strip()
+    pattern1 = r'\b([A-Z]{2})\s+[A-Z]\d[A-Z]\s*\d[A-Z]\d\b'
+    match = re.search(pattern1, text)
+    if match:
+        return match.group(1)
+    pattern2 = r',\s*([A-Z]{2})\b'
+    match = re.search(pattern2, text)
+    if match:
+        return match.group(1)
+    province_names = {
+        'ALBERTA': 'AB', 'BRITISH COLUMBIA': 'BC', 'MANITOBA': 'MB',
+        'NEW BRUNSWICK': 'NB', 'NEWFOUNDLAND': 'NL', 'NOVA SCOTIA': 'NS',
+        'NORTHWEST TERRITORIES': 'NT', 'NUNAVUT': 'NU', 'ONTARIO': 'ON',
+        'PRINCE EDWARD ISLAND': 'PE', 'QUEBEC': 'QC', 'SASKATCHEWAN': 'SK',
+        'YUKON': 'YT'
+    }
+    for name, code in province_names.items():
+        if name in text:
+            return code
+    return None
+
+
 from bs4 import BeautifulSoup, SoupStrainer
 
 
@@ -21,6 +49,7 @@ def directory_url(country="Canada"):
 def _text(container, selector):
     node = container.select_one(selector)
     return node.get_text(" ", strip=True) if node else ""
+
 
 
 def parse_results(html: str, source_url: str) -> List[Dict[str, str]]:
@@ -50,11 +79,19 @@ def parse_results(html: str, source_url: str) -> List[Dict[str, str]]:
         ]
         contact_node = item.select_one(".ListingResults_Level3_MAINCONTACT")
         contact = contact_node.get_text(" ", strip=True) if contact_node else ""
+        
+        # Extract province from region or address
+        province = _text(item, '[itemprop="region"]')
+        if not province:
+            address = _text(item, '[itemprop="street-address"]')
+            if address:
+                province = _extract_province_improved(address)
+        
         records.append({
             "company": company,
             "website": visit["href"].strip() if visit else "",
             "city": _text(item, '[itemprop="locality"]'),
-            "province": _text(item, '[itemprop="region"]'),
+            "province": province,
             "country": "Canada" if "Canada" in item.get_text(" ", strip=True) else "United States",
             "phone": _text(item, ".ListingResults_Level3_PHONE1"),
             "email": "",
@@ -67,8 +104,6 @@ def parse_results(html: str, source_url: str) -> List[Dict[str, str]]:
             "source_url": listing_url,
         })
     return records
-
-
 def is_target_provider(record):
     categories = {value.strip() for value in record.get("category", "").split(",")}
     return bool(categories & TARGET_CATEGORIES)
