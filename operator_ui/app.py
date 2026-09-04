@@ -21,6 +21,7 @@ from discovery.crawler import _canonical_page_url
 from operator_ui.outreach_actions import approve_draft
 from operator_ui.repository import OperatorRepository
 from operator_ui.auth import AuthStore
+from operator_ui.data_loader import load_data
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -732,7 +733,11 @@ def create_app(config=None):
         })
 
 
-        return app
+            from operator_ui.debug_routes import register_debug_routes
+    register_debug_routes(app)
+    return app
+        from operator_ui.debug_routes import register_debug_routes
+    register_debug_routes(app)
     return app
 if __name__ == "__main__":
     create_app().run(host="127.0.0.1", port=5000, debug=False)
