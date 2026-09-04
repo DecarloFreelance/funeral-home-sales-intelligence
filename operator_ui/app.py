@@ -9,7 +9,7 @@ import os
 import sqlite3
 from urllib.parse import urlsplit
 
-from flask import Flask, Response, abort, flash, redirect, render_template, request, session, url_for
+from flask import Flask, Response, abort, flash, jsonify, redirect, render_template, request, session, url_for
 
 from crm.action_queue import create_action
 from crm.execution import complete_action, start_action
