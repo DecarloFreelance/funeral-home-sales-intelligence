@@ -13459,48 +13459,39 @@
     "provinces": [
       {
         "code": "NS",
-        "count": 88,
-        "name": "NS"
+        "count": 88
       },
       {
         "code": "ON",
-        "count": 556,
-        "name": "ON"
+        "count": 556
       },
       {
         "code": "MB",
-        "count": 88,
-        "name": "MB"
+        "count": 88
       },
       {
         "code": "NB",
-        "count": 52,
-        "name": "NB"
+        "count": 52
       },
       {
         "code": "SK",
-        "count": 90,
-        "name": "SK"
+        "count": 90
       },
       {
         "code": "NL",
-        "count": 80,
-        "name": "NL"
+        "count": 80
       },
       {
         "code": "YT",
-        "count": 1,
-        "name": "YT"
+        "count": 1
       },
       {
         "code": "NT",
-        "count": 4,
-        "name": "NT"
+        "count": 4
       },
       {
         "code": "NU",
-        "count": 2,
-        "name": "NU"
+        "count": 2
       }
     ],
     "province_counts": {
@@ -13513,7 +13504,6 @@
       "YT": 1,
       "NT": 4,
       "NU": 2
-    },
-    "total": 961
+    }
   }
 }
