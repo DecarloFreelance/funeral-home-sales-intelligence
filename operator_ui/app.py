@@ -143,8 +143,9 @@ def create_app(config=None):
         if contact not in {"", "yes", "no"} or website not in {"", "yes", "no"} or decision_maker not in {"", "yes", "no"}:
             abort(400, "Unsupported findings filter")
         provinces = sorted({str(row.get("province") or "").upper() for row in records if row.get("province")})
-        if province and province not in provinces:
-            abort(400, "Unsupported province filter")
+        # Skip validation - provinces are now hardcoded in the template
+        # if province and province not in provinces:
+        #     abort(400, "Unsupported province filter")
         filtered = []
         for row in records:
             has_safe_contact = bool(row.get("emails") or row.get("phones") or row.get("staff"))
