@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "tasks": {
+    "GAP-2026-066": {
+      "status": "COMPLETED",
+      "completed_at": "2026-09-04T10:58:16Z",
+      "depends_on": [],
+      "id": "GAP-2026-066"
+    },
+    "GAP-2026-067": {
+      "status": "COMPLETED",
+      "completed_at": "2026-09-04T11:02:00Z",
+      "depends_on": [
+        "GAP-2026-066"
+      ],
+      "id": "GAP-2026-067"
+    }
+  }
+}
