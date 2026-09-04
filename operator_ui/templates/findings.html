@@ -18,7 +18,22 @@
     <label class="search-label">Search
       <input name="q" type="search" value="{{ filters.q }}" placeholder="Company, city, province, ID…" autocomplete="off">
     </label>
-    <label>Province<select name="province"><option value="">All provinces</option>{% for province in provinces %}<option value="{{ province }}"{% if filters.province == province %} selected{% endif %}>{{ province }}</option>{% endfor %}</select></label>
+    <label>Province<select name="province">
+<option value="">All provinces</option>
+<option value="AB" {% if filters.province == 'AB' %}selected{% endif %}>AB</option>
+<option value="BC" {% if filters.province == 'BC' %}selected{% endif %}>BC</option>
+<option value="MB" {% if filters.province == 'MB' %}selected{% endif %}>MB</option>
+<option value="NB" {% if filters.province == 'NB' %}selected{% endif %}>NB</option>
+<option value="NL" {% if filters.province == 'NL' %}selected{% endif %}>NL</option>
+<option value="NS" {% if filters.province == 'NS' %}selected{% endif %}>NS</option>
+<option value="NT" {% if filters.province == 'NT' %}selected{% endif %}>NT</option>
+<option value="NU" {% if filters.province == 'NU' %}selected{% endif %}>NU</option>
+<option value="ON" {% if filters.province == 'ON' %}selected{% endif %}>ON</option>
+<option value="PE" {% if filters.province == 'PE' %}selected{% endif %}>PE</option>
+<option value="QC" {% if filters.province == 'QC' %}selected{% endif %}>QC</option>
+<option value="SK" {% if filters.province == 'SK' %}selected{% endif %}>SK</option>
+<option value="YT" {% if filters.province == 'YT' %}selected{% endif %}>YT</option>
+</select></label>
     <label>Safe contact<select name="contact"><option value="">Any</option><option value="yes"{% if filters.contact == 'yes' %} selected{% endif %}>Has contact</option><option value="no"{% if filters.contact == 'no' %} selected{% endif %}>No contact</option></select></label>
     <label>Website<select name="website"><option value="">Any</option><option value="yes"{% if filters.website == 'yes' %} selected{% endif %}>Has website</option><option value="no"{% if filters.website == 'no' %} selected{% endif %}>No website</option></select></label>
     <label>Decision maker<select name="decision_maker"><option value="">Any</option><option value="yes"{% if filters.decision_maker == 'yes' %} selected{% endif %}>Has decision maker</option><option value="no"{% if filters.decision_maker == 'no' %} selected{% endif %}>No decision maker</option></select></label>
