@@ -624,7 +624,18 @@ def create_app(config=None):
         flash(f"Completed action for {domain}.")
         return redirect(url_for("crm_actions"))
 
-    
+    def find_data_file():
+        """Find the data file with fallback paths."""
+        possible_paths = [
+            Path(app.config['DATA_ROOT']) / 'ui_data_streamlined.json',
+            Path('data/ui_data_streamlined.json'),
+            Path('ui_data_streamlined.json'),
+            Path(app.config['DATA_ROOT']).parent / 'ui_data_streamlined.json',
+        ]
+        for path in possible_paths:
+            if path.exists():
+                return path
+        return None
 
     @app.route('/api/leads/enriched')
     def api_enriched_leads():
@@ -633,9 +644,8 @@ def create_app(config=None):
         import os
         from pathlib import Path
         
-        data_file = Path(app.config['DATA_ROOT']) / 'ui_data_streamlined.json'
-        
-        if not data_file.exists():
+        data_file = find_data_file()
+        if not data_file:
             return jsonify({'error': 'Data file not found'}), 404
         
         with open(data_file, 'r') as f:
@@ -686,9 +696,8 @@ def create_app(config=None):
         import json
         from pathlib import Path
         
-        data_file = Path(app.config['DATA_ROOT']) / 'ui_data_streamlined.json'
-        
-        if not data_file.exists():
+        data_file = find_data_file()
+        if not data_file:
             return jsonify({'error': 'Data file not found'}), 404
         
         with open(data_file, 'r') as f:
@@ -706,9 +715,8 @@ def create_app(config=None):
         import json
         from pathlib import Path
         
-        data_file = Path(app.config['DATA_ROOT']) / 'ui_data_streamlined.json'
-        
-        if not data_file.exists():
+        data_file = find_data_file()
+        if not data_file:
             return jsonify({'error': 'Data file not found'}), 404
         
         with open(data_file, 'r') as f:
