@@ -13456,8 +13456,54 @@
     }
   ],
   "stats": {
-    "total": 961,
-    "by_province": {
+    "provinces": [
+      {
+        "code": "NS",
+        "count": 88,
+        "name": "NS"
+      },
+      {
+        "code": "ON",
+        "count": 556,
+        "name": "ON"
+      },
+      {
+        "code": "MB",
+        "count": 88,
+        "name": "MB"
+      },
+      {
+        "code": "NB",
+        "count": 52,
+        "name": "NB"
+      },
+      {
+        "code": "SK",
+        "count": 90,
+        "name": "SK"
+      },
+      {
+        "code": "NL",
+        "count": 80,
+        "name": "NL"
+      },
+      {
+        "code": "YT",
+        "count": 1,
+        "name": "YT"
+      },
+      {
+        "code": "NT",
+        "count": 4,
+        "name": "NT"
+      },
+      {
+        "code": "NU",
+        "count": 2,
+        "name": "NU"
+      }
+    ],
+    "province_counts": {
       "NS": 88,
       "ON": 556,
       "MB": 88,
@@ -13468,7 +13514,6 @@
       "NT": 4,
       "NU": 2
     },
-    "nt_count": 4,
-    "nu_count": 2
+    "total": 961
   }
 }
