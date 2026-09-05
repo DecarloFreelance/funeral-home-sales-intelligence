@@ -217,22 +217,50 @@
       "company": "Affordable Burial and Cremation",
       "city": "Hamilton",
       "province": "ON",
-      "website": "",
-      "website_status": "no_signal",
+      "website": "https://www.affordableburialandcremation.ca/",
+      "website_status": "verified",
       "record_type": "Branch",
-      "founded_year": "",
-      "ownership_type": "",
+      "founded_year": 2003,
+      "ownership_type": "Independent",
       "service_area": "",
-      "service_offering": "",
+      "service_offering": "Direct Cremation; Burial Services; Funeral Services; Memorial Services; Embalming; Visitations; Catered Receptions; Pre-Planning; Grief Support",
       "languages_offered": "",
-      "parent_organization": "",
-      "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
+      "parent_organization": "2020733 Ontario Limited",
+      "staff": [
+        {
+          "name": "Mindy Earle",
+          "title": "Managing Funeral Director"
+        },
+        {
+          "name": "Hannah Beckett",
+          "title": "Funeral Director"
+        },
+        {
+          "name": "Crystal Howell",
+          "title": "Licensed Funeral Pre-Planner, Administrative Assistant, and Funeral Director Intern"
+        },
+        {
+          "name": "Ariel Varga",
+          "title": "Funeral Director"
+        },
+        {
+          "name": "Cathy Stargratt",
+          "title": "Funeral Director Assistant"
+        }
+      ],
+      "source": "https://www.affordableburialandcremation.ca/",
       "emails": [],
-      "phones": [],
-      "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
+      "phones": [
+        "(905) 389-2998"
+      ],
+      "decision_makers": [
+        {
+          "name": "Mindy Earle",
+          "title": "Managing Funeral Director"
+        }
+      ],
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 10,
       "directory_record_id": "ON-0010"
     },
@@ -240,22 +268,26 @@
       "company": "Affordable Cremation Options Ltd.",
       "city": "Mississauga",
       "province": "ON",
-      "website": "",
-      "website_status": "no_signal",
+      "website": "https://www.affordablecremationoptions.net/",
+      "website_status": "verified",
       "record_type": "Branch",
       "founded_year": "",
       "ownership_type": "",
       "service_area": "",
-      "service_offering": "",
+      "service_offering": "Direct Cremation; Cremation Services; Funeral Services; Embalming; Memorial Services; Visitations",
       "languages_offered": "",
       "parent_organization": "",
       "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
+      "source": "official site: affordablecremationoptions.net",
+      "emails": [
+        "info@affordablecremationoptions.net"
+      ],
+      "phones": [
+        "(905) 566-1937"
+      ],
       "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 10,
       "directory_record_id": "ON-0011"
     },
@@ -263,22 +295,24 @@
       "company": "Affordable Funeral Services Inc.",
       "city": "Mississauga",
       "province": "ON",
-      "website": "",
-      "website_status": "no_signal",
+      "website": "https://affordablefuneralservices.ca/",
+      "website_status": "verified",
       "record_type": "Branch",
       "founded_year": "",
       "ownership_type": "",
       "service_area": "",
-      "service_offering": "",
+      "service_offering": "Funeral Services; Cremation Services; Memorial Services",
       "languages_offered": "",
       "parent_organization": "",
       "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
+      "source": "official site: affordablefuneralservices.ca",
       "emails": [],
-      "phones": [],
+      "phones": [
+        "(416) 270-2436"
+      ],
       "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 10,
       "directory_record_id": "ON-0012"
     },
@@ -34868,7 +34902,7 @@
       "directory_record_id": "ON-1302"
     }
   ],
-  "version": "V23",
+  "version": "V26",
   "generated": "2026-09-04",
   "summary": {
     "total_records": 1302,
@@ -34887,6 +34921,6 @@
       "QC": 49,
       "PE": 1
     },
-    "version": "V23"
+    "version": "V26"
   }
 }
