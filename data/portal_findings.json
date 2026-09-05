@@ -4,22 +4,24 @@
       "company": "A.H. BROWN FUNERAL SERVICES",
       "city": "SPRINGHILL",
       "province": "NS",
-      "website": "",
-      "website_status": "no_signal",
+      "website": "https://www.brownsfuneralhome.com/",
+      "website_status": "verified",
       "record_type": "Branch",
       "founded_year": "",
       "ownership_type": "",
       "service_area": "",
-      "service_offering": "",
+      "service_offering": "Complete Funeral and Cremation Services; In House Crematorium; Preplanning; Webcasting of Service",
       "languages_offered": "",
       "parent_organization": "",
       "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
+      "source": "https://www.brownsfuneralhome.com/",
       "emails": [],
-      "phones": [],
+      "phones": [
+        "(902) 597-2361"
+      ],
       "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 5,
       "directory_record_id": "NS-0001"
     },
@@ -34862,7 +34864,7 @@
       "directory_record_id": "ON-1302"
     }
   ],
-  "version": "V21",
+  "version": "V22",
   "generated": "2026-09-04",
   "summary": {
     "total_records": 1302,
@@ -34880,6 +34882,7 @@
       "BC": 50,
       "QC": 49,
       "PE": 1
-    }
+    },
+    "version": "V22"
   }
 }
