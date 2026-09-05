@@ -98,22 +98,26 @@
       "company": "A. Roy Miller Funeral Chapel",
       "city": "Toronto",
       "province": "ON",
-      "website": "",
-      "website_status": "no_signal",
+      "website": "https://newediukfuneralhome.com/A_Roy_Miller_Chapel_SM.html",
+      "website_status": "verified",
       "record_type": "Branch",
       "founded_year": "",
       "ownership_type": "",
       "service_area": "",
-      "service_offering": "",
+      "service_offering": "Funeral Services; Cremation Services; Burial and Entombment; Pre-Planning; Custom Receptions and Gatherings; Bereavement Services",
       "languages_offered": "",
-      "parent_organization": "",
+      "parent_organization": "Newediuk Funeral Home",
       "staff": [],
       "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
+      "emails": [
+        "infoaroymiller@newediukfuneralhome.com"
+      ],
+      "phones": [
+        "(416) 656-3585"
+      ],
       "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 10,
       "directory_record_id": "ON-0005"
     },
@@ -34864,7 +34868,7 @@
       "directory_record_id": "ON-1302"
     }
   ],
-  "version": "V22",
+  "version": "V23",
   "generated": "2026-09-04",
   "summary": {
     "total_records": 1302,
@@ -34883,6 +34887,6 @@
       "QC": 49,
       "PE": 1
     },
-    "version": "V22"
+    "version": "V23"
   }
 }
