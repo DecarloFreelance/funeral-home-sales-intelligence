@@ -317,75 +317,6 @@
       "directory_record_id": "ON-0012"
     },
     {
-      "company": "Aftercare Cremation & Burial Service Limited",
-      "city": "Toronto",
-      "province": "ON",
-      "website": "",
-      "website_status": "no_signal",
-      "record_type": "Branch",
-      "founded_year": "",
-      "ownership_type": "",
-      "service_area": "",
-      "service_offering": "",
-      "languages_offered": "",
-      "parent_organization": "",
-      "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
-      "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
-      "score": 10,
-      "directory_record_id": "ON-0013"
-    },
-    {
-      "company": "Ainsworth Funeral Home",
-      "city": "Wellington",
-      "province": "ON",
-      "website": "",
-      "website_status": "no_signal",
-      "record_type": "Branch",
-      "founded_year": "",
-      "ownership_type": "",
-      "service_area": "",
-      "service_offering": "",
-      "languages_offered": "",
-      "parent_organization": "",
-      "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
-      "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
-      "score": 10,
-      "directory_record_id": "ON-0014"
-    },
-    {
-      "company": "Ajax Crematorium and Visitation Centre Inc.",
-      "city": "Ajax",
-      "province": "ON",
-      "website": "",
-      "website_status": "no_signal",
-      "record_type": "Branch",
-      "founded_year": "",
-      "ownership_type": "",
-      "service_area": "",
-      "service_offering": "",
-      "languages_offered": "",
-      "parent_organization": "",
-      "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
-      "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
-      "score": 10,
-      "directory_record_id": "ON-0015"
-    },
-    {
       "company": "Alan R. Barker Funeral Home & Chapel Inc.",
       "city": "Carleton Place",
       "province": "ON",
@@ -407,29 +338,6 @@
       "enrichment_status": "pending",
       "score": 30,
       "directory_record_id": "ON-0016"
-    },
-    {
-      "company": "Albert County Funeral Home",
-      "city": "Hopewell Cape",
-      "province": "NB",
-      "website": "",
-      "website_status": "no_signal",
-      "record_type": "Branch",
-      "founded_year": "",
-      "ownership_type": "",
-      "service_area": "",
-      "service_offering": "",
-      "languages_offered": "",
-      "parent_organization": "",
-      "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
-      "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
-      "score": 5,
-      "directory_record_id": "NB-0017"
     },
     {
       "company": "Alexander & Houle Funeral Home Ltd.",
@@ -547,29 +455,6 @@
       "directory_record_id": "ON-0022"
     },
     {
-      "company": "Alternatives Funeral & Cremation Services",
-      "city": "Regina",
-      "province": "SK",
-      "website": "",
-      "website_status": "no_signal",
-      "record_type": "Branch",
-      "founded_year": "",
-      "ownership_type": "",
-      "service_area": "",
-      "service_offering": "",
-      "languages_offered": "",
-      "parent_organization": "",
-      "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
-      "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
-      "score": 5,
-      "directory_record_id": "SK-0023"
-    },
-    {
       "company": "Anderson Family Funeral Home",
       "city": "Ashern",
       "province": "MB",
@@ -591,98 +476,6 @@
       "enrichment_status": "pending",
       "score": 25,
       "directory_record_id": "MB-0024"
-    },
-    {
-      "company": "Anderson Funeral Home & Cremation Centre",
-      "city": "Windsor",
-      "province": "ON",
-      "website": "",
-      "website_status": "no_signal",
-      "record_type": "Branch",
-      "founded_year": "",
-      "ownership_type": "",
-      "service_area": "",
-      "service_offering": "",
-      "languages_offered": "",
-      "parent_organization": "",
-      "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
-      "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
-      "score": 10,
-      "directory_record_id": "ON-0025"
-    },
-    {
-      "company": "Andrew L. Hodges Funeral Home Ltd.",
-      "city": "St. Marys",
-      "province": "ON",
-      "website": "",
-      "website_status": "no_signal",
-      "record_type": "Branch",
-      "founded_year": "",
-      "ownership_type": "",
-      "service_area": "",
-      "service_offering": "",
-      "languages_offered": "",
-      "parent_organization": "",
-      "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
-      "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
-      "score": 10,
-      "directory_record_id": "ON-0026"
-    },
-    {
-      "company": "Andrews Community Funeral Centre",
-      "city": "Brampton",
-      "province": "ON",
-      "website": "",
-      "website_status": "no_signal",
-      "record_type": "Branch",
-      "founded_year": "",
-      "ownership_type": "",
-      "service_area": "",
-      "service_offering": "",
-      "languages_offered": "",
-      "parent_organization": "",
-      "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
-      "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
-      "score": 10,
-      "directory_record_id": "ON-0027"
-    },
-    {
-      "company": "ARIMATHEA FUNERAL CO-OPERATIVE LIMITED",
-      "city": "UPPER MUSQUODOBOIT",
-      "province": "NS",
-      "website": "",
-      "website_status": "no_signal",
-      "record_type": "Branch",
-      "founded_year": "",
-      "ownership_type": "",
-      "service_area": "",
-      "service_offering": "",
-      "languages_offered": "",
-      "parent_organization": "",
-      "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
-      "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
-      "score": 5,
-      "directory_record_id": "NS-0028"
     },
     {
       "company": "Armstrong Funeral Home Limited",
@@ -34905,22 +34698,60 @@
       "company": "Aftercare Cremation & Burial Service Limited",
       "city": "Toronto",
       "province": "ON",
-      "website": "",
-      "website_status": "no_signal",
+      "website": "https://www.aftercare.org/",
+      "website_status": "verified",
       "record_type": "Branch",
-      "founded_year": "",
+      "founded_year": 1995,
       "ownership_type": "",
       "service_area": "",
-      "service_offering": "",
+      "service_offering": "Direct Cremation; Burial Services; Funeral Services; Pre-Planning; Grief Support",
       "languages_offered": "",
       "parent_organization": "",
-      "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
-      "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
+      "staff": [
+        {
+          "name": "Laura Aliberti",
+          "title": "Licensed Funeral Director - Class 1"
+        },
+        {
+          "name": "Alfie Beasley",
+          "title": "Funeral Directors Assistant"
+        },
+        {
+          "name": "Joanne Becker",
+          "title": "Licensed Funeral Director - Class 1"
+        },
+        {
+          "name": "Terri Dudas",
+          "title": "Administrator"
+        },
+        {
+          "name": "Douglas James",
+          "title": "Funeral Directors Assistant"
+        },
+        {
+          "name": "Douglas McCann",
+          "title": "Licensed Funeral Director - Class 1; Owner & Managing Director, Aftercare Toronto"
+        },
+        {
+          "name": "Lisa McEllistrum",
+          "title": "Licensed Funeral Director - Class 1"
+        }
+      ],
+      "source": "official site: aftercare.org",
+      "emails": [
+        "info@aftercare.org"
+      ],
+      "phones": [
+        "(416) 440-8878"
+      ],
+      "decision_makers": [
+        {
+          "name": "Douglas McCann",
+          "title": "Owner & Managing Director"
+        }
+      ],
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 10,
       "directory_record_id": "ON-0013"
     },
@@ -34928,22 +34759,36 @@
       "company": "Ainsworth Funeral Home",
       "city": "Wellington",
       "province": "ON",
-      "website": "",
-      "website_status": "no_signal",
+      "website": "https://www.ainsworthfuneralhome.com/",
+      "website_status": "verified",
       "record_type": "Branch",
-      "founded_year": "",
-      "ownership_type": "",
+      "founded_year": 1910,
+      "ownership_type": "Family Owned and Operated",
       "service_area": "",
-      "service_offering": "",
+      "service_offering": "Traditional Burial; Cremation; Memorial Services; Pre-Planning; Caskets and Urns",
       "languages_offered": "",
-      "parent_organization": "",
-      "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
-      "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
+      "parent_organization": "Garry Lavender Funeral Home & Furniture, Ltd.",
+      "staff": [
+        {
+          "name": "Tod Lavender",
+          "title": "Owner / Funeral Director"
+        }
+      ],
+      "source": "official site: ainsworthfuneralhome.com",
+      "emails": [
+        "tlavender@ainsworthfuneralhome.com"
+      ],
+      "phones": [
+        "613.399.3177"
+      ],
+      "decision_makers": [
+        {
+          "name": "Tod Lavender",
+          "title": "Owner / Funeral Director"
+        }
+      ],
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 10,
       "directory_record_id": "ON-0014"
     },
@@ -34951,22 +34796,40 @@
       "company": "Ajax Crematorium and Visitation Centre Inc.",
       "city": "Ajax",
       "province": "ON",
-      "website": "",
-      "website_status": "no_signal",
+      "website": "https://www.acvc.info/",
+      "website_status": "verified",
       "record_type": "Branch",
-      "founded_year": "",
-      "ownership_type": "",
+      "founded_year": 2016,
+      "ownership_type": "Independent / Sole Proprietorship",
       "service_area": "",
-      "service_offering": "",
+      "service_offering": "Traditional Funeral Services; Burial; Cremation; Direct Cremation; Memorial Services; Celebrations of Life; Pre-Planning; Caskets and Urns; Culturally Specific Funeral Services; Veteran Services; Pet Cremation",
       "languages_offered": "",
-      "parent_organization": "",
-      "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
-      "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
+      "parent_organization": null,
+      "staff": [
+        {
+          "name": "Puneet Aujla",
+          "title": "Owner / Chief Executive Officer"
+        },
+        {
+          "name": "Justin Carmichael",
+          "title": "Senior Funeral Director"
+        }
+      ],
+      "source": "official site: acvc.info",
+      "emails": [
+        "info@acvc.info"
+      ],
+      "phones": [
+        "289-372-3300"
+      ],
+      "decision_makers": [
+        {
+          "name": "Puneet Aujla",
+          "title": "Owner / Chief Executive Officer"
+        }
+      ],
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 10,
       "directory_record_id": "ON-0015"
     },
@@ -34974,22 +34837,40 @@
       "company": "Albert County Funeral Home",
       "city": "Hopewell Cape",
       "province": "NB",
-      "website": "",
-      "website_status": "no_signal",
+      "website": "https://www.albertcountyfh.com/",
+      "website_status": "verified",
       "record_type": "Branch",
-      "founded_year": "",
-      "ownership_type": "",
+      "founded_year": 1921,
+      "ownership_type": "Family Owned and Operated",
       "service_area": "",
-      "service_offering": "",
+      "service_offering": "Funeral Services; Visitation; Cremation Services; Pre-Planning; Cemetery Arrangements; Caskets and Urns; Tombstones and Monuments; Funeral Flowers; Online Guest Registry; Online Condolences",
       "languages_offered": "",
-      "parent_organization": "",
-      "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
-      "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
+      "parent_organization": null,
+      "staff": [
+        {
+          "name": "Lisa Henderson",
+          "title": "Licensed Embalmer"
+        },
+        {
+          "name": "Casey Duffy",
+          "title": "Licensed Embalmer"
+        }
+      ],
+      "source": "official site and NB Funeral Directors and Embalmers Association",
+      "emails": [
+        "info@albertcountyfh.com"
+      ],
+      "phones": [
+        "506-734-2780"
+      ],
+      "decision_makers": [
+        {
+          "name": "Lisa Henderson",
+          "title": "Licensed Embalmer / Funeral Home Contact"
+        }
+      ],
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 5,
       "directory_record_id": "NB-0017"
     },
@@ -34997,22 +34878,45 @@
       "company": "Alternatives Funeral & Cremation Services",
       "city": "Regina",
       "province": "SK",
-      "website": "",
-      "website_status": "no_signal",
+      "website": "https://www.myalternatives.ca/",
+      "website_status": "verified",
       "record_type": "Branch",
-      "founded_year": "",
-      "ownership_type": "",
+      "founded_year": 1992,
+      "ownership_type": "Canadian Owned and Operated",
       "service_area": "",
-      "service_offering": "",
+      "service_offering": "Direct Cremation; Funeral Services; Memorial Services; Celebration of Life; Graveside Services; Direct Burial; Pre-Planning",
       "languages_offered": "",
-      "parent_organization": "",
-      "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
-      "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
+      "parent_organization": null,
+      "staff": [
+        {
+          "name": "Elden Conley",
+          "title": "Owner / Licensed Funeral Director"
+        },
+        {
+          "name": "Heather Scherle",
+          "title": "Assistant Manager / Licensed Funeral Director / Pre-planning Specialist"
+        },
+        {
+          "name": "Madison Webster",
+          "title": "Licensed Funeral Director"
+        }
+      ],
+      "source": "Official Alternatives Funeral & Cremation Services site; Funeral and Cremation Services Council of Saskatchewan",
+      "emails": [
+        "regina@myalternatives.ca"
+      ],
+      "phones": [
+        "(306) 757-2327",
+        "(888) 760-2002"
+      ],
+      "decision_makers": [
+        {
+          "name": "Elden Conley",
+          "title": "Owner / Licensed Funeral Director"
+        }
+      ],
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 5,
       "directory_record_id": "SK-0023"
     },
@@ -35020,22 +34924,40 @@
       "company": "Anderson Funeral Home & Cremation Centre",
       "city": "Windsor",
       "province": "ON",
-      "website": "",
-      "website_status": "no_signal",
+      "website": "https://www.andersonfuneralhomewindsor.com/",
+      "website_status": "verified",
       "record_type": "Branch",
-      "founded_year": "",
-      "ownership_type": "",
+      "founded_year": 1920,
+      "ownership_type": "Corporate / Dignity Memorial",
       "service_area": "",
-      "service_offering": "",
-      "languages_offered": "",
-      "parent_organization": "",
-      "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
-      "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
+      "service_offering": "Traditional Burial; Funeral Services; Cremation Services; Memorial Services; Celebrations of Life; Pre-Planning; Caskets and Urns; Remembrance Jewelry; Tribute Video Production; Catered Events; Event Planning",
+      "languages_offered": [
+        "English",
+        "French"
+      ],
+      "parent_organization": "Service Corporation International (Canada) ULC",
+      "staff": [
+        {
+          "name": "Craig Erickson",
+          "title": "Manager"
+        }
+      ],
+      "source": "Official Dignity Memorial site; Cremation Association of North America; Better Business Bureau",
+      "emails": [
+        "Loc3782@dignitymemorial.com"
+      ],
+      "phones": [
+        "519-254-3223",
+        "226-400-1353"
+      ],
+      "decision_makers": [
+        {
+          "name": "Craig Erickson",
+          "title": "Manager"
+        }
+      ],
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 10,
       "directory_record_id": "ON-0025"
     },
@@ -35043,22 +34965,56 @@
       "company": "Andrew L. Hodges Funeral Home Ltd.",
       "city": "St. Marys",
       "province": "ON",
-      "website": "",
-      "website_status": "no_signal",
+      "website": "https://hodgesfuneralhome.ca/",
+      "website_status": "verified",
       "record_type": "Branch",
-      "founded_year": "",
-      "ownership_type": "",
+      "founded_year": 1897,
+      "ownership_type": "Locally Owned and Operated",
       "service_area": "",
-      "service_offering": "",
+      "service_offering": "Funeral Services; Basic Cremation; Traditional Funeral Services; Memorial Services; Graveside Services; Pre-Planning; Repatriation; Receiving Services; Donation to Science",
       "languages_offered": "",
-      "parent_organization": "",
-      "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
-      "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
+      "parent_organization": null,
+      "staff": [
+        {
+          "name": "Andrew Hodges",
+          "title": "Licensed Funeral Director / Owner"
+        },
+        {
+          "name": "Andrea Macko",
+          "title": "Co-owner / Administrator / Marketing Manager"
+        },
+        {
+          "name": "Jamie Hahn",
+          "title": "Part-time Funeral Home Staff"
+        },
+        {
+          "name": "Gary Mallalieu",
+          "title": "Part-time Funeral Assistant / Certified Funeral Celebrant"
+        },
+        {
+          "name": "Jeff F. Sager",
+          "title": "Part-time Funeral Home Staff"
+        }
+      ],
+      "source": "Official Andrew L. Hodges Funeral Home site",
+      "emails": [
+        "andrew@hodgesfuneralhome.ca"
+      ],
+      "phones": [
+        "(519) 284-2820"
+      ],
+      "decision_makers": [
+        {
+          "name": "Andrew Hodges",
+          "title": "Licensed Funeral Director / Owner"
+        },
+        {
+          "name": "Andrea Macko",
+          "title": "Co-owner / Administrator / Marketing Manager"
+        }
+      ],
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 10,
       "directory_record_id": "ON-0026"
     },
@@ -35066,22 +35022,45 @@
       "company": "Andrews Community Funeral Centre",
       "city": "Brampton",
       "province": "ON",
-      "website": "",
-      "website_status": "no_signal",
+      "website": "https://www.dignitymemorial.com/en-ca/funeral-homes/ontario/brampton/andrews-community-funeral-centre-bramalea-chapel/3163",
+      "website_status": "verified",
       "record_type": "Branch",
-      "founded_year": "",
-      "ownership_type": "",
+      "founded_year": 1995,
+      "ownership_type": "Corporate / Dignity Memorial",
       "service_area": "",
-      "service_offering": "",
-      "languages_offered": "",
-      "parent_organization": "",
-      "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
+      "service_offering": "Traditional Burial; Funeral Services; Cremation Services; Memorial Services; Celebrations of Life; Pre-Planning; Caskets and Urns; Cremation Remembrance Jewelry; Tribute Video Production; Catered Events; Event Planning; Home or Mail Delivery of Ashes; Scattering Assistance",
+      "languages_offered": [
+        "Vietnamese",
+        "Russian"
+      ],
+      "parent_organization": "Service Corporation International (Canada) ULC",
+      "staff": [
+        {
+          "name": "Geoffrey DaCosta Smith",
+          "title": "Funeral Director"
+        },
+        {
+          "name": "Joseph Angelini",
+          "title": "Funeral Director"
+        }
+      ],
+      "source": "Official Dignity Memorial site",
       "emails": [],
-      "phones": [],
-      "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
+      "phones": [
+        "905-456-8190"
+      ],
+      "decision_makers": [
+        {
+          "name": "Geoffrey DaCosta Smith",
+          "title": "Funeral Director"
+        },
+        {
+          "name": "Joseph Angelini",
+          "title": "Funeral Director"
+        }
+      ],
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 10,
       "directory_record_id": "ON-0027"
     },
@@ -35089,22 +35068,40 @@
       "company": "ARIMATHEA FUNERAL CO-OPERATIVE LIMITED",
       "city": "UPPER MUSQUODOBOIT",
       "province": "NS",
-      "website": "",
-      "website_status": "no_signal",
+      "website": "https://www.arimatheafuneral.ca/",
+      "website_status": "verified",
       "record_type": "Branch",
-      "founded_year": "",
-      "ownership_type": "",
+      "founded_year": 1994,
+      "ownership_type": "Co-operative",
       "service_area": "",
-      "service_offering": "",
-      "languages_offered": "",
-      "parent_organization": "",
-      "staff": [],
-      "source": "canada_funeral_intelligence_directory_markdown",
+      "service_offering": "Casket Services; Cremation Services; Traditional Funeral Services; Memorial Services; Graveside Services; Caskets and Urns; Pre-Planning Consultations; Family Consultations",
+      "languages_offered": [
+        "English"
+      ],
+      "parent_organization": null,
+      "staff": [
+        {
+          "name": "Wanda Smith",
+          "title": "Manager / Funeral Director"
+        },
+        {
+          "name": "Trevor Smith",
+          "title": "Embalmer / Funeral Director"
+        }
+      ],
+      "source": "Official Arimathea Funeral Cooperative site; Nova Scotia Co-operative Council; Nova Scotia Board of Registration of Embalmers and Funeral Directors",
       "emails": [],
-      "phones": [],
-      "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
+      "phones": [
+        "902-758-5034"
+      ],
+      "decision_makers": [
+        {
+          "name": "Wanda Smith",
+          "title": "Manager / Funeral Director"
+        }
+      ],
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 5,
       "directory_record_id": "NS-0028"
     }
