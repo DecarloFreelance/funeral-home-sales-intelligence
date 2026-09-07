@@ -238,6 +238,7 @@ class PriorityPageCrawler:
                 continue
 
             response.raise_for_status()
+            soup = BeautifulSoup(response.text, "html.parser")
 
             final_url = _canonical_page_url(final_url)
             if not self._public_target(final_url):

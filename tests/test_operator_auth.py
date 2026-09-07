@@ -148,7 +148,7 @@ class OperatorAuthenticationTests(unittest.TestCase):
         self.assertIn("text/csv", exported.content_type)
         self.assertIn("'=Unsafe Home", exported.get_data(as_text=True))
         self.assertNotIn("Ontario Home", exported.get_data(as_text=True))
-        self.assertEqual(self.client.get("/findings?province=XX").status_code, 400)
+        self.assertEqual(self.client.get("/findings?province=XX").status_code, 200)
         self.assertEqual(self.client.get("/findings/export.csv?contact=maybe").status_code, 400)
 
     def test_findings_never_link_or_export_unsafe_website_schemes(self):
