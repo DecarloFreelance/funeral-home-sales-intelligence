@@ -6,43 +6,28 @@ from pathlib import Path
 from operator_ui.app import create_app
 from operator_ui.auth import AuthStore
 
+
+def _required(values, name):
+    value = str(values.get(name, "")).strip()
+    if not value:
+        raise RuntimeError(f"{name} is required")
+    return value
+
 def production_app(environment=None):
-    values = environment or os.environ
-    
-    # Use the complete dataset directly from the data directory
+    values = os.environ if environment is None else environment
     PROJECT_ROOT = Path(__file__).resolve().parents[1]
     DATA_ROOT = PROJECT_ROOT / "data"
-    
-    # Try multiple possible locations for portal_findings.json
-    possible_paths = [
-        DATA_ROOT / "portal_findings.json",
-        PROJECT_ROOT / "portal_findings.json",
-        DATA_ROOT / "raw" / "canada_funeral_directory_COMPLETE.json",
-        PROJECT_ROOT / "data" / "raw" / "canada_funeral_directory_COMPLETE.json",
-    ]
-    
-    findings_path = None
-    for path in possible_paths:
-        if path.exists():
-            findings_path = path
-            print(f"✅ Found portal findings at: {findings_path}")
-            break
-    
-    if not findings_path:
-        # Fallback to environment variable
-        env_path = Path(values.get("PORTAL_FINDINGS_PATH", ""))
-        if env_path.exists():
-            findings_path = env_path
-            print(f"✅ Found portal findings at: {findings_path}")
-        else:
-            raise RuntimeError(f"Portal findings file not found. Checked: {possible_paths}")
-    
-    # Initialize auth
-    auth_path = Path(values.get("OPERATOR_UI_AUTH_DB", "/tmp/operator_auth.sqlite"))
-    AuthStore(auth_path).initialize(values.get("OPERATOR_UI_BOOTSTRAP_PASSWORD", "funeral"))
+
+    findings_path = Path(_required(values, "PORTAL_FINDINGS_PATH"))
+    if not findings_path.is_file():
+        raise RuntimeError(f"Portal findings file not found: {findings_path}")
+    secret_key = _required(values, "OPERATOR_UI_SECRET_KEY")
+    bootstrap_password = _required(values, "OPERATOR_UI_BOOTSTRAP_PASSWORD")
+    auth_path = Path(values.get("OPERATOR_UI_AUTH_DB", str(PROJECT_ROOT / "instance" / "operator_auth.sqlite")))
+    AuthStore(auth_path).initialize(bootstrap_password)
     
     return create_app({
-        "SECRET_KEY": values.get("OPERATOR_UI_SECRET_KEY", "dev-secret-key"),
+        "SECRET_KEY": secret_key,
         "AUTH_DB": auth_path,
         "AUTH_REQUIRED": True,
         "FINDINGS_PATH": findings_path,
