@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
   "tasks": [
-    {"id": "GAP-2026-066", "task_version": 1, "title": "Verify LangSearch candidates", "owner": null, "declared_status": "VALIDATED", "depends_on": [], "requires_review": true, "audit_refs": []},
-    {"id": "GAP-2026-067", "task_version": 1, "title": "Crawl verified websites", "owner": null, "declared_status": "VALIDATED", "depends_on": ["GAP-2026-066"], "requires_review": true, "audit_refs": []},
+    {"id": "GAP-2026-066", "task_version": 1, "title": "Verify LangSearch candidates", "owner": null, "declared_status": "BLOCKED", "depends_on": [], "requires_review": true, "audit_refs": []},
+    {"id": "GAP-2026-067", "task_version": 1, "title": "Crawl verified websites", "owner": null, "declared_status": "BLOCKED", "depends_on": ["GAP-2026-066"], "requires_review": true, "audit_refs": []},
     {"id": "GAP-2026-068", "task_version": 1, "title": "Materialize V19 enrichment", "owner": null, "declared_status": "VALIDATED", "depends_on": ["GAP-2026-066", "GAP-2026-067"], "requires_review": true, "audit_refs": []},
     {"id": "GAP-2026-069", "task_version": 1, "title": "Import and reconcile V19", "owner": null, "declared_status": "VALIDATED", "depends_on": ["GAP-2026-066", "GAP-2026-067", "GAP-2026-068"], "requires_review": true, "audit_refs": []},
     {"id": "GAP-2026-070", "task_version": 1, "title": "Publish V19 to Render", "owner": null, "declared_status": "VALIDATED", "depends_on": ["GAP-2026-068", "GAP-2026-069"], "requires_review": true, "audit_refs": []},

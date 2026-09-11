@@ -132,13 +132,34 @@ materialization or deployment.
   registrable domains, company/location identity, funeral relevance, and
   excluded-host rules; preserve candidate/refusal evidence; produce a
   deterministic verified/review/unresolved split with no database, CRM, or
-  outreach writes.
+  outreach writes. **CORRECTION 2026-09-11:** the task-coordinator manifest
+  (`automation/task_manifest.json`) had marked this `VALIDATED`, contradicting
+  this file's own open checkbox. Verified directly: `discovery.langsearch_provider`
+  (imported by `resolve_955_websites.py` for the actual LangSearch calls) does
+  not exist anywhere in `git log --all`, and no V3 queue/search-result artifact
+  exists on disk under `data/generated/`. Whatever produced the 364/3,443
+  evidence cited above did not leave its code or output in this checkout, so
+  the VALIDATED claim was not reproducible and has been reverted to BLOCKED in
+  the manifest. Also found and fixed a real blocker: `resolve_955_websites.py`
+  had a nested-quote f-string that only parses on Python 3.12+ (PEP 701), so it
+  could not even be imported on this repo's Python 3.10 checkout. Restored
+  `discovery/langsearch_provider.py` as a real client against the documented
+  LangSearch API (https://docs.langsearch.com/api/web-search-api), covered by
+  `tests/test_langsearch_provider.py` (8 tests). The script now imports and
+  runs end-to-end, and fails closed per-record with a clear error when
+  `LANGSEARCH_API_KEY` is unset. **Still blocked:** this repo has no
+  LangSearch API key. A free-tier key from https://langsearch.com/dashboard
+  needs to be set as `LANGSEARCH_API_KEY` in a local, uncommitted `.env`
+  before this task (and GAP-2026-067, which depends on it) can actually run
+  against the real 940-business gap and be honestly marked VALIDATED.
 
 - [ ] **GAP-2026-067 (HIGH): crawl verified V3 websites for contact and staff
   evidence.** Evidence: V18 still has 634 businesses without phones and 791
   without emails. Acceptance: crawl bounded contact/about/team/location paths;
   retain source URL plus contextual excerpt for every fact; reject fax,
   directory, shared-domain, and non-branch values; preserve all 955 IDs.
+  **STATUS 2026-09-11:** blocked on the same missing `LANGSEARCH_API_KEY` as
+  GAP-2026-066, which this task depends on directly. See that entry.
 
 - [x] **GAP-2026-068 (HIGH): materialize verified V19 enrichment.** Evidence:
   no V19 artifact exists and LangSearch output is separate from V18.
