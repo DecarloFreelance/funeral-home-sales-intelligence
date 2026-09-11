@@ -137,10 +137,12 @@ def main():
         query = targeted_query(row)
         attempted_this_run += 1
 
+        company_label = row.get("company", "")
+        city_label = row.get("city", "")
+        province_label = row.get("province", "")
         print(
             f"[{attempted_this_run}] {record_id} "
-            f"{row.get("company", "")} — {row.get("city", "")}, "
-            f"{row.get("province", "")}",
+            f"{company_label} — {city_label}, {province_label}",
             flush=True,
         )
 
