@@ -2,19 +2,12 @@
 
 Last reconciled: 2026-09-07
 
-- [ ] **AUDIT-2026-082 (HIGH): reconcile orchestration control-plane state
-  with the validated work queue.** Evidence: `automation/task_manifest.json`
-  omits validated `GAP-2026-073` and all audit tasks, while its durable state
-  reports `GAP-2026-072` as completed and `GAP-2026-071` as pending, directly
-  contradicting `todo.md`; `task_coordinator.py` only computes a snapshot and
-  has no lease/owner claim, execution handoff, or completion reconciliation.
-  The bounded record vertical slice is implemented separately in
-  `run_enrichment.py` and `AgentOrchestrator`, but the coordinator cannot
-  govern or observe it. Acceptance: define one versioned task/status contract,
-  reject stale or unknown task state, expose deterministic claim/lease and
-  completion reconciliation without network, CRM, database, Render, or
-  outreach writes, and preserve the existing review-only agent boundary.
-  Priority: high.
+<!-- AUDIT-2026-082 duplicate removed 2026-09-11: this stale, still-open
+     copy of the item was left in place after it was fixed and marked
+     [x] VALIDATED further down (manifest schema v2, worker-bound claims,
+     lease recovery, 19/19 focused tests). Having both copies in the file
+     is exactly the kind of self-contradiction the task itself was about
+     fixing. See the VALIDATED entry below for the real status. -->
 
 - [x] **AUDIT-2026-074 (CRITICAL): quarantine or replace the restored `src/`
   agent before execution.** Evidence: `src/agent.py` is committed with
