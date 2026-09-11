@@ -25,7 +25,7 @@ Last reconciled: 2026-09-07
   removed shell execution and arbitrary writes; `py_compile` passes and the
   focused adversarial suite passes 2/2.
 
-- [ ] **AUDIT-2026-075 (HIGH): reconcile V15 immutable artifact provenance.**
+- [x] **AUDIT-2026-075 (HIGH): reconcile V15 immutable artifact provenance.**
   Evidence: `sanitize_staff_precision_v16.py` pins source hash
   `c4f6d49c...`, while the current ignored V15 artifact hashes to
   `1f510631...`; all three V16 materialization tests fail closed with
@@ -53,8 +53,15 @@ Last reconciled: 2026-09-07
   retire this pipeline (document it as historical/reference and stop tracking
   its gaps as active work), or deliberately re-baseline it against current
   evidence if there's a reason to keep using it going forward.
+  **RETIRED 2026-09-11:** confirmed by the user -- the pipeline was always
+  meant to keep evolving, and it did, just not through these scripts; the
+  hand-maintained `data/portal_findings.json` ("V20" through "V26"+) is that
+  evolution. V14-V19 and their materialize/sanitize scripts are now
+  historical/reference only, removed from `automation/task_manifest.json`,
+  and no longer tracked as open work. Left in place (not deleted) in case
+  their provenance discipline is useful again later.
 
-- [ ] **AUDIT-2026-081 (HIGH): restore missing V17/V18 materialization inputs.**
+- [x] **AUDIT-2026-081 (HIGH): restore missing V17/V18 materialization inputs.**
   Evidence: V17's declared `langsearch_unverified_v2/verification/verified_websites.json`
   and `v17_verified_recovery_v1/migration_pages.json` are absent; V18's declared
   `branch_attribution_v2/branch_contacts.json` and generated `summary.json` are
@@ -69,6 +76,7 @@ Last reconciled: 2026-09-07
   `data/portal_findings.json` currently deployed to Render. Restoring these 4
   files would not change what Todd sees today. Same decision needed as
   AUDIT-2026-075: retire or deliberately re-baseline.
+  **RETIRED 2026-09-11:** same decision as AUDIT-2026-075 -- see that entry.
 
 - [x] **AUDIT-2026-082 (HIGH): reconcile orchestration control-plane state
   with the validated work queue.** Evidence: the previous manifest omitted
@@ -167,8 +175,15 @@ materialization or deployment.
   `LANGSEARCH_API_KEY` is unset. **Still blocked:** this repo has no
   LangSearch API key. A free-tier key from https://langsearch.com/dashboard
   needs to be set as `LANGSEARCH_API_KEY` in a local, uncommitted `.env`
-  before this task (and GAP-2026-067, which depends on it) can actually run
-  against the real 940-business gap and be honestly marked VALIDATED.
+  before this task (and GAP-2026-067, which depends on it) can actually run.
+  **RETARGETED 2026-09-11:** this task's evidence (364/3,443, "V3 queue") was
+  scoped against the retired V14-V19 pipeline's 955-record/CFI-#### dataset
+  (see docs/PIPELINE_HISTORY.md). That dataset is no longer what's deployed.
+  The live dataset needing this work is `data/portal_findings.json`
+  ("V26", 1,302 records): 937 have no website on file. `resolve_955_websites.py`
+  is dataset-agnostic and needs no code change -- it just needs a queue built
+  from the live 1,302 records (province-prefixed IDs), not the old CFI queue.
+  Once `LANGSEARCH_API_KEY` exists, build that queue before running it.
 
 - [ ] **GAP-2026-067 (HIGH): crawl verified V3 websites for contact and staff
   evidence.** Evidence: V18 still has 634 businesses without phones and 791
@@ -176,7 +191,9 @@ materialization or deployment.
   retain source URL plus contextual excerpt for every fact; reject fax,
   directory, shared-domain, and non-branch values; preserve all 955 IDs.
   **STATUS 2026-09-11:** blocked on the same missing `LANGSEARCH_API_KEY` as
-  GAP-2026-066, which this task depends on directly. See that entry.
+  GAP-2026-066, which this task depends on directly. Also retargeted to the
+  live 1,302-record `data/portal_findings.json` per the same entry -- V18's
+  634/791 figures are from the retired pipeline (docs/PIPELINE_HISTORY.md).
 
 - [x] **GAP-2026-068 (HIGH): materialize verified V19 enrichment.** Evidence:
   no V19 artifact exists and LangSearch output is separate from V18.
@@ -249,6 +266,14 @@ materialization or deployment.
   shared-domain values in review. Preserve 955 rows, apply the staff precision
   denylist before materialization, run adversarial/targeted/full validation,
   and perform zero CRM or outreach writes.
+  **RETARGETED 2026-09-11:** the "613"/"514"/"955 rows" figures describe the
+  retired V14-V19 pipeline (docs/PIPELINE_HISTORY.md), not the live product.
+  The current, real numbers against `data/portal_findings.json` ("V26", 1,302
+  records): **937 have no website on file, 871 have no website, phone,
+  email, staff, or decision-maker evidence at all.** Same acceptance criteria,
+  same script (`resolve_955_websites.py`, already fixed and dataset-agnostic),
+  different target: build the discovery queue from the 1,302 live records
+  and preserve all 1,302, not 955.
 
 - [x] **GAP-2026-064 (HIGH): run branch attribution against the current
   identity-verified mapping set and materialize V18.** Evidence: the branch
@@ -277,7 +302,7 @@ materialization or deployment.
   materialization now deduplicates normalized staff identities before export,
   and the focused regression suite passes 5/5.
 
-- [ ] **GAP-2026-063 (HIGH): re-verify legacy website mappings before bounded
+- [x] **GAP-2026-063 (HIGH): re-verify legacy website mappings before bounded
   contact/staff crawling.** Evidence: the legacy `verified_crawlset` labels 530
   mappings as verified, yet the current registrable-domain identity guard
   rejects 226 of them and exposes deceptive third-party hosts including
@@ -312,6 +337,7 @@ materialization or deployment.
   16/16, and the full suite passes 327/327. CRM/outreach writes remain zero.
   Remaining work: branch/location attribution review, conservative V18
   materialization, persistence/deployment validation, and Render secret update.
+  **RETIRED 2026-09-11:** same decision as AUDIT-2026-075 -- see that entry.
   **BROADER FINDING 2026-09-11:** same root cause as AUDIT-2026-075/081 -- this
   is the same abandoned V14-V19 CFI pipeline. V18 materialization did complete
   later (see GAP-2026-064, VALIDATED), but the live Render portal moved on to

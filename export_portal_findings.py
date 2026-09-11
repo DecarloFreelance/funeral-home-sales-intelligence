@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+
+# RETIRED 2026-09-11: this script is part of the old V14-V19 CFI-####
+# pipeline, which is no longer connected to the live product. The
+# deployed portal now runs on the hand-maintained data/portal_findings.json
+# ('V20'+ / 'V26'). Kept for reference only -- see docs/PIPELINE_HISTORY.md
+# before extending or running this.
 """Build the minimal private V18 snapshot consumed by the online portal."""
 
 from __future__ import annotations
