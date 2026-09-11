@@ -4,6 +4,7 @@ import argparse
 import getpass
 import sqlite3
 from pathlib import Path
+from operator_ui.sqlite import connection
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -20,8 +21,8 @@ class AuthStore:
         if len(password) < 7:
             raise ValueError("Password must contain at least 7 characters")
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        with sqlite3.connect(self.path) as connection:
-            connection.execute(
+        with connection(self.path) as database:
+            database.execute(
                 """CREATE TABLE IF NOT EXISTS users (
                        username_key TEXT PRIMARY KEY,
                        display_name TEXT NOT NULL UNIQUE,
@@ -30,7 +31,7 @@ class AuthStore:
                    )"""
             )
             for username in ALLOWED_USERS:
-                connection.execute(
+                database.execute(
                     """INSERT INTO users(username_key, display_name, password_hash, is_active)
                        VALUES (?, ?, ?, 1)
                        ON CONFLICT(username_key) DO UPDATE SET
@@ -40,7 +41,7 @@ class AuthStore:
                     (username.casefold(), username, generate_password_hash(password)),
                 )
             placeholders = ",".join("?" for _ in ALLOWED_USERS)
-            connection.execute(
+            database.execute(
                 f"DELETE FROM users WHERE username_key NOT IN ({placeholders})",
                 tuple(username.casefold() for username in ALLOWED_USERS),
             )
@@ -50,8 +51,8 @@ class AuthStore:
         row = None
         if self.path.is_file():
             try:
-                with sqlite3.connect(f"file:{self.path}?mode=ro", uri=True) as connection:
-                    row = connection.execute(
+                with connection(f"file:{self.path}?mode=ro", uri=True) as database:
+                    row = database.execute(
                         "SELECT display_name, password_hash, is_active FROM users WHERE username_key=?",
                         (str(username or "").strip().casefold(),),
                     ).fetchone()
@@ -64,8 +65,8 @@ class AuthStore:
     def users(self) -> list[str]:
         if not self.path.is_file():
             return []
-        with sqlite3.connect(f"file:{self.path}?mode=ro", uri=True) as connection:
-            return [row[0] for row in connection.execute(
+        with connection(f"file:{self.path}?mode=ro", uri=True) as database:
+            return [row[0] for row in database.execute(
                 "SELECT display_name FROM users WHERE is_active=1 ORDER BY username_key"
             )]
 

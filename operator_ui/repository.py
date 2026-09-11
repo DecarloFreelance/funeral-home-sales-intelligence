@@ -2,6 +2,7 @@ import json
 import sqlite3
 from operator_ui.outreach_actions import draft_id, load_approvals
 from pathlib import Path
+from operator_ui.sqlite import connection
 
 
 class OperatorRepository:
@@ -170,9 +171,9 @@ class OperatorRepository:
         if not self.crm_db.is_file():
             return []
         try:
-            with sqlite3.connect(self.crm_db) as connection:
-                connection.row_factory = sqlite3.Row
-                rows = connection.execute(
+            with connection(self.crm_db) as database:
+                database.row_factory = sqlite3.Row
+                rows = database.execute(
                     """
                     SELECT id, domain, action_type, priority, status, due_date,
                            notes, created_at, started_at, completed_at
@@ -191,8 +192,8 @@ class OperatorRepository:
         if not self.crm_db.is_file():
             return False
         try:
-            with sqlite3.connect(self.crm_db) as connection:
-                return connection.execute(
+            with connection(self.crm_db) as database:
+                return database.execute(
                     "SELECT 1 FROM leads WHERE domain=?", (domain,)
                 ).fetchone() is not None
         except (sqlite3.Error, OSError):

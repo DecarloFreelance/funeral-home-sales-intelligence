@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-import fcntl
 import hashlib
 import json
 from pathlib import Path
@@ -12,6 +11,7 @@ from urllib.parse import urlsplit
 from automation.agents import RecordAgent
 from automation.orchestrator import AgentOrchestrator
 from pilot.workflow import _angle_evidence, _record_identity, _stable
+from persistence.file_lock import exclusive
 
 
 SCHEMA_VERSION = 1
@@ -424,14 +424,14 @@ def evaluate_with_orchestrator(
     lock_path = state_path.with_suffix(state_path.suffix + ".lock")
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with lock_path.open("a+", encoding="utf-8") as lock:
-        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
-        orchestrator = AgentOrchestrator(state_path, audit_path, [ImplementationFeasibilityAgent()])
-        result = orchestrator.process({
-            "domain": prospect["organization_id"],
-            "record": record,
-            "selected_angle": angle,
-            "forms": forms,
-            "pages": list(pages),
-        })
-        orchestrator.flush_audit()
+        with exclusive(lock):
+            orchestrator = AgentOrchestrator(state_path, audit_path, [ImplementationFeasibilityAgent()])
+            result = orchestrator.process({
+                "domain": prospect["organization_id"],
+                "record": record,
+                "selected_angle": angle,
+                "forms": forms,
+                "pages": list(pages),
+            })
+            orchestrator.flush_audit()
     return result["implementation_feasibility"]

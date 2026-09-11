@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the minimal private V17 snapshot consumed by the online portal."""
+"""Build the minimal private V18 snapshot consumed by the online portal."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ import json
 from pathlib import Path
 
 
-SOURCE = Path("data/generated/directory_955/full_955_enrichment_v17/full_955_enrichment.json")
-SUMMARY = Path("data/generated/directory_955/full_955_enrichment_v17/summary.json")
+SOURCE = Path("data/generated/directory_955/full_955_enrichment_v18/full_955_enrichment.json")
+SUMMARY = Path("data/generated/directory_955/full_955_enrichment_v18/summary.json")
 OUTPUT = Path("instance/portal_findings.json")
 MAPPINGS = Path("data/generated/directory_955/legacy_mapping_recheck_v1/verification_v2/verified_websites.json")
 MAX_RENDER_SECRET_BYTES = 1_000_000
@@ -23,7 +23,7 @@ def compact_evidence(item: dict) -> dict:
     }
 
 
-def build(source: Path, summary_path: Path, mappings_path: Path | None = None, version: str = "V17") -> dict:
+def build(source: Path, summary_path: Path, mappings_path: Path | None = None, version: str = "V18") -> dict:
     records = json.loads(source.read_text(encoding="utf-8"))
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     if len(records) != 955 or len({row.get("directory_record_id") for row in records}) != 955:
@@ -55,7 +55,7 @@ def build(source: Path, summary_path: Path, mappings_path: Path | None = None, v
     return {"version": version, "records": output, "summary": summary}
 
 
-def write_snapshot(source: Path, summary: Path, output: Path, mappings: Path | None = MAPPINGS, version: str = "V17") -> int:
+def write_snapshot(source: Path, summary: Path, output: Path, mappings: Path | None = MAPPINGS, version: str = "V18") -> int:
     payload = json.dumps(build(source, summary, mappings, version), ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
     size = len(payload.encode())
     if size > MAX_RENDER_SECRET_BYTES:
@@ -72,7 +72,7 @@ def main() -> None:
     parser.add_argument("--summary", type=Path, default=SUMMARY)
     parser.add_argument("--output", type=Path, default=OUTPUT)
     parser.add_argument("--mappings", type=Path, default=MAPPINGS)
-    parser.add_argument("--version", default="V17")
+    parser.add_argument("--version", default="V18")
     args = parser.parse_args()
     print(json.dumps({"records": 955, "bytes": write_snapshot(args.source, args.summary, args.output, args.mappings, args.version), "output": str(args.output)}))
 

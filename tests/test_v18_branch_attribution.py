@@ -20,8 +20,8 @@ def test_branch_attribution_rejects_duplicate_mapping_ids():
 
 def test_v18_materialization_is_conservative_and_conserves_rows():
     path = Path("data/generated/directory_955/full_955_enrichment_v18/full_955_enrichment.json")
-    summary = json.loads(Path("data/generated/directory_955/full_955_enrichment_v18/summary.json").read_text())
-    rows = json.loads(path.read_text())
+    summary = json.loads(Path("data/generated/directory_955/full_955_enrichment_v18/summary.json").read_text(encoding="utf-8"))
+    rows = json.loads(path.read_text(encoding="utf-8"))
     assert len(rows) == 955
     assert len({row["directory_record_id"] for row in rows}) == 955
     assert summary["invariants"]["no_crm_or_outreach_writes"] is True
@@ -31,7 +31,7 @@ def test_v18_materialization_is_conservative_and_conserves_rows():
 
 def test_v18_materialization_reapplies_staff_precision_boundary():
     path = Path("data/generated/directory_955/full_955_enrichment_v18/full_955_enrichment.json")
-    rows = json.loads(path.read_text())
+    rows = json.loads(path.read_text(encoding="utf-8"))
     by_id = {row["directory_record_id"]: row for row in rows}
 
     # These labels were quarantined in V16 and must not return through the
@@ -48,7 +48,7 @@ def test_v18_materialization_reapplies_staff_precision_boundary():
 
 
 def test_v18_staff_is_unique_after_name_normalization():
-    rows = json.loads(Path("data/generated/directory_955/full_955_enrichment_v18/full_955_enrichment.json").read_text())
+    rows = json.loads(Path("data/generated/directory_955/full_955_enrichment_v18/full_955_enrichment.json").read_text(encoding="utf-8"))
     for row in rows:
         staff = row.get("branch_safe_enrichment", {}).get("staff", [])
         keys = {

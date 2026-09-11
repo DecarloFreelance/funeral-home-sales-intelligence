@@ -7,6 +7,7 @@ import requests
 
 from crm import database
 from crm.database import initialize, upsert_lead
+from operator_ui.sqlite import connection as close_connection
 from crm.espocrm import EspoCRMBackend, EspoCRMError
 from crm.sync import sync_lead
 
@@ -135,7 +136,7 @@ class EspoCRMSyncTests(unittest.TestCase):
         })
 
     def test_sync_rejects_lead_without_explicit_quality_approval(self):
-        with sqlite3.connect(database.DB) as conn:
+        with close_connection(database.DB) as conn:
             conn.execute("UPDATE leads SET crm_sync_safe=0 WHERE domain='example.ca'")
 
         with self.assertRaisesRegex(ValueError, "not quality-approved"):
@@ -154,7 +155,7 @@ class EspoCRMSyncTests(unittest.TestCase):
         self.assertIsNone(backend.calls[0][2])
         self.assertEqual(backend.calls[1][2], "remote-1")
         self.assertEqual(backend.calls[0][1]["emailAddress"], "info@example.ca")
-        with sqlite3.connect(database.DB) as conn:
+        with close_connection(database.DB) as conn:
             events = conn.execute(
                 "SELECT status FROM external_crm_sync_events ORDER BY id"
             ).fetchall()
@@ -166,7 +167,7 @@ class EspoCRMSyncTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             sync_lead("example.ca", backend)
 
-        with sqlite3.connect(database.DB) as conn:
+        with close_connection(database.DB) as conn:
             lead = conn.execute(
                 "SELECT pipeline_stage, crm_status FROM leads WHERE domain='example.ca'"
             ).fetchone()

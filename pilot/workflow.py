@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections import Counter
 from datetime import datetime, timezone
-import fcntl
 import hashlib
 import json
 from pathlib import Path
@@ -10,6 +9,7 @@ from typing import Any, Dict, Iterable, List
 from urllib.parse import urlsplit
 
 from automation.orchestrator import AgentOrchestrator
+from persistence.file_lock import exclusive
 from enrichment.quality import approved_for_commercial_use
 
 
@@ -843,8 +843,8 @@ class PilotStore:
         lock_path = self.events_path.with_suffix(self.events_path.suffix + ".lock")
         lock_path.parent.mkdir(parents=True, exist_ok=True)
         with lock_path.open("a+", encoding="utf-8") as lock:
-            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
-            events = self.events()
+            with exclusive(lock):
+                events = self.events()
             existing = next((value for value in events if value.get("event_id") == event["event_id"]), None)
             if existing:
                 return existing, False

@@ -6,6 +6,7 @@ from pathlib import Path
 
 from operator_ui import create_app
 from operator_ui.auth import AuthStore
+from operator_ui.sqlite import connection
 
 
 class OperatorAuthenticationTests(unittest.TestCase):
@@ -59,8 +60,8 @@ class OperatorAuthenticationTests(unittest.TestCase):
                 self.assertEqual(state["authenticated_user"], display)
 
     def test_passwords_are_hashed_and_invalid_credentials_use_generic_failure(self):
-        with sqlite3.connect(self.auth_db) as connection:
-            rows = connection.execute("SELECT username_key, password_hash FROM users").fetchall()
+        with connection(self.auth_db) as database:
+            rows = database.execute("SELECT username_key, password_hash FROM users").fetchall()
         self.assertEqual(len(rows), 2)
         self.assertNotIn("test-password", repr(rows))
         for username, password in (("Alex", "wrong"), ("Unknown", "test-password")):
@@ -125,6 +126,23 @@ class OperatorAuthenticationTests(unittest.TestCase):
         self.assertNotIn(b"<script>alert(1)</script>", detail.data)
         self.assertIn(b"safe@example.test", detail.data)
         self.assertEqual(self.client.get("/findings/CFI-9999").status_code, 404)
+
+    def test_findings_table_expands_contact_context_and_safe_sources(self):
+        directory = self.data / "generated/directory_955/full_955_enrichment_v17"
+        directory.mkdir(parents=True)
+        (directory / "full_955_enrichment.json").write_text(json.dumps([{
+            "directory_record_id": "CFI-0001", "company": "Evidence Home",
+            "city": "City", "province": "ON", "branch_safe_enrichment": {
+                "emails": [{"value": "info@example.test", "source_url": "https://example.test/contact", "evidence_line": "Contact page"}],
+                "phones": [], "staff": [], "decision_makers": [], "has_any_contact": True,
+            },
+        }]))
+        (directory / "summary.json").write_text("{}")
+        self.login()
+        response = self.client.get("/findings")
+        self.assertIn(b"View evidence", response.data)
+        self.assertIn(b"Contact page", response.data)
+        self.assertIn(b"https://example.test/contact", response.data)
 
     def test_findings_filters_compose_and_csv_export_matches_with_formula_safety(self):
         directory = self.data / "generated/directory_955/full_955_enrichment_v17"

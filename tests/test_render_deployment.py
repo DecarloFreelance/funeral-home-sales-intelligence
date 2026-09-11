@@ -38,7 +38,8 @@ class RenderDeploymentTests(unittest.TestCase):
             self.assertEqual(payload["version"], "V17")
             self.assertEqual(len(payload["records"]), 955)
             self.assertNotIn("source_text_sha256", one.read_text())
-            self.assertEqual(oct(one.stat().st_mode & 0o777), "0o600")
+            if os.name != "nt":
+                self.assertEqual(oct(one.stat().st_mode & 0o777), "0o600")
 
     def test_portal_mapping_overlay_uses_only_fresh_verified_rows(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -79,8 +80,8 @@ class RenderDeploymentTests(unittest.TestCase):
             cwd=Path(__file__).resolve().parents[1], env=environment,
             text=True, capture_output=True, check=False,
         )
-        self.assertEqual(result.returncode, 0)
-        self.assertEqual(result.stderr, "")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("PORTAL_FINDINGS_PATH is required", result.stderr)
 
     def test_production_wsgi_rebuilds_auth_and_protects_findings(self):
         with tempfile.TemporaryDirectory() as temporary:

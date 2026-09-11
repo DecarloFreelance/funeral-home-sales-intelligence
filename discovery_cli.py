@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Bounded national discovery planning, execution, and status reporting."""
 import argparse
-import fcntl
 import json
 from pathlib import Path
 import sys
@@ -10,6 +9,7 @@ from discovery.autonomous import (
     DiscoveryBudget, DiscoveryStore, NationalDiscoveryCoordinator, QueryPlanner,
     coverage_report, saturation_status,
 )
+from persistence.file_lock import exclusive
 
 
 DEFAULT_ROOT = Path("data/generated/autonomous_discovery")
@@ -108,17 +108,22 @@ def main(argv=None):
         print("No authorized search provider is configured. Use --plan-only or supply --search-export.", file=sys.stderr); return 3
     lock_path = args.state.with_suffix(args.state.suffix + ".lock"); lock_path.parent.mkdir(parents=True, exist_ok=True)
     with lock_path.open("a+", encoding="utf-8") as lock:
-        try: fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        try:
+            lock_context = exclusive(lock, blocking=False)
+            lock_context.__enter__()
         except BlockingIOError:
             print("Another autonomous discovery run holds the process lock.", file=sys.stderr); return 4
-        if not args.dry_run:
-            store.seed(seed); store.save()
-        summary = NationalDiscoveryCoordinator(store, JsonSearchProvider(args.search_export), fixture_verifier, budget).run(plan, dry_run=args.dry_run)
-        report = {"current_coverage": coverage_report((store.data["organizations"].values() if not args.dry_run else seed), store.data["candidates"].values()), "this_run": summary, "novelty": saturation_status(store.data["query_ledger"], budget), "quarantine_reasons": _reason_counts(store.data["review_queue"].values())}
-        if not args.dry_run:
-            from automation.orchestrator import AgentOrchestrator
-            AgentOrchestrator._atomic_json(args.report, report)
-        print(json.dumps(report, indent=2, ensure_ascii=False))
+        try:
+            if not args.dry_run:
+                store.seed(seed); store.save()
+            summary = NationalDiscoveryCoordinator(store, JsonSearchProvider(args.search_export), fixture_verifier, budget).run(plan, dry_run=args.dry_run)
+            report = {"current_coverage": coverage_report((store.data["organizations"].values() if not args.dry_run else seed), store.data["candidates"].values()), "this_run": summary, "novelty": saturation_status(store.data["query_ledger"], budget), "quarantine_reasons": _reason_counts(store.data["review_queue"].values())}
+            if not args.dry_run:
+                from automation.orchestrator import AgentOrchestrator
+                AgentOrchestrator._atomic_json(args.report, report)
+            print(json.dumps(report, indent=2, ensure_ascii=False))
+        finally:
+            lock_context.__exit__(None, None, None)
     return 0
 
 

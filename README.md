@@ -41,6 +41,22 @@ python run_enrichment.py \
   --results data/discovered_results.json
 ```
 
+For coordinator-governed execution, opt in explicitly with a worker identity:
+
+```bash
+python run_enrichment.py \
+  --pages data/discovered_leads.json \
+  --results data/discovered_results.json \
+  --worker-id enrichment-worker-1 \
+  --coordinator-manifest automation/task_manifest.json \
+  --coordinator-state data/generated/task_coordinator/state.json
+```
+
+The governed entrypoint claims `AUTOMATION-ENRICHMENT`, records input and
+output fingerprints, and preserves review outcomes. It does not approve CRM
+synchronization or outreach. `run_research_resolution.py` accepts the same
+three coordinator options for `AUTOMATION-RESEARCH-RESOLUTION`.
+
 The command uses only previously permitted crawl/discovery evidence; it performs
 no new network requests. Versioned input fingerprints skip unchanged agent work,
 while timestamps and freshness horizons keep old observations from being treated

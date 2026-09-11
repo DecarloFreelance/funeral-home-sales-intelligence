@@ -7,11 +7,19 @@ from datetime import datetime
 DB = Path("data/crm.sqlite")
 
 
+class ClosingConnection(sqlite3.Connection):
+    def __exit__(self, exc_type, exc_value, traceback):
+        try:
+            return super().__exit__(exc_type, exc_value, traceback)
+        finally:
+            self.close()
+
+
 def connect(db_path=None):
     path = Path(db_path) if db_path else DB
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    return sqlite3.connect(path)
+    return sqlite3.connect(path, factory=ClosingConnection)
 
 
 def initialize():

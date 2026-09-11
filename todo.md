@@ -1,13 +1,119 @@
 # Product Task List
 
-Last reconciled: 2026-09-01
+Last reconciled: 2026-09-07
 
-- [ ] **GAP-2026-073 (MEDIUM): add review-only manual enrichment form to
+- [ ] **AUDIT-2026-082 (HIGH): reconcile orchestration control-plane state
+  with the validated work queue.** Evidence: `automation/task_manifest.json`
+  omits validated `GAP-2026-073` and all audit tasks, while its durable state
+  reports `GAP-2026-072` as completed and `GAP-2026-071` as pending, directly
+  contradicting `todo.md`; `task_coordinator.py` only computes a snapshot and
+  has no lease/owner claim, execution handoff, or completion reconciliation.
+  The bounded record vertical slice is implemented separately in
+  `run_enrichment.py` and `AgentOrchestrator`, but the coordinator cannot
+  govern or observe it. Acceptance: define one versioned task/status contract,
+  reject stale or unknown task state, expose deterministic claim/lease and
+  completion reconciliation without network, CRM, database, Render, or
+  outreach writes, and preserve the existing review-only agent boundary.
+  Priority: high.
+
+- [x] **AUDIT-2026-074 (CRITICAL): quarantine or replace the restored `src/`
+  agent before execution.** Evidence: `src/agent.py` is committed with
+  non-Python prose and a Markdown fence, so `compileall` fails; the intended
+  implementation also exposes unrestricted `shell=True` command execution and
+  arbitrary-path file writes. Impact: the module cannot run as committed, and
+  repairing it without a strict workspace sandbox would create arbitrary code
+  execution and data-integrity risk. Acceptance: restore valid syntax only
+  after defining an approved, allowlisted tool contract; confine reads/writes
+  to explicit workspace paths, remove shell execution, add adversarial tests,
+  and prove the module imports and compiles on Windows without network, CRM,
+  database, or outreach side effects. Priority: critical. **VALIDATED
+  2026-09-07:** replaced the malformed LangChain prototype with a
+  standard-library-only read-only contract confined to the repository root;
+  removed shell execution and arbitrary writes; `py_compile` passes and the
+  focused adversarial suite passes 2/2.
+
+- [ ] **AUDIT-2026-075 (HIGH): reconcile V15 immutable artifact provenance.**
+  Evidence: `sanitize_staff_precision_v16.py` pins source hash
+  `c4f6d49c...`, while the current ignored V15 artifact hashes to
+  `1f510631...`; all three V16 materialization tests fail closed with
+  `V15 source drift detected`. Acceptance: restore the exact reviewed V15
+  artifact or formally review and update the pinned hash plus expected audit
+  outputs; do not weaken drift protection. Priority: high. **CURRENT EVIDENCE
+  2026-09-07:** the local V15 hash is `1f510631...`, the pinned reviewed hash
+  is `c4f6d49c...`, and the V15/V16 snapshots are ignored and absent from Git
+  history; authoritative replacement bytes are unavailable, so the drift guard
+  remains correctly open.
+
+- [ ] **AUDIT-2026-081 (HIGH): restore missing V17/V18 materialization inputs.**
+  Evidence: V17's declared `langsearch_unverified_v2/verification/verified_websites.json`
+  and `v17_verified_recovery_v1/migration_pages.json` are absent; V18's declared
+  `branch_attribution_v2/branch_contacts.json` and generated `summary.json` are
+  absent. Existing V17/V18 snapshots are ignored and have no embedded
+  authoritative provenance. Acceptance: restore reviewed inputs or deliberately
+  regenerate them from recorded evidence, materialize deterministic summaries,
+  and preserve fail-closed source checks. Priority: high.
+
+- [x] **AUDIT-2026-082 (HIGH): reconcile orchestration control-plane state
+  with the validated work queue.** Evidence: the previous manifest omitted
+  validated product tasks and audit findings, while durable state reported
+  statuses that contradicted `todo.md`; the coordinator had no ownership or
+  completion reconciliation. **VALIDATED 2026-09-07:** manifest schema v2 now
+  separates declared status from execution status and includes GAP-2026-066
+  through GAP-2026-073 plus AUDIT-2026-074 through AUDIT-2026-082. The
+  coordinator migrates historical schema-v1 state separately, exposes worker-
+  bound claims, lease renewal/expiry recovery, fingerprint-checked completion,
+  idempotent reconciliation, and review-status preservation. Focused
+  orchestration/security tests pass 19/19; full suite passes 326 tests with
+  only the five pre-existing provenance failures. No network, CRM, PostgreSQL,
+  Render, outreach, or legacy browser capability was added.
+
+- [x] **AUDIT-2026-076 (MEDIUM): close SQLite connections in operator test
+  paths.** Evidence: the full suite emits unclosed-connection warnings and
+  produces Windows `WinError 32` failures while deleting temporary
+  `auth.sqlite` and `custom.sqlite` files; operator tests fail during teardown.
+  acceptance: identify the owning connection lifecycle, close it deterministically,
+  add a Windows-compatible regression check, and reduce the full-suite errors
+  without weakening database isolation. Priority: medium. **VALIDATED
+  2026-09-07:** added a close-guaranteeing SQLite context manager for operator
+  production paths and updated operator lifecycle tests to use it; isolated
+  operator/auth tests pass 30/30 without teardown lock errors.
+
+- [x] **AUDIT-2026-077 (HIGH): make file locking portable on Windows.**
+  Evidence: pytest collection failed for eight modules because they imported
+  POSIX-only `fcntl`; the repository targets Windows operators as well as POSIX
+  environments. Acceptance: preserve blocking and nonblocking lock semantics,
+  remove unconditional `fcntl` imports, and collect the full suite on Windows.
+  **VALIDATED 2026-09-07:** added `persistence.file_lock.exclusive`, ported six
+  callers, and pytest collection now reaches all 337 tests; the affected subset
+  passes 87 tests plus 2 subtests.
+
+- [x] **AUDIT-2026-078 (MEDIUM): avoid eager missing-artifact reads in guarded
+  pilot drafts.** Evidence: `pilot_cli draft` failed before draft validation
+  when the default scale results artifact was absent, even without a selected
+  commercial angle. **VALIDATED 2026-09-07:** draft reads current evidence only
+  when the optional files exist; pilot and portability subset passes.
+
+
+- [x] **AUDIT-2026-079 (MEDIUM): make prospect package serialization
+  Windows-readable.** Evidence: the UTF-8 package was read with the Windows
+  code page by the deterministic regression test, producing mojibake. The
+  package now uses ASCII-safe JSON escaping while preserving its data.
+  **VALIDATED:** deterministic prospect regression passes.
+
+- [x] **AUDIT-2026-080 (MEDIUM): remove non-ASCII lead-scoring console output.**
+  Evidence: the lead-scoring subprocess failed under CP1252 when `report.py`
+  printed a fire emoji. **VALIDATED:** lead-scoring integration regression
+  passes with ASCII report markers.
+- [x] **GAP-2026-073 (MEDIUM): add review-only manual enrichment form to
   Imports.** Evidence: operators currently can only upload CSV/JSON; manual
   website, phone, email, and staff-role corrections require an external file.
   Acceptance: select any canonical business, capture provenance/context, save
   drafts under `data/generated/manual_imports/review_queue.json`, and never
   auto-post to PostgreSQL, CRM, or outreach. Covered by operator UI tests.
+  **VALIDATED 2026-09-07:** manual drafts now require canonical business
+  selection, provenance context or source URL, validate all evidence URLs as
+  HTTP(S), record the operator actor, and persist only review drafts; operator
+  UI/auth tests pass 32/32, including unsafe-URL and no-write coverage.
 
 ## Directory 955 precision enrichment (2026-08-31)
 
@@ -57,16 +163,24 @@ materialization or deployment.
   (498,455 bytes) to service `srv-daavl3p5efls7393p9i0`, explicitly deployed,
   and received HTTP 200 from `/healthz`.
 
-- [ ] **GAP-2026-071 (MEDIUM): improve Findings table contact presentation.**
+- [x] **GAP-2026-071 (MEDIUM): improve Findings table contact presentation.**
   Evidence: the table currently shows only contact counts. Acceptance: add
   accessible expandable inline rows showing value, found-in context, source
-  page, and evidence class without exposing private hashes.
+  page, and evidence class without exposing private hashes. **VALIDATED
+  2026-09-07:** Findings now expands email, phone, staff, and decision-maker
+  evidence with values, context, evidence class, and HTTP(S)-only source links;
+  authenticated Findings tests pass 11/11.
 
 - [ ] **GAP-2026-072 (MEDIUM): reconcile repository artifact hygiene.** Evidence:
   `git status` shows production scripts, backups, generated datasets, and
   private artifacts mixed as untracked files. Acceptance: classify paths,
   update ignore/documentation rules, prevent secret/private commits, and run
   diff, secret, and generated-path audits before the next checkpoint.
+  **PARTIALLY VALIDATED 2026-09-07:** removed tracked portal snapshots, test
+  logs, and bytecode caches; added SQLite/database/log ignore rules; retained
+  `data/crm.sqlite` as an intentional immutable provenance fixture. The item
+  remains open until generated evidence artifacts and the retained database's
+  repository role are formally documented or relocated.
 
 - [x] **GAP-2026-073 (MEDIUM): add bounded recovery-task coordination.**
   Evidence: GAP-066 through GAP-072 have explicit dependencies, but the

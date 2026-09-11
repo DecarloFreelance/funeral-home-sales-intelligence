@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from collections import Counter
 from datetime import datetime, timezone
-import fcntl
 import hashlib
 import json
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
 from automation.orchestrator import AgentOrchestrator
+from persistence.file_lock import exclusive
 from enrichment.quality import CRM_BLOCKING_CODES, readiness_from_findings
 
 
@@ -273,8 +273,8 @@ class ManualReviewStore:
         lock_path = self.decisions_path.with_suffix(self.decisions_path.suffix + ".lock")
         lock_path.parent.mkdir(parents=True, exist_ok=True)
         with lock_path.open("a+", encoding="utf-8") as lock:
-            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
-            decisions = self.decisions()
+            with exclusive(lock):
+                decisions = self.decisions()
             existing = next((value for value in decisions if value.get("decision_id") == identifier), None)
             if existing:
                 return existing, False

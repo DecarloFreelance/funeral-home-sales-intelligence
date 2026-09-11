@@ -21,6 +21,7 @@ from discovery.crawler import _canonical_page_url
 from operator_ui.outreach_actions import approve_draft
 from operator_ui.repository import OperatorRepository
 from operator_ui.auth import AuthStore
+from operator_ui.sqlite import connection
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -85,22 +86,22 @@ def create_app(config=None):
         if root not in path.parents:
             abort(500, "Invalid review database path")
         path.parent.mkdir(parents=True, exist_ok=True)
-        with sqlite3.connect(path) as connection:
-            connection.execute("CREATE TABLE IF NOT EXISTS drafts (draft_id TEXT PRIMARY KEY, payload TEXT NOT NULL)")
+        with connection(path) as database:
+            database.execute("CREATE TABLE IF NOT EXISTS drafts (draft_id TEXT PRIMARY KEY, payload TEXT NOT NULL)")
             legacy = root / "generated/manual_imports/review_queue.json"
-            if connection.execute("SELECT 1 FROM drafts LIMIT 1").fetchone() is None and legacy.is_file():
+            if database.execute("SELECT 1 FROM drafts LIMIT 1").fetchone() is None and legacy.is_file():
                 try:
                     items = json.loads(legacy.read_text(encoding="utf-8"))
                 except (OSError, json.JSONDecodeError):
                     items = []
                 if isinstance(items, list):
-                    connection.executemany("INSERT OR IGNORE INTO drafts (draft_id, payload) VALUES (?, ?)", [(item.get("draft_id", secrets.token_urlsafe(16)), json.dumps(item, ensure_ascii=False)) for item in items if isinstance(item, dict)])
+                    database.executemany("INSERT OR IGNORE INTO drafts (draft_id, payload) VALUES (?, ?)", [(item.get("draft_id", secrets.token_urlsafe(16)), json.dumps(item, ensure_ascii=False)) for item in items if isinstance(item, dict)])
         return path
 
     def review_drafts():
         path = review_db()
-        with sqlite3.connect(path) as connection:
-            rows = connection.execute("SELECT payload FROM drafts ORDER BY rowid").fetchall()
+        with connection(path) as database:
+            rows = database.execute("SELECT payload FROM drafts ORDER BY rowid").fetchall()
             drafts = [json.loads(row[0]) for row in rows]
             known = {item.get("draft_id") for item in drafts if isinstance(item, dict)}
             legacy = path.with_suffix(".json")
@@ -112,7 +113,7 @@ def create_app(config=None):
                 if isinstance(items, list):
                     missing = [item for item in items if isinstance(item, dict) and item.get("draft_id") not in known]
                     if missing:
-                        connection.executemany("INSERT OR IGNORE INTO drafts (draft_id, payload) VALUES (?, ?)", [(item.get("draft_id", secrets.token_urlsafe(16)), json.dumps(item, ensure_ascii=False)) for item in missing])
+                        database.executemany("INSERT OR IGNORE INTO drafts (draft_id, payload) VALUES (?, ?)", [(item.get("draft_id", secrets.token_urlsafe(16)), json.dumps(item, ensure_ascii=False)) for item in missing])
                         drafts.extend(missing)
         return drafts
 
@@ -301,28 +302,49 @@ def create_app(config=None):
             abort(400, "Select a valid canonical business")
         website = request.form.get("website", "").strip()
         address = request.form.get("address", "").strip()
+        provenance_source_url = request.form.get("provenance_source_url", "").strip()
+        provenance_context = request.form.get("provenance_context", "").strip()
         if website:
             website = _canonical_page_url(website)
             if not website:
                 abort(400, "Website must be a valid HTTP or HTTPS URL")
         def rows(prefix, fields):
             values = [request.form.getlist(f"{prefix}_{field}") for field in fields]
-            return [dict(zip(fields, item)) for item in zip(*values) if any(item)]
+            result = []
+            for item in zip(*values):
+                if not any(item):
+                    continue
+                row = dict(zip(fields, item))
+                source_url = row.get("source_url", "").strip()
+                if source_url:
+                    row["source_url"] = _canonical_page_url(source_url)
+                    if not row["source_url"]:
+                        abort(400, "Evidence source URLs must use HTTP or HTTPS")
+                result.append(row)
+            return result
         phones = rows("phone", ("value", "person", "source_url", "notes"))
         emails = rows("email", ("value", "person", "source_url", "notes"))
         staff = rows("staff", ("name", "role", "source_url", "notes"))
         if not website and not address and not phones and not emails and not staff:
             abort(400, "Enter at least one enrichment value")
+        if not provenance_source_url and not provenance_context:
+            abort(400, "Add provenance context or a source URL")
+        if provenance_source_url:
+            provenance_source_url = _canonical_page_url(provenance_source_url)
+            if not provenance_source_url:
+                abort(400, "Provenance source URL must use HTTP or HTTPS")
         draft = {
             "draft_id": secrets.token_urlsafe(16), "status": "REVIEW",
             "created_at": datetime.utcnow().isoformat() + "Z",
+            "actor": session.get("authenticated_user", ""),
             "directory_record_id": record_id, "company": record.get("company"),
             "city": record.get("city"), "province": record.get("province"),
             "website": website, "address": address, "phones": phones, "emails": emails, "staff": staff,
+            "provenance": {"source_url": provenance_source_url, "context": provenance_context},
         }
         path = review_db()
-        with sqlite3.connect(path) as connection:
-            connection.execute("INSERT INTO drafts (draft_id, payload) VALUES (?, ?)", (draft["draft_id"], json.dumps(draft, ensure_ascii=False)))
+        with connection(path) as database:
+            database.execute("INSERT INTO drafts (draft_id, payload) VALUES (?, ?)", (draft["draft_id"], json.dumps(draft, ensure_ascii=False)))
         legacy = path.with_suffix(".json")
         legacy.write_text(json.dumps(review_drafts(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         flash(f"Saved manual enrichment for {record.get('company')} for review.")
@@ -353,9 +375,9 @@ def create_app(config=None):
         if not merged.get("website"): merged["website"] = other.get("website", "")
         merged["status"] = "APPROVED"; merged["merged_draft_ids"] = ids
         path = review_db()
-        with sqlite3.connect(path) as connection:
-            connection.executemany("UPDATE drafts SET payload=? WHERE draft_id=?", [(json.dumps({**item, "status": "SUPERSEDED", "superseded_by": merged["draft_id"]}, ensure_ascii=False), item["draft_id"]) for item in drafts])
-            connection.execute("INSERT OR REPLACE INTO drafts (draft_id, payload) VALUES (?, ?)", (merged["draft_id"], json.dumps(merged, ensure_ascii=False)))
+        with connection(path) as database:
+            database.executemany("UPDATE drafts SET payload=? WHERE draft_id=?", [(json.dumps({**item, "status": "SUPERSEDED", "superseded_by": merged["draft_id"]}, ensure_ascii=False), item["draft_id"]) for item in drafts])
+            database.execute("INSERT OR REPLACE INTO drafts (draft_id, payload) VALUES (?, ?)", (merged["draft_id"], json.dumps(merged, ensure_ascii=False)))
         return {"approved": merged}
 
     @app.post("/imports/preview")

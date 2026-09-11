@@ -10,6 +10,7 @@ from pathlib import Path
 from operator_ui import create_app
 from operator_ui.outreach_actions import draft_id
 from operator_ui.research_actions import apply_reviewed_resolution
+from operator_ui.sqlite import connection
 
 
 class OperatorUiTests(unittest.TestCase):
@@ -45,6 +46,7 @@ class OperatorUiTests(unittest.TestCase):
         response = self.client.post("/imports/manual", data={
             "csrf_token": token, "confirm": "yes", "directory_record_id": "CFI-0001",
             "website": "https://example.ca", "phone_value": ["+14165551234", ""],
+            "provenance_source_url": "https://example.ca/contact", "provenance_context": "Observed on the contact page.",
             "phone_person": ["Office", ""], "phone_source_url": ["https://example.ca/contact", ""], "phone_notes": ["main line", ""],
             "email_value": ["", ""], "email_person": ["", ""], "email_source_url": ["", ""], "email_notes": ["", ""],
             "staff_name": ["Jane Smith", "", ""], "staff_role": ["Owner", "", ""],
@@ -54,6 +56,24 @@ class OperatorUiTests(unittest.TestCase):
         drafts = json.loads((self.data / "generated/manual_imports/review_queue.json").read_text())
         self.assertEqual(drafts[0]["status"], "REVIEW")
         self.assertEqual(drafts[0]["staff"][0]["role"], "Owner")
+        self.assertEqual(drafts[0]["actor"], "")
+        self.assertEqual(drafts[0]["provenance"]["context"], "Observed on the contact page.")
+
+    def test_manual_import_rejects_non_http_evidence_source(self):
+        self.write_json("generated/directory_955/full_955_enrichment_v17/full_955_enrichment.json", [{
+            "directory_record_id": "CFI-0001", "company": "Example Home", "city": "Town", "province": "ON",
+            "branch_safe_enrichment": {"emails": [], "phones": [], "staff": [], "decision_makers": []},
+        }])
+        self.client.get("/imports")
+        with self.client.session_transaction() as session:
+            token = session["csrf_token"]
+        response = self.client.post("/imports/manual", data={
+            "csrf_token": token, "confirm": "yes", "directory_record_id": "CFI-0001",
+            "phone_value": ["+14165551234"], "phone_source_url": ["javascript:alert(1)"],
+            "provenance_context": "Observed in submitted evidence.",
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse((self.data / "generated/manual_imports/review_queue.json").exists())
 
     def test_dashboard_and_queue_render_fixture_counts(self):
         self.write_json("crawl_queue.json", [{"company": "Example Home", "domain": "example.com"}])
@@ -140,12 +160,12 @@ class OperatorUiTests(unittest.TestCase):
 
     def test_crm_actions_are_read_from_configured_database(self):
         database = self.data / "custom.sqlite"
-        with sqlite3.connect(database) as connection:
-            connection.execute("""CREATE TABLE action_queue (
+        with connection(database) as db:
+            db.execute("""CREATE TABLE action_queue (
                 id INTEGER PRIMARY KEY, domain TEXT, action_type TEXT, priority TEXT,
                 status TEXT, due_date TEXT, notes TEXT, created_at TEXT,
                 started_at TEXT, completed_at TEXT)""")
-            connection.execute("INSERT INTO action_queue VALUES (1, 'example.com', 'email', 'A1', 'OPEN', '2026-08-22', '', '', NULL, NULL)")
+            db.execute("INSERT INTO action_queue VALUES (1, 'example.com', 'email', 'A1', 'OPEN', '2026-08-22', '', '', NULL, NULL)")
         app = create_app({"TESTING": True, "DATA_ROOT": self.data, "CRM_DB": database})
         response = app.test_client().get("/crm/actions")
         self.assertIn(b"example.com", response.data)
@@ -153,8 +173,8 @@ class OperatorUiTests(unittest.TestCase):
 
     def create_crm_database(self):
         database = self.data / "workflow.sqlite"
-        with sqlite3.connect(database) as connection:
-            connection.executescript("""
+        with connection(database) as db:
+            db.executescript("""
                 CREATE TABLE leads (
                     domain TEXT PRIMARY KEY, pipeline_stage TEXT, attempts INTEGER,
                     next_action TEXT, follow_up_date TEXT,
@@ -188,8 +208,8 @@ class OperatorUiTests(unittest.TestCase):
         response = client.post("/crm/actions", data={"csrf_token": token})
         self.assertEqual(response.status_code, 400)
 
-        with sqlite3.connect(database) as connection:
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM action_queue").fetchone()[0], 0)
+        with connection(database) as db:
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM action_queue").fetchone()[0], 0)
 
     def test_crm_action_lifecycle_through_confirmed_posts(self):
         database = self.create_crm_database()
@@ -210,10 +230,10 @@ class OperatorUiTests(unittest.TestCase):
         })
         self.assertEqual(completed.status_code, 302)
 
-        with sqlite3.connect(database) as connection:
-            status = connection.execute("SELECT status FROM action_queue WHERE id=1").fetchone()[0]
-            attempts = connection.execute("SELECT attempts FROM leads WHERE domain='example.com'").fetchone()[0]
-            events = connection.execute("SELECT event_type FROM crm_events ORDER BY id").fetchall()
+        with connection(database) as db:
+            status = db.execute("SELECT status FROM action_queue WHERE id=1").fetchone()[0]
+            attempts = db.execute("SELECT attempts FROM leads WHERE domain='example.com'").fetchone()[0]
+            events = db.execute("SELECT event_type FROM crm_events ORDER BY id").fetchall()
         self.assertEqual(status, "COMPLETED")
         self.assertEqual(attempts, 1)
         self.assertEqual(events, [("ACTION_STARTED",), ("ACTION_COMPLETED",)])
@@ -228,8 +248,8 @@ class OperatorUiTests(unittest.TestCase):
             "action_type": "email", "priority": "A1 - Immediate Outreach",
         })
         self.assertEqual(response.status_code, 400)
-        with sqlite3.connect(database) as connection:
-            count = connection.execute("SELECT COUNT(*) FROM action_queue").fetchone()[0]
+        with connection(database) as db:
+            count = db.execute("SELECT COUNT(*) FROM action_queue").fetchone()[0]
         self.assertEqual(count, 0)
 
     def test_import_preview_does_not_write_until_confirmed(self):

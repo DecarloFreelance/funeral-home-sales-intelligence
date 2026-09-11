@@ -79,7 +79,7 @@ for domain,pages in companies.items():
     }
 
     for feature, score in detected.items():
-        print(f"\n✅ {feature} (score {score})")
+        print(f"\n[PASS] {feature} (score {score})")
         snippets = []
         for pattern in FEATURE_PATTERNS.get(feature, {}):
             match = re.search(pattern, text)
@@ -95,7 +95,7 @@ for domain,pages in companies.items():
     if not detected:
 
         print(
-            "❌ No conversion signals detected"
+            "[NONE] No conversion signals detected"
         )
 
 

@@ -145,7 +145,9 @@ def main(argv=None):
     elif args.command == "disqualify":
         event, created = store.transition(args.identifier, "DISQUALIFIED", args.actor, note=args.note); output = {"created": created, "event": event}
     elif args.command == "draft":
-        event, created = store.prepare_draft(args.identifier, args.actor, records=_json(args.results, list), forms=_json(args.forms, dict)); output = {"created": created, "draft": event.get("draft"), "outreach_sent": False}
+        records = _json(args.results, list) if args.results.is_file() else None
+        forms = _json(args.forms, dict) if args.forms.is_file() else None
+        event, created = store.prepare_draft(args.identifier, args.actor, records=records, forms=forms); output = {"created": created, "draft": event.get("draft"), "outreach_sent": False}
     elif args.command == "record-external-send":
         event, created = store.record_external_send(
             args.identifier,

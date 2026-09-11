@@ -33,7 +33,7 @@ class SanitizeStaffPrecisionV16Tests(unittest.TestCase):
         self.assertEqual(summary["after"]["named_decision_makers"], 204)
 
     def test_contacts_and_road_house_decision_policy_are_preserved(self):
-        original = json.loads(v16.SOURCE.read_text())
+        original = json.loads(v16.SOURCE.read_text(encoding="utf-8"))
         with tempfile.TemporaryDirectory() as temp:
             _summary, records, _output, _audit = self.run_merge(Path(temp))
         for before, after in zip(original, records):

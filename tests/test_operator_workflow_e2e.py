@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 from operator_ui import create_app
+from operator_ui.sqlite import connection as close_connection
 from operator_ui.outreach_actions import draft_id
 
 
@@ -138,7 +139,7 @@ class OperatorWorkflowEndToEndTests(unittest.TestCase):
                 "csrf_token": csrf, "confirm": "yes", "domain": "example.com",
                 "result": "Owner requested a follow-up.",
             }).status_code, 302)
-            with sqlite3.connect(database) as connection:
+            with close_connection(database) as connection:
                 status = connection.execute(
                     "SELECT status FROM action_queue WHERE id=1"
                 ).fetchone()[0]
@@ -161,7 +162,7 @@ class OperatorWorkflowEndToEndTests(unittest.TestCase):
 
     @staticmethod
     def initialize_crm(path):
-        with sqlite3.connect(path) as connection:
+        with close_connection(path) as connection:
             connection.executescript("""
                 CREATE TABLE leads (
                     domain TEXT PRIMARY KEY, pipeline_stage TEXT, attempts INTEGER,

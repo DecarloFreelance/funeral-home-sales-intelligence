@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 import argparse
-import fcntl
 import json
 from pathlib import Path
 from urllib.parse import urlsplit
 
 from automation import AgentOrchestrator, EnrichmentAgent, QualityControlAgent
+from automation.runner_bridge import coordinated_run
+from automation.task_coordinator import TaskCoordinator
 from enrichment.quality import evaluate_dataset_quality, readiness_from_findings
+from persistence.file_lock import exclusive
 
 
 def _domain(page):
@@ -63,11 +65,19 @@ def run(pages_path: Path, results_path: Path, output_path: Path, state_path: Pat
     state_path.parent.mkdir(parents=True, exist_ok=True)
     lock_path = state_path.with_suffix(state_path.suffix + ".lock")
     with lock_path.open("a+", encoding="utf-8") as lock:
-        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
-        try:
+        with exclusive(lock):
             return _run_locked(pages_path, results_path, output_path, state_path, audit_path, review_path)
-        finally:
-            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
+
+def run_coordinated(pages_path: Path, results_path: Path, output_path: Path, state_path: Path,
+                    audit_path: Path, review_path: Path, manifest_path: Path,
+                    coordinator_state_path: Path, worker_id: str):
+    coordinator = TaskCoordinator(manifest_path, coordinator_state_path)
+    return coordinated_run(
+        coordinator, "AUTOMATION-ENRICHMENT", worker_id,
+        (pages_path, results_path), (output_path, state_path, audit_path, review_path),
+        lambda: run(pages_path, results_path, output_path, state_path, audit_path, review_path),
+    )
 
 
 def main():
@@ -78,8 +88,17 @@ def main():
     parser.add_argument("--state", default="data/generated/enrichment/agent_state.json")
     parser.add_argument("--audit", default="data/generated/enrichment/agent_audit.json")
     parser.add_argument("--review", default="data/generated/enrichment/review_queue.json")
+    parser.add_argument("--coordinator-manifest", type=Path)
+    parser.add_argument("--coordinator-state", type=Path)
+    parser.add_argument("--worker-id")
     args = parser.parse_args()
-    summary = run(*(Path(value) for value in (args.pages, args.results, args.output, args.state, args.audit, args.review)))
+    paths = tuple(Path(value) for value in (args.pages, args.results, args.output, args.state, args.audit, args.review))
+    if args.worker_id:
+        if not args.coordinator_manifest or not args.coordinator_state:
+            parser.error("--worker-id requires --coordinator-manifest and --coordinator-state")
+        summary = run_coordinated(*paths, args.coordinator_manifest, args.coordinator_state, args.worker_id)
+    else:
+        summary = run(*paths)
     print(f"Enriched {summary['records']} records; {summary['needs_review']} require review.")
 
 

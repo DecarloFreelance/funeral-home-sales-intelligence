@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 import argparse
-import fcntl
 import json
 from pathlib import Path
 
 from automation import AgentOrchestrator
+from automation.runner_bridge import coordinated_run
+from automation.task_coordinator import TaskCoordinator
 from research import ResearchResolutionAgent, build_resolution_queue
+from persistence.file_lock import exclusive
 
 
 def _load(path: Path, expected):
@@ -88,8 +90,19 @@ def run_locked(*args):
     state_path.parent.mkdir(parents=True, exist_ok=True)
     lock_path = state_path.with_suffix(state_path.suffix + ".lock")
     with lock_path.open("a+", encoding="utf-8") as lock:
-        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
-        return run(*args)
+        with exclusive(lock):
+            return run(*args)
+
+
+def run_coordinated(research_path: Path, review_path: Path, output_path: Path, queue_path: Path,
+                    state_path: Path, audit_path: Path, manifest_path: Path,
+                    coordinator_state_path: Path, worker_id: str):
+    coordinator = TaskCoordinator(manifest_path, coordinator_state_path)
+    return coordinated_run(
+        coordinator, "AUTOMATION-RESEARCH-RESOLUTION", worker_id,
+        (research_path, review_path), (output_path, queue_path, state_path, audit_path),
+        lambda: run_locked(research_path, review_path, output_path, queue_path, state_path, audit_path),
+    )
 
 
 def main():
@@ -101,8 +114,19 @@ def main():
     parser.add_argument("--queue", type=Path, default=root / "research_resolution_queue.json")
     parser.add_argument("--state", type=Path, default=root / "research_agent_state.json")
     parser.add_argument("--audit", type=Path, default=root / "research_agent_audit.json")
+    parser.add_argument("--coordinator-manifest", type=Path)
+    parser.add_argument("--coordinator-state", type=Path)
+    parser.add_argument("--worker-id")
     args = parser.parse_args()
-    summary = run_locked(args.research, args.review, args.output, args.queue, args.state, args.audit)
+    if args.worker_id:
+        if not args.coordinator_manifest or not args.coordinator_state:
+            parser.error("--worker-id requires --coordinator-manifest and --coordinator-state")
+        summary = run_coordinated(
+            args.research, args.review, args.output, args.queue, args.state, args.audit,
+            args.coordinator_manifest, args.coordinator_state, args.worker_id,
+        )
+    else:
+        summary = run_locked(args.research, args.review, args.output, args.queue, args.state, args.audit)
     print("Research candidates={candidates} questions={questions} resolved={resolved} ambiguous={ambiguous}".format(**summary))
 
 

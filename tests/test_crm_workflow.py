@@ -9,6 +9,7 @@ from crm.database import initialize, upsert_lead
 from crm.events import get_history
 from crm.execution import complete_action, execute_next_action, start_action
 from intelligence.lead_intelligence import LeadIntelligence
+from operator_ui.sqlite import connection as close_connection
 
 
 class CrmWorkflowTests(unittest.TestCase):
@@ -41,7 +42,7 @@ class CrmWorkflowTests(unittest.TestCase):
         })
 
     def test_initialize_queue_applies_execution_columns(self):
-        with sqlite3.connect(database.DB) as conn:
+        with close_connection(database.DB) as conn:
             columns = {
                 row[1]
                 for row in conn.execute("PRAGMA table_info(action_queue)")
@@ -52,12 +53,12 @@ class CrmWorkflowTests(unittest.TestCase):
 
     def test_initialize_migrates_company_name_for_existing_database(self):
         database.DB.unlink()
-        with sqlite3.connect(database.DB) as conn:
+        with close_connection(database.DB) as conn:
             conn.execute("CREATE TABLE leads (domain TEXT PRIMARY KEY)")
 
         initialize()
 
-        with sqlite3.connect(database.DB) as conn:
+        with close_connection(database.DB) as conn:
             columns = {row[1] for row in conn.execute("PRAGMA table_info(leads)")}
         self.assertIn("company_name", columns)
         self.assertIn("crm_sync_safe", columns)
@@ -73,7 +74,7 @@ class CrmWorkflowTests(unittest.TestCase):
 
         self.assertEqual(first_id, second_id)
 
-        with sqlite3.connect(database.DB) as conn:
+        with close_connection(database.DB) as conn:
             count = conn.execute(
                 "SELECT COUNT(*) FROM action_queue"
             ).fetchone()[0]
@@ -89,7 +90,7 @@ class CrmWorkflowTests(unittest.TestCase):
         started = execute_next_action()
         self.assertEqual(started["domain"], "example.com")
 
-        with sqlite3.connect(database.DB) as conn:
+        with close_connection(database.DB) as conn:
             action = conn.execute(
                 "SELECT status, started_at FROM action_queue"
             ).fetchone()
@@ -104,7 +105,7 @@ class CrmWorkflowTests(unittest.TestCase):
         self.assertTrue(complete_action("example.com", "Reached owner"))
         self.assertFalse(complete_action("example.com", "Duplicate completion"))
 
-        with sqlite3.connect(database.DB) as conn:
+        with close_connection(database.DB) as conn:
             action = conn.execute(
                 "SELECT status, completed_at FROM action_queue"
             ).fetchone()
@@ -126,7 +127,7 @@ class CrmWorkflowTests(unittest.TestCase):
 
         self.assertIsNone(start_action(action_id))
 
-        with sqlite3.connect(database.DB) as conn:
+        with close_connection(database.DB) as conn:
             status = conn.execute(
                 "SELECT status FROM action_queue WHERE id=?", (action_id,)
             ).fetchone()[0]
@@ -137,13 +138,13 @@ class CrmWorkflowTests(unittest.TestCase):
 
     def test_action_cannot_start_without_explicit_outreach_readiness(self):
         self.add_lead("blocked.example")
-        with sqlite3.connect(database.DB) as conn:
+        with close_connection(database.DB) as conn:
             conn.execute("UPDATE leads SET outreach_ready=0 WHERE domain='blocked.example'")
         action_id = create_action("blocked.example", "email", "A1 - Immediate Outreach")
 
         self.assertIsNone(start_action(action_id))
 
-        with sqlite3.connect(database.DB) as conn:
+        with close_connection(database.DB) as conn:
             self.assertEqual(conn.execute(
                 "SELECT status FROM action_queue WHERE id=?", (action_id,)
             ).fetchone()[0], "OPEN")

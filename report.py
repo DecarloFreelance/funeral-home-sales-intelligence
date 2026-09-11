@@ -39,6 +39,4 @@ def print_report(results):
         print("Recommended Pitch:")
 
         for p in r["pitch"]:
-            print(
-                "🔥 " + p
-            )
+            print("- " + p)

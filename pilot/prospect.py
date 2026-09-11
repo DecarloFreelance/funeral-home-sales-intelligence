@@ -352,5 +352,8 @@ def write_package(path: Path, package: Dict[str, Any]) -> bool:
     existing = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else None
     if existing == package:
         return False
-    AgentOrchestrator._atomic_json(path, package)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(package, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+    temporary.replace(path)
     return True

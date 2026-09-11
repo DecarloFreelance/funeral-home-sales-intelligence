@@ -1,12 +1,24 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "tasks": [
-    {"id": "GAP-2026-066", "title": "Verify LangSearch candidates", "owner": "verification", "depends_on": []},
-    {"id": "GAP-2026-067", "title": "Crawl verified websites", "owner": "crawler", "depends_on": ["GAP-2026-066"]},
-    {"id": "GAP-2026-068", "title": "Materialize V19 enrichment", "owner": "materializer", "depends_on": ["GAP-2026-066", "GAP-2026-067"]},
-    {"id": "GAP-2026-069", "title": "Import and reconcile V19", "owner": "persistence", "depends_on": ["GAP-2026-066", "GAP-2026-067", "GAP-2026-068"]},
-    {"id": "GAP-2026-070", "title": "Publish V19 to Render", "owner": "operator", "depends_on": ["GAP-2026-068", "GAP-2026-069"]},
-    {"id": "GAP-2026-071", "title": "Improve Findings contact presentation", "owner": "ui", "depends_on": []},
-    {"id": "GAP-2026-072", "title": "Reconcile repository artifact hygiene", "owner": "repository", "depends_on": []}
+    {"id": "GAP-2026-066", "task_version": 1, "title": "Verify LangSearch candidates", "owner": null, "declared_status": "VALIDATED", "depends_on": [], "requires_review": true, "audit_refs": []},
+    {"id": "GAP-2026-067", "task_version": 1, "title": "Crawl verified websites", "owner": null, "declared_status": "VALIDATED", "depends_on": ["GAP-2026-066"], "requires_review": true, "audit_refs": []},
+    {"id": "GAP-2026-068", "task_version": 1, "title": "Materialize V19 enrichment", "owner": null, "declared_status": "VALIDATED", "depends_on": ["GAP-2026-066", "GAP-2026-067"], "requires_review": true, "audit_refs": []},
+    {"id": "GAP-2026-069", "task_version": 1, "title": "Import and reconcile V19", "owner": null, "declared_status": "VALIDATED", "depends_on": ["GAP-2026-066", "GAP-2026-067", "GAP-2026-068"], "requires_review": true, "audit_refs": []},
+    {"id": "GAP-2026-070", "task_version": 1, "title": "Publish V19 to Render", "owner": null, "declared_status": "VALIDATED", "depends_on": ["GAP-2026-068", "GAP-2026-069"], "requires_review": true, "audit_refs": []},
+    {"id": "GAP-2026-071", "task_version": 1, "title": "Improve Findings contact presentation", "owner": null, "declared_status": "VALIDATED", "depends_on": [], "requires_review": false, "audit_refs": []},
+    {"id": "GAP-2026-072", "task_version": 2, "title": "Reconcile repository artifact hygiene", "owner": null, "declared_status": "PARTIALLY_VALIDATED", "depends_on": [], "requires_review": true, "audit_refs": ["GAP-2026-072"]},
+    {"id": "GAP-2026-073", "task_version": 1, "title": "Add review-only manual enrichment form", "owner": null, "declared_status": "VALIDATED", "depends_on": [], "requires_review": true, "audit_refs": []},
+    {"id": "AUTOMATION-ENRICHMENT", "task_version": 1, "title": "Run bounded enrichment and quality control", "owner": null, "declared_status": "ACTIVE", "depends_on": [], "requires_review": true, "audit_refs": []},
+    {"id": "AUTOMATION-RESEARCH-RESOLUTION", "task_version": 1, "title": "Run bounded research resolution", "owner": null, "declared_status": "ACTIVE", "depends_on": [], "requires_review": true, "audit_refs": []},
+    {"id": "AUDIT-2026-074", "task_version": 1, "title": "Quarantine restored src agent", "owner": null, "declared_status": "VALIDATED", "depends_on": [], "requires_review": true, "audit_refs": ["AUDIT-2026-074"]},
+    {"id": "AUDIT-2026-075", "task_version": 1, "title": "Reconcile V15 immutable artifact provenance", "owner": null, "declared_status": "BLOCKED", "depends_on": [], "requires_review": true, "audit_refs": ["AUDIT-2026-075"]},
+    {"id": "AUDIT-2026-076", "task_version": 1, "title": "Close SQLite connections in operator test paths", "owner": null, "declared_status": "VALIDATED", "depends_on": [], "requires_review": false, "audit_refs": ["AUDIT-2026-076"]},
+    {"id": "AUDIT-2026-077", "task_version": 1, "title": "Make file locking portable on Windows", "owner": null, "declared_status": "VALIDATED", "depends_on": [], "requires_review": false, "audit_refs": ["AUDIT-2026-077"]},
+    {"id": "AUDIT-2026-078", "task_version": 1, "title": "Avoid eager missing-artifact reads in guarded pilot drafts", "owner": null, "declared_status": "VALIDATED", "depends_on": [], "requires_review": false, "audit_refs": ["AUDIT-2026-078"]},
+    {"id": "AUDIT-2026-079", "task_version": 1, "title": "Make prospect package serialization Windows-readable", "owner": null, "declared_status": "VALIDATED", "depends_on": [], "requires_review": false, "audit_refs": ["AUDIT-2026-079"]},
+    {"id": "AUDIT-2026-080", "task_version": 1, "title": "Remove non-ASCII lead-scoring console output", "owner": null, "declared_status": "VALIDATED", "depends_on": [], "requires_review": false, "audit_refs": ["AUDIT-2026-080"]},
+    {"id": "AUDIT-2026-081", "task_version": 1, "title": "Restore missing V17/V18 materialization inputs", "owner": null, "declared_status": "BLOCKED", "depends_on": [], "requires_review": true, "audit_refs": ["AUDIT-2026-081"]},
+    {"id": "AUDIT-2026-082", "task_version": 1, "title": "Reconcile orchestration control-plane state", "owner": null, "declared_status": "ACTIVE", "depends_on": [], "requires_review": true, "audit_refs": ["AUDIT-2026-082"]}
   ]
 }
