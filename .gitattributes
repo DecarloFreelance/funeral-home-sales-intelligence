@@ -1,0 +1,10 @@
+* text=auto eol=lf
+
+*.sqlite binary
+*.sqlite3 binary
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
