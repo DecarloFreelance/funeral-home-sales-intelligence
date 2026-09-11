@@ -35,7 +35,7 @@ class RenderDeploymentTests(unittest.TestCase):
             self.assertEqual(first, second)
             self.assertLess(first, MAX_RENDER_SECRET_BYTES)
             payload = json.loads(one.read_text())
-            self.assertEqual(payload["version"], "V17")
+            self.assertEqual(payload["version"], "V18")
             self.assertEqual(len(payload["records"]), 955)
             self.assertNotIn("source_text_sha256", one.read_text())
             if os.name != "nt":
