@@ -35,7 +35,24 @@ Last reconciled: 2026-09-07
   2026-09-07:** the local V15 hash is `1f510631...`, the pinned reviewed hash
   is `c4f6d49c...`, and the V15/V16 snapshots are ignored and absent from Git
   history; authoritative replacement bytes are unavailable, so the drift guard
-  remains correctly open.
+  remains correctly open. **BROADER FINDING 2026-09-11:** the drift is not
+  isolated to V15. The upstream V14 artifact (`full_955_enrichment_v14/...`)
+  also fails its own pinned-hash check inside `recover_zero_page_staff_v15.py`
+  (local hash `8133abdc...` vs pinned `97aedaa2...`). The entire V14-through-V19
+  hash-chained pipeline (955 records, `CFI-####` IDs) has drifted from its own
+  provenance pins. Meanwhile the dataset actually live on the Render portal
+  (`data/portal_findings.json`, "V26", 1,302 records, `AB-0001`/`NS-0001`-style
+  IDs) is structurally unrelated -- different record count, different ID
+  scheme -- and was built through a separate, directly-committed path (see
+  e.g. commit `68e0f30`, "feat: publish V26 portal enrichment batch", a
+  hand-edited diff against `data/portal_findings.json` with no run of this
+  pipeline involved). In short: this whole CFI/V14-V19 pipeline looks
+  abandoned in favor of a simpler, hand-maintained workflow that now produces
+  the real live data. Fixing V15's drift would repair a pipeline that
+  no longer feeds the product. **Needs a decision, not a fix:** formally
+  retire this pipeline (document it as historical/reference and stop tracking
+  its gaps as active work), or deliberately re-baseline it against current
+  evidence if there's a reason to keep using it going forward.
 
 - [ ] **AUDIT-2026-081 (HIGH): restore missing V17/V18 materialization inputs.**
   Evidence: V17's declared `langsearch_unverified_v2/verification/verified_websites.json`
@@ -44,7 +61,14 @@ Last reconciled: 2026-09-07
   absent. Existing V17/V18 snapshots are ignored and have no embedded
   authoritative provenance. Acceptance: restore reviewed inputs or deliberately
   regenerate them from recorded evidence, materialize deterministic summaries,
-  and preserve fail-closed source checks. Priority: high.
+  and preserve fail-closed source checks. Priority: high. **BROADER FINDING
+  2026-09-11:** same root cause as AUDIT-2026-075 -- these are intermediate
+  artifacts of the same abandoned V14-V19 CFI pipeline. `export_portal_findings.py`
+  (the script these files feed) still hardcodes the 955-record/`CFI-####`
+  source and a `V18` label; it has no relationship to the live 1,302-record
+  `data/portal_findings.json` currently deployed to Render. Restoring these 4
+  files would not change what Todd sees today. Same decision needed as
+  AUDIT-2026-075: retire or deliberately re-baseline.
 
 - [x] **AUDIT-2026-082 (HIGH): reconcile orchestration control-plane state
   with the validated work queue.** Evidence: the previous manifest omitted
@@ -288,6 +312,13 @@ materialization or deployment.
   16/16, and the full suite passes 327/327. CRM/outreach writes remain zero.
   Remaining work: branch/location attribution review, conservative V18
   materialization, persistence/deployment validation, and Render secret update.
+  **BROADER FINDING 2026-09-11:** same root cause as AUDIT-2026-075/081 -- this
+  is the same abandoned V14-V19 CFI pipeline. V18 materialization did complete
+  later (see GAP-2026-064, VALIDATED), but the live Render portal moved on to
+  a separately built 1,302-record dataset ("V26") that never went through this
+  pipeline at all. The "remaining work" listed above targets a snapshot that
+  no longer matches what's deployed. See AUDIT-2026-075 for the full picture
+  and the decision this needs (retire vs. re-baseline).
 
 - [x] **GAP-2026-062 (HIGH): expose reviewed website addresses in Findings.**
   Evidence: the private V17 portal snapshot contains 571 safe HTTP(S) website
@@ -337,7 +368,7 @@ materialization or deployment.
   adversarial stale-summary and contradictory-flag tests pass, focused portal
   tests pass 14/14, and the full suite passes 315/315. No data was changed.
 
-- [ ] **GAP-2026-060 (HIGH): publish V17 in the authenticated Render portal
+- [x] **GAP-2026-060 (HIGH): publish V17 in the authenticated Render portal
   with composable search filters and spreadsheet export.** Evidence: the live
   portal snapshot/exporter and findings labels are fixed to V16; its only search
   is an in-browser text substring filter, with no province/contact/website/
@@ -363,6 +394,15 @@ materialization or deployment.
   and 1,054 evidence sources rather than exact V17 snapshot totals. No Render
   API/CLI credential is configured locally, so replacing the mounted private
   findings secret remains an external deployment step after Git auto-deploy.
+  **RECONCILED 2026-09-11:** the "publish V17 snapshot" half of this task is
+  moot -- V17 belongs to the abandoned CFI pipeline (see AUDIT-2026-075) and
+  was never what got deployed. But the actual deliverable that matters --
+  composable filters and CSV export in the authenticated Findings UI -- is
+  real, confirmed directly in `operator_ui/app.py` (`filtered_findings()`,
+  `GET /findings/export.csv` with formula-injection-safe cells), and works
+  against whatever dataset is currently loaded, which today is the live
+  1,302-record `data/portal_findings.json` ("V26"). Todd can filter and export
+  today. Closing this as done on that basis; struck the V17-specific framing.
 
 - [x] **GAP-2026-059 (HIGH): complete hardened LangSearch recovery and
   materialize verified V17 evidence.** Evidence: the restartable 425-record
