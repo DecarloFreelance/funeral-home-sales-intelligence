@@ -77,7 +77,7 @@ class SanitizeStaffPrecisionV16Tests(unittest.TestCase):
         self.assertEqual(len(first[1]), 955)
 
     def test_no_network_database_or_outreach_boundary(self):
-        source = Path("sanitize_staff_precision_v16.py").read_text()
+        source = (Path(__file__).parent / "sanitize_staff_precision_v16.py").read_text()
         for forbidden in ("requests.", "urlopen(", "sqlite3", "psycopg", "send_message"):
             self.assertNotIn(forbidden, source)
 

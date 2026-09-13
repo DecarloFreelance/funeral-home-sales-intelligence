@@ -2,6 +2,14 @@
 
 Retired: 2026-09-11, confirmed by the project owner.
 
+Relocated: 2026-09-12. The scripts and tests named below now live under
+`legacy/v14_v19_pipeline/` (and `legacy/v14_v19_pipeline/tests/`) instead of
+the repo root, to get them out of the way of the live pipeline while keeping
+them as reference material. `pytest.ini` restricts default test collection
+to `tests/`, so these don't run (or fail on known data drift) as part of the
+normal suite; run them explicitly with
+`pytest legacy/v14_v19_pipeline/tests` if you need to.
+
 ## What's actually live
 
 `data/portal_findings.json` is the source of truth for the deployed Render

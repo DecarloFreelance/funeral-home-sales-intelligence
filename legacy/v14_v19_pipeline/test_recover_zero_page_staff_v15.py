@@ -71,7 +71,7 @@ class RecoverZeroPageStaffV15Tests(unittest.TestCase):
         self.assertEqual(len({row["directory_record_id"] for row in first[1]}), 955)
 
     def test_materializer_has_no_network_or_crm_write_boundary(self):
-        source = Path("recover_zero_page_staff_v15.py").read_text()
+        source = (Path(__file__).parent / "recover_zero_page_staff_v15.py").read_text()
         for forbidden in ("requests.", "urlopen(", "sqlite3", "psycopg", "PsqlRunner"):
             self.assertNotIn(forbidden, source)
 
