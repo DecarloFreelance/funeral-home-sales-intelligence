@@ -5,6 +5,7 @@ email-validator
 Flask
 gunicorn
 lxml
+openpyxl
 pandas
 phonenumbers
 python-dotenv
