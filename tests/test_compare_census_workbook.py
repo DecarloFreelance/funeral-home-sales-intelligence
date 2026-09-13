@@ -54,11 +54,11 @@ class CompareCensusWorkbookTests(unittest.TestCase):
             load_portal_records(PORTAL_SOURCE)[0],
         )["summary"]
         self.assertEqual(summary["census_rows"], 1077)
-        self.assertEqual(summary["portal_records"], 1302)
-        self.assertEqual(summary["domain_matches"], 184)
-        self.assertEqual(summary["namecity_matches"], 336)
-        self.assertEqual(summary["new_candidates"], 557)
-        self.assertEqual(summary["new_candidates_with_website"], 181)
+        self.assertEqual(summary["portal_records"], 1326)
+        self.assertEqual(summary["domain_matches"], 210)
+        self.assertEqual(summary["namecity_matches"], 335)
+        self.assertEqual(summary["new_candidates"], 532)
+        self.assertEqual(summary["new_candidates_with_website"], 156)
 
     def test_domain_match_wins_even_with_a_different_spelled_name(self):
         with tempfile.TemporaryDirectory() as tmp:

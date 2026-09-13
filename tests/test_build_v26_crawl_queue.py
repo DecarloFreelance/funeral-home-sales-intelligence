@@ -52,7 +52,7 @@ class BuildV26CrawlQueueTests(unittest.TestCase):
         self.assertEqual(summary["queue_count"], 172)
         self.assertEqual(len(queue), 172)
         self.assertEqual(summary["source_version"], "V26")
-        self.assertEqual(summary["source_total_records"], 1302)
+        self.assertEqual(summary["source_total_records"], 1326)
 
     # 2. No-website records are excluded.
     def test_records_without_a_website_are_excluded(self):
