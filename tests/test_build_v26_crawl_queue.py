@@ -47,10 +47,10 @@ def portal_payload(records_list, version="V26"):
 
 class BuildV26CrawlQueueTests(unittest.TestCase):
     # 1. Current V26 input produces the expected current 172-record queue.
-    def test_real_v26_source_produces_the_current_172_record_queue(self):
+    def test_real_v26_source_produces_the_current_165_record_queue(self):
         queue, summary = build_queue(REAL_SOURCE)
-        self.assertEqual(summary["queue_count"], 172)
-        self.assertEqual(len(queue), 172)
+        self.assertEqual(summary["queue_count"], 165)
+        self.assertEqual(len(queue), 165)
         self.assertEqual(summary["source_version"], "V26")
         self.assertEqual(summary["source_total_records"], 1326)
 

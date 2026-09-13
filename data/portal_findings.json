@@ -86,11 +86,15 @@
       "parent_organization": "",
       "staff": [],
       "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
+      "emails": [
+        "general@amgfh.com"
+      ],
+      "phones": [
+        "+1-519-433-5184"
+      ],
       "decision_makers": [],
-      "website_verification": "verified",
-      "enrichment_status": "pending",
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 30,
       "directory_record_id": "ON-0004"
     },
@@ -136,11 +140,15 @@
       "parent_organization": "",
       "staff": [],
       "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
+      "emails": [
+        "info@aboriginalfuneralchapel.com"
+      ],
+      "phones": [
+        "(204) 586-7700"
+      ],
       "decision_makers": [],
-      "website_verification": "verified",
-      "enrichment_status": "pending",
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 25,
       "directory_record_id": "MB-0006"
     },
@@ -354,11 +362,15 @@
       "parent_organization": "",
       "staff": [],
       "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
+      "emails": [
+        "alexanderandhoule@gmail.com"
+      ],
+      "phones": [
+        "(519) 352-2710"
+      ],
       "decision_makers": [],
-      "website_verification": "verified",
-      "enrichment_status": "pending",
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 30,
       "directory_record_id": "ON-0018"
     },
@@ -1760,11 +1772,15 @@
       "parent_organization": "",
       "staff": [],
       "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
+      "emails": [
+        "birchfc@mymts.net"
+      ],
+      "phones": [
+        "(204) 346-1030"
+      ],
       "decision_makers": [],
-      "website_verification": "verified",
-      "enrichment_status": "pending",
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 25,
       "directory_record_id": "MB-0081"
     },
@@ -5957,10 +5973,12 @@
       "staff": [],
       "source": "canada_funeral_intelligence_directory_markdown",
       "emails": [],
-      "phones": [],
+      "phones": [
+        "204-421-5501"
+      ],
       "decision_makers": [],
-      "website_verification": "verified",
-      "enrichment_status": "pending",
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 25,
       "directory_record_id": "MB-0259"
     },
@@ -17962,11 +17980,15 @@
       "parent_organization": "",
       "staff": [],
       "source": "canada_funeral_intelligence_directory_markdown",
-      "emails": [],
-      "phones": [],
+      "emails": [
+        "contact@seasonsfuneralchapel.ca"
+      ],
+      "phones": [
+        "(204) 444-5444"
+      ],
       "decision_makers": [],
-      "website_verification": "verified",
-      "enrichment_status": "pending",
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 25,
       "directory_record_id": "MB-0781"
     },
@@ -33317,12 +33339,16 @@
       "source": "association",
       "source_name": "Cremation Association of North America",
       "source_url": "https://members.cremationassociation.org/canamembers/Funeral-Home/Jayne%27s-Funeral-Home-2157",
-      "emails": [],
-      "phones": [],
+      "emails": [
+        "info@jaynesfuneralhome.net"
+      ],
+      "phones": [
+        "(902) 245-2525"
+      ],
       "staff": [],
       "decision_makers": [],
-      "website_verification": "no_signal",
-      "enrichment_status": "pending",
+      "website_verification": true,
+      "enrichment_status": "verified",
       "score": 0,
       "directory_record_id": "NS-1262"
     },
@@ -35721,7 +35747,7 @@
     }
   ],
   "version": "V26",
-  "generated": "2026-09-13T03:54:33.756061Z",
+  "generated": "2026-09-13T04:09:52.025562Z",
   "summary": {
     "total_records": 1326,
     "provinces": {
