@@ -2,6 +2,27 @@
 
 AI-powered platform for discovering, auditing, scoring, and prioritizing funeral home sales opportunities.
 
+## Architecture
+
+Three parts:
+
+- **Database**: `data/portal_findings.json`, currently labeled `"V26"`, holding
+  1,302 businesses across all 13 Canadian provinces/territories. It's an
+  intentionally evolving, hand-curated dataset maintained by directly editing
+  the file and committing the diff — not the fixed output of a pipeline. See
+  `docs/PIPELINE_HISTORY.md` for how this differs from an earlier, retired
+  approach.
+- **Self-enriching pipeline**: the `discovery/`, `enrichment/`, `validation/`,
+  and `persistence/` packages, invoked either through `operator_ui`'s web
+  actions or directly via the root-level CLI scripts (`run_enrichment.py`,
+  `run_research_resolution.py`, `discovery_cli.py`, `review_cli.py`,
+  `pilot_cli.py`, `database_cli.py`, `form_cli.py`, and the various
+  `*_discovery.py` / `*_import.py` / `build_*.py` / `rank_*.py` scripts
+  documented below). These are two interfaces onto the same underlying code,
+  not two separate systems.
+- **Frontend**: `operator_ui`, a Flask app deployed to Render via `render.yaml`
+  (see "Free Render deployment" below). It's the only production entry point.
+
 ## Current Capabilities
 
 - Website crawling and analysis
@@ -197,22 +218,22 @@ on a server-side Python host for shared access instead.
 
 The root `render.yaml` defines one free Python web service using Gunicorn,
 managed TLS, secure session cookies, and a public non-sensitive `/healthz`
-endpoint. Prepare the private read-only findings file locally:
+endpoint. The findings data itself is not built by a script — `data/
+portal_findings.json` (the "V26" dataset) already *is* the file to deploy; it's
+maintained by hand-editing and committing it directly.
 
-```bash
-python export_portal_findings.py
-```
-
-This writes ignored, mode-0600 `instance/portal_findings.json` and fails if the
-955-record snapshot exceeds Render's 1 MB secret-file limit. In Render, create a
-Blueprint from this repository and supply `OPERATOR_UI_BOOTSTRAP_PASSWORD` when
-prompted. On the resulting service's Environment page, add a secret file named
-`portal_findings.json`, paste/upload the local file, and save. Render mounts it
-at `/etc/secrets/portal_findings.json` and redeploys. The startup process refuses
-to run if any required secret or findings file is absent; it recreates the
-ephemeral SQLite credential store with hashes for exactly Alex and Todd after
-every restart. Neither the shared password nor the findings snapshot belongs in
-Git or `render.yaml`.
+In Render, create a Blueprint from this repository and supply
+`OPERATOR_UI_BOOTSTRAP_PASSWORD` when prompted. On the resulting service's
+Environment page, add a secret file named `portal_findings.json`,
+paste/upload the current `data/portal_findings.json`, and save. Render mounts
+it at `/etc/secrets/portal_findings.json` (`PORTAL_FINDINGS_PATH`) and
+redeploys. The startup process refuses to run if any required secret or
+findings file is absent; it recreates the ephemeral SQLite credential store
+with hashes for exactly Alex and Todd after every restart. Neither the shared
+password nor the findings snapshot belongs in Git or `render.yaml`. Whenever
+you edit `data/portal_findings.json` (a new enrichment batch, corrections,
+etc.), re-upload it to the Render secret file to deploy the update — commits
+to the git-tracked copy don't reach production by themselves.
 
 The interface reads existing generated datasets and exposes confirmed, CSRF-
 protected operator actions. CSV and JSON discovery sources can be normalized and
@@ -388,30 +409,17 @@ explicit paid provider succeeds. DNS/MX evidence proves only that a mail domain
 accepts mail; it does not prove that an individual mailbox exists. Phone
 metadata does not prove that a line is active or identify its current carrier.
 
-## EspoCRM Synchronization
+## EspoCRM Synchronization (archived)
 
-The local SQLite CRM remains the auditable workflow source of truth. EspoCRM is
-the first external target behind the `CRMBackend` boundary. Configure a
-least-privilege EspoCRM API user with Account read/create/edit access, keep its
-key outside the repository, and synchronize one lead or all leads:
-
-```bash
-export ESPOCRM_URL="https://crm.internal.example"
-export ESPOCRM_API_KEY="..."
-python espocrm_sync.py --domain example.ca
-python espocrm_sync.py --all
-```
-
-The adapter authenticates with `X-Api-Key`, searches by canonical website before
-creating, retains remote IDs locally for subsequent updates, uses bounded
-retries, and records every success or failure without modifying local lead
-state. A live self-hosted instance is optional for development; automated tests
-use deterministic fake sessions and backends and never make API calls.
-
-For a pinned localhost-only test stack and real two-pass synchronization check,
-follow `dev/espocrm/README.md`. Runtime credentials stay in the ignored
-`dev/espocrm/.env`; the live harness uses a temporary SQLite database and never
-prints the API key.
+The local SQLite CRM (`crm/`) remains the auditable workflow source of truth
+and is still live. An EspoCRM external-sync adapter was built behind the same
+`CRMBackend` boundary, but showed no evidence of use and was archived
+2026-09-12 to `legacy/espocrm_integration/` (script, tests, local Docker test
+stack, and the `crm.espocrm`/`crm.sync` submodules it depended on). It's
+otherwise unchanged and should still work if revived — see
+`legacy/espocrm_integration/dev_espocrm/README.md` for the pinned local test
+stack, and run `python legacy/espocrm_integration/espocrm_sync.py --domain
+example.ca` (or `--all`) once `ESPOCRM_URL`/`ESPOCRM_API_KEY` are set.
 
 ## Platform-Candidate Workflow
 
@@ -434,17 +442,8 @@ are also generated for software integrations; individual `.eml` drafts are
 written under `data/generated/platform/emails/`. Draft generation never sends
 email.
 
-## v34.20 Baseline
-
-Completed:
-- Funeral home website intelligence engine
-- Opportunity scoring framework
-- Example client reporting
-- Outreach workflow generation
-
 ## Roadmap
 
-v35:
 - Automated business discovery (implemented for AFSA and file adapters)
 - Contact enrichment (implemented for public site and directory data)
 - Funeral director identification (implemented conservatively)
@@ -452,6 +451,5 @@ v35:
   mailbox verification remains available through ZeroBounce)
 - Phone verification (local metadata validation implemented; optional live
   Lookup remains available through Twilio)
-- EspoCRM synchronization (implemented; additional backends can use the same
-  boundary)
-# Force redeploy with NT and NU data
+- EspoCRM synchronization (built, archived — see "EspoCRM Synchronization"
+  above; additional backends can use the same `CRMBackend` boundary)
