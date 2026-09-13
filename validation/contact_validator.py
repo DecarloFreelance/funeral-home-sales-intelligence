@@ -33,8 +33,6 @@ def validate_phone(phone):
     - 11 digit North American numbers starting with 1
 
     Rejects:
-    - timestamps
-    - scraped IDs
     - impossible area codes
     """
 
@@ -47,16 +45,6 @@ def validate_phone(phone):
         "",
         phone
     )
-
-
-    # Reject timestamps / IDs
-    if digits.startswith(
-        (
-            "19",
-            "20"
-        )
-    ):
-        return False
 
 
     # Normalize country code

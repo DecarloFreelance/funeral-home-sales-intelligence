@@ -12,6 +12,8 @@ import os
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from dotenv import load_dotenv
+
 from discovery.langsearch_provider import LangSearchError, LangSearchProvider
 
 
@@ -80,6 +82,12 @@ def load_json(path, default):
 
 
 def main():
+    # Loaded here (the CLI entrypoint), not at module import, so importing
+    # this file or discovery.langsearch_provider elsewhere never depends on
+    # an untracked local .env; existing tests that pass an explicit api_key
+    # stay deterministic regardless of what's on disk.
+    load_dotenv()
+
     parser = argparse.ArgumentParser(
         description="Search LangSearch for official-site candidates for known funeral businesses."
     )

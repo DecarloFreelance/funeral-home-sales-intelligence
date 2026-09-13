@@ -76,6 +76,12 @@ def _metadata(soup: BeautifulSoup) -> Dict[str, Any]:
     }
 
 
+def _page_text(soup: BeautifulSoup) -> str:
+    for tag in soup(["script", "style"]):
+        tag.decompose()
+    return soup.get_text(" ", strip=True)
+
+
 def _priority_links(soup: BeautifulSoup, base_url: str, domain: str) -> List[str]:
     links = []
     for anchor in soup.find_all("a", href=True):
@@ -162,6 +168,11 @@ class PriorityPageCrawler:
             "status": "FAILED",
             "attempts": [],
             "pages": 0,
+            # Carries whatever identity fields the caller attached to this
+            # queue entry (e.g. a V26 directory_record_id) through to the
+            # report, so evidence can be mapped back to every input record
+            # even when multiple records share one crawled domain.
+            "queue_entry": lead,
         }
         if not domain or not homepage or (not _same_domain(homepage, domain) and not resolved_location):
             outcome["reason"] = "INVALID_QUEUE_RECORD"
@@ -174,6 +185,7 @@ class PriorityPageCrawler:
             if url and _same_domain(url, website_domain if resolved_location else domain)
         )
         visited = set()
+        fetched_final_urls = set()
         records = []
         active_domain = website_domain if resolved_location else domain
         attempts = 0
@@ -221,6 +233,24 @@ class PriorityPageCrawler:
                     },
                 })
                 continue
+            except requests.RequestException as error:
+                # Connection failures, timeouts, and other transport errors
+                # are expected, routine outcomes for a live business website
+                # (down, DNS-flaky, TLS-misconfigured, ...) -- record them
+                # like any other failed attempt rather than aborting the
+                # whole lead over one bad request.
+                outcome["attempts"].append({
+                    "url": url,
+                    "outcome": "REQUEST_FAILED",
+                    "detail": str(error),
+                    "branch_identity": {
+                        "domain": domain,
+                        "company": lead.get("company", ""),
+                        "source": lead.get("source", ""),
+                        "provenance": lead.get("provenance", []),
+                    },
+                })
+                continue
 
             if safety_error:
                 outcome["attempts"].append({
@@ -237,7 +267,22 @@ class PriorityPageCrawler:
                 })
                 continue
 
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except requests.HTTPError:
+                outcome["attempts"].append({
+                    "url": url,
+                    "outcome": "HTTP_ERROR",
+                    "status_code": response.status_code,
+                    "redirect_chain": redirect_chain,
+                    "branch_identity": {
+                        "domain": domain,
+                        "company": lead.get("company", ""),
+                        "source": lead.get("source", ""),
+                        "provenance": lead.get("provenance", []),
+                    },
+                })
+                continue
             soup = BeautifulSoup(response.text, "html.parser")
 
             final_url = _canonical_page_url(final_url)
@@ -293,6 +338,28 @@ class PriorityPageCrawler:
                 })
                 continue
 
+            if final_url in fetched_final_urls:
+                # A different source URL (e.g. a "/home" nav link, or a
+                # bare-domain vs. www variant) redirected to a page this
+                # lead already fetched under another URL. The attempt is
+                # still recorded for audit purposes; no second page record
+                # or second link-discovery pass is produced for it.
+                outcome["attempts"].append({
+                    "url": url,
+                    "outcome": "DUPLICATE_FINAL_URL",
+                    "status_code": response.status_code,
+                    "final_url": final_url,
+                    "redirect_chain": redirect_chain,
+                    "branch_identity": {
+                        "domain": domain,
+                        "company": lead.get("company", ""),
+                        "source": lead.get("source", ""),
+                        "provenance": lead.get("provenance", []),
+                    },
+                })
+                continue
+            fetched_final_urls.add(final_url)
+
             outcome["attempts"].append({
                 "url": url,
                 "outcome": "SUCCESS",
@@ -304,6 +371,22 @@ class PriorityPageCrawler:
                     "company": lead.get("company", ""),
                     "source": lead.get("source", ""),
                     "provenance": lead.get("provenance", []),
+                },
+            })
+
+            records.append({
+                "url": final_url,
+                "domain": domain,
+                "metadata": _metadata(soup),
+                "markdown": _page_text(soup),
+                "discovery": {
+                    "queue_domain": domain,
+                    "source": lead.get("source"),
+                    "email": lead.get("email"),
+                    "locations": lead.get("locations"),
+                },
+                "crawl": {
+                    "observedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
                 },
             })
 
@@ -336,25 +419,62 @@ class PriorityPageCrawler:
         successful_domains = []
         failed_domains = []
         lead_reports = []
+        # (domain -> (lead_records, lead_report)) for domains already
+        # crawled earlier in this same batch. Multiple queue entries can
+        # legitimately share one business website (e.g. several branch
+        # records pointing at one corporate domain); this cache means the
+        # domain's pages are fetched over the network only once per batch,
+        # while every original entry still gets its own report/checkpoint
+        # (see consume() and each report's "queue_entry"/"reused_crawl").
+        domain_cache: Dict[str, Any] = {}
+        seen_record_keys = set()
 
         def consume(index, lead, lead_records, lead_report):
             lead_reports.append(lead_report)
-            records.extend(lead_records)
+            # Only extend the returned page list with genuinely new
+            # (domain, url) evidence -- a cache-hit lead re-passes the same
+            # records object already added for the first lead on this
+            # domain, and duplicate final URLs are already excluded from
+            # lead_records by crawl_lead() itself.
             domain = lead.get("domain", "")
-            if lead_records:
+            new_records = [
+                item for item in lead_records
+                if (domain, item.get("url")) not in seen_record_keys
+            ]
+            seen_record_keys.update((domain, item.get("url")) for item in new_records)
+            records.extend(new_records)
+            if lead_report.get("status") == "SUCCESS":
                 successful_domains.append(domain)
             else:
                 failed_domains.append(domain)
             if checkpoint:
+                # The outer checkpoint callback (website_crawler.py) derives
+                # its own per-domain page count from lead_records and merges
+                # report entries keyed by domain, so it must always see the
+                # true, undeduplicated evidence for this domain -- not the
+                # batch-deduplicated `new_records` above.
                 checkpoint(lead_records, lead_report)
             if on_lead:
-                on_lead(index, len(leads), domain, len(lead_records))
+                on_lead(index, len(leads), domain, lead_report.get("pages", len(lead_records)))
 
         if workers <= 1 or len(leads) <= 1:
             for index, lead in enumerate(leads, start=1):
-                lead_records = self.crawl_lead(lead)
-                consume(index, lead, lead_records, self.last_lead_report)
+                domain = lead.get("domain", "")
+                if domain in domain_cache:
+                    cached_records, cached_report = domain_cache[domain]
+                    lead_records = cached_records
+                    lead_report = {**cached_report, "queue_entry": lead, "reused_crawl": True}
+                else:
+                    lead_records = self.crawl_lead(lead)
+                    lead_report = self.last_lead_report
+                    domain_cache[domain] = (lead_records, lead_report)
+                consume(index, lead, lead_records, lead_report)
         else:
+            # Concurrency is opt-in and not the default; the cross-record
+            # domain cache above is not applied here to avoid adding
+            # cross-thread synchronization to this path in the same change.
+            # Duplicate-domain queue entries under workers>1 still each
+            # crawl independently, as before this fix.
             from concurrent.futures import ThreadPoolExecutor, as_completed
 
             def crawl_one(index, lead):

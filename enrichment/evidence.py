@@ -18,6 +18,11 @@ CONFIDENCE_STATES = {
     "EXTERNALLY_VERIFIED",
     "CONFLICTED",
     "NOT_CHECKED",
+    # Structured schema.org data authored directly by the site itself (e.g. a
+    # LocalBusiness/Organization JSON-LD block). Distinct from
+    # EXTERNALLY_VERIFIED, which implies an independent third-party check --
+    # this is high-trust but still first-party-only evidence.
+    "STRUCTURED_DIRECT",
 }
 SINGLE_VALUE_FIELDS = {
     "organization.canonical_domain",

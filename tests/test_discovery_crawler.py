@@ -42,7 +42,6 @@ class FakeSession:
 
 class PriorityPageCrawlerTests(unittest.TestCase):
 
-    @unittest.skip("Temporary skip - mock needs fixing")
     def test_crawls_homepage_and_discovers_priority_same_domain_link(self):
         homepage = "https://example.com/"
         contact = "https://example.com/contact-us"
@@ -88,7 +87,6 @@ class PriorityPageCrawlerTests(unittest.TestCase):
         self.assertEqual(records[0]["discovery"]["locations"][0]["city"], "Edmonton")
         self.assertRegex(records[0]["crawl"]["observedAt"], r"^\d{4}-\d{2}-\d{2}T.*Z$")
 
-    @unittest.skip("Temporary skip - mock needs fixing")
     def test_skips_failures_non_html_and_cross_domain_redirects(self):
         session = FakeSession({
             "https://example.com/": FakeResponse(
@@ -135,7 +133,6 @@ class PriorityPageCrawlerTests(unittest.TestCase):
         }), [])
         self.assertEqual(session.requested, [])
 
-    @unittest.skip("Temporary skip - mock needs fixing")
     def test_crawls_only_explicit_high_confidence_location_resolution_under_original_entity(self):
         target = "https://network.example/calgary/example-funeral-home/42"
         session = FakeSession({target: FakeResponse(target, "<html><body>Example Funeral Home Calgary <a href='/contact-us'>Contact</a></body></html>")})
@@ -154,7 +151,6 @@ class PriorityPageCrawlerTests(unittest.TestCase):
         lead["resolution"]["confidence"] = 0.89
         self.assertEqual(crawler.crawl_lead(lead), [])
 
-    @unittest.skip("Temporary skip - mock needs fixing")
     def test_queue_report_identifies_domains_without_pages(self):
         homepage = "https://example.com/"
         session = FakeSession({
@@ -171,7 +167,6 @@ class PriorityPageCrawlerTests(unittest.TestCase):
         self.assertEqual(crawler.last_report["successful_domains"], 1)
         self.assertEqual(crawler.last_report["failed_domains"], ["failed.example"])
 
-    @unittest.skip("Temporary skip - mock needs fixing")
     def test_queue_progress_callback_receives_each_domain(self):
         homepage = "https://example.com/"
         session = FakeSession({
@@ -187,7 +182,6 @@ class PriorityPageCrawlerTests(unittest.TestCase):
 
         self.assertEqual(progress, [(1, 1, "example.com", 1)])
 
-    @unittest.skip("Temporary skip - mock needs fixing")
     def test_allows_same_brand_homepage_redirect_to_country_domain(self):
         session = FakeSession({
             "https://example.com/": FakeResponse(
@@ -234,6 +228,117 @@ class PriorityPageCrawlerTests(unittest.TestCase):
         self.assertEqual(crawler.crawl_lead({"domain": "example.com", "url": homepage}), [])
         self.assertEqual(session.requested, [(homepage, 15)])
         self.assertEqual(crawler.last_lead_report["attempts"][0]["outcome"], "UNSAFE_REDIRECT_TARGET")
+
+
+class CrawlDeduplicationTests(unittest.TestCase):
+    """No real network access: every request in this class goes through
+    FakeSession, matching the rest of this file."""
+
+    def test_final_url_reached_via_redirect_is_not_double_recorded(self):
+        homepage = "https://example.com/"
+        via_redirect = "https://example.com/via-redirect"
+        redirect_response = FakeResponse(via_redirect, status=301)
+        redirect_response.headers["location"] = homepage
+        session = FakeSession({
+            homepage: FakeResponse(homepage, "<html><body>Home</body></html>"),
+            via_redirect: redirect_response,
+        })
+        crawler = PriorityPageCrawler(session=session, host_resolver=PUBLIC_RESOLVER)
+
+        records = crawler.crawl_lead({
+            "domain": "example.com",
+            "url": homepage,
+            "priority_urls": [via_redirect],
+        })
+
+        # Only one page record for the one distinct final URL, even though
+        # it was reached twice (directly, and via a redirecting link).
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0]["url"], homepage)
+
+        # The redirecting URL's attempt is preserved in the audit trail,
+        # not silently dropped, and is distinguished from a fresh SUCCESS.
+        outcomes_by_url = {a["url"]: a for a in crawler.last_lead_report["attempts"]}
+        self.assertEqual(outcomes_by_url[via_redirect]["outcome"], "DUPLICATE_FINAL_URL")
+        self.assertEqual(outcomes_by_url[via_redirect]["redirect_chain"], [via_redirect, homepage])
+        self.assertEqual(outcomes_by_url[homepage]["outcome"], "SUCCESS")
+
+    def test_distinct_pages_on_one_domain_are_still_all_crawled(self):
+        homepage = "https://example.com/"
+        contact = "https://example.com/contact"
+        session = FakeSession({
+            homepage: FakeResponse(homepage, "<html><body>Home</body></html>"),
+            contact: FakeResponse(contact, "<html><body>Call us</body></html>"),
+        })
+        crawler = PriorityPageCrawler(session=session, host_resolver=PUBLIC_RESOLVER)
+
+        records = crawler.crawl_lead({
+            "domain": "example.com", "url": homepage, "priority_urls": [contact],
+        })
+
+        self.assertEqual({r["url"] for r in records}, {homepage, contact})
+
+    def test_two_records_sharing_a_domain_crawl_it_only_once(self):
+        homepage = "https://shared.example/"
+        contact = "https://shared.example/contact"
+        session = FakeSession({
+            homepage: FakeResponse(homepage, "<html><body>Home</body></html>"),
+            contact: FakeResponse(contact, "<html><body>Call us</body></html>"),
+        })
+        crawler = PriorityPageCrawler(session=session, host_resolver=PUBLIC_RESOLVER)
+        lead_a = {
+            "domain": "shared.example", "url": homepage, "priority_urls": [contact],
+            "directory_record_id": "ON-0001",
+        }
+        lead_b = {
+            "domain": "shared.example", "url": homepage, "priority_urls": [contact],
+            "directory_record_id": "ON-0002",
+        }
+
+        records = crawler.crawl_queue([lead_a, lead_b])
+
+        # The network was only touched for the two distinct URLs, not once
+        # per input record.
+        self.assertEqual(sorted(u for u, _ in session.requested), [homepage, contact])
+
+        # Evidence itself is stored once, not duplicated per input record.
+        self.assertEqual(len(records), 2)
+
+        # But both original records remain fully represented and mappable.
+        self.assertEqual(crawler.last_report["queued_domains"], 2)
+        self.assertEqual(crawler.last_report["successful_domains"], 2)
+        self.assertEqual(len(crawler.last_report["leads"]), 2)
+        mapped_ids = sorted(
+            entry["queue_entry"]["directory_record_id"] for entry in crawler.last_report["leads"]
+        )
+        self.assertEqual(mapped_ids, ["ON-0001", "ON-0002"])
+        # Exactly one of the two entries actually hit the network; the other
+        # is explicitly marked as reusing that crawl's evidence.
+        reused_flags = sorted(bool(entry.get("reused_crawl")) for entry in crawler.last_report["leads"])
+        self.assertEqual(reused_flags, [False, True])
+        # Both entries still correctly report the domain as fully crawled.
+        for entry in crawler.last_report["leads"]:
+            self.assertEqual(entry["status"], "SUCCESS")
+            self.assertEqual(entry["pages"], 2)
+
+    def test_different_domains_still_crawled_independently(self):
+        homepage_one = "https://one.example/"
+        homepage_two = "https://two.example/"
+        session = FakeSession({
+            homepage_one: FakeResponse(homepage_one, "<html><body>One</body></html>"),
+            homepage_two: FakeResponse(homepage_two, "<html><body>Two</body></html>"),
+        })
+        crawler = PriorityPageCrawler(session=session, host_resolver=PUBLIC_RESOLVER)
+
+        records = crawler.crawl_queue([
+            {"domain": "one.example", "url": homepage_one},
+            {"domain": "two.example", "url": homepage_two},
+        ])
+
+        self.assertEqual(sorted(u for u, _ in session.requested), [homepage_one, homepage_two])
+        self.assertEqual({r["url"] for r in records}, {homepage_one, homepage_two})
+        self.assertEqual(crawler.last_report["successful_domains"], 2)
+        self.assertFalse(any(entry.get("reused_crawl") for entry in crawler.last_report["leads"]))
 
 
 if __name__ == "__main__":
