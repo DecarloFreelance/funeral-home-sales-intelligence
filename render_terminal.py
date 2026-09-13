@@ -82,6 +82,11 @@ def main():
     secret.add_argument("service_id")
     secret.add_argument("file_name", help="for example portal_findings.json")
     secret.add_argument("local_path", type=Path)
+    secret.add_argument(
+        "--minify-json", action="store_true",
+        help="re-serialize local_path as compact JSON before upload (no indentation/whitespace); "
+             "use when the pretty-printed file exceeds Render's secret-file size limit",
+    )
     drafts = sub.add_parser("review-drafts", help="query review-only manual enrichment drafts")
     drafts.add_argument("service_url", help="for example https://funeral-home-findings.onrender.com")
     approve = sub.add_parser("approve-review-draft")
@@ -101,6 +106,8 @@ def main():
         content = args.local_path.read_text(encoding="utf-8")
         if not content:
             raise SystemExit("Refusing to upload an empty secret file")
+        if args.minify_json:
+            content = json.dumps(json.loads(content), separators=(",", ":"), ensure_ascii=False)
         print(f"Uploading {args.file_name} ({len(content.encode('utf-8'))} bytes) to Render service {args.service_id}.")
         print("This replaces that named secret file and requires an explicit deploy afterward.")
         if input("Type UPLOAD to continue: ") != "UPLOAD":
