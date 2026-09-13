@@ -7,8 +7,8 @@ from pathlib import Path
 
 from crm import database
 from crm.database import initialize, upsert_lead
-from crm.espocrm import EspoCRMBackend
-from crm.sync import sync_lead
+from crm_espocrm import EspoCRMBackend
+from crm_sync import sync_lead
 
 
 VALIDATION_DOMAIN = "espocrm-adapter-validation.invalid"

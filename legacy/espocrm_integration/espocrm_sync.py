@@ -2,8 +2,8 @@ import argparse
 import os
 
 from crm.database import connect
-from crm.espocrm import EspoCRMBackend
-from crm.sync import sync_lead
+from crm_espocrm import EspoCRMBackend
+from crm_sync import sync_lead
 
 
 def main():

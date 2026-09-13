@@ -8,8 +8,8 @@ import requests
 from crm import database
 from crm.database import initialize, upsert_lead
 from operator_ui.sqlite import connection as close_connection
-from crm.espocrm import EspoCRMBackend, EspoCRMError
-from crm.sync import sync_lead
+from crm_espocrm import EspoCRMBackend, EspoCRMError
+from crm_sync import sync_lead
 
 
 class FakeResponse:
